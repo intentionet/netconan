@@ -2,7 +2,8 @@ import re
 import logging
 
 # Taken from RANCID password scrubbing regexes
-default_password_line_regexes = ['^(\s+password \d+) (.*)',
+default_password_line_regexes = [
+            '^(\s+password \d+) (.*)',
             '^(username (\S+) password (\d)) (\S+)(.*)',
             '^((enable )?(password|passwd)( level \d+)?) (.*)',
             '^(enable secret) (.*)',
@@ -46,16 +47,19 @@ default_password_line_regexes = ['^(\s+password \d+) (.*)',
             '(\s+ssh-(rsa|dsa) )\"(.*)',
             '^\s+((pre-shared-|)key (ascii-text|hexadecimal)) [^ ;]+(.*)']
 # Taken from RANCID community scrubbing regexes
-default_community_line_regexes = ['^((snmp-server .*community)( [08])?) (\S+)(.*)',
+default_community_line_regexes = [
+            '^((snmp-server .*community)( [08])?) (\S+)(.*)',
             # TODO: confirm this catches all community possibilities for snmp-server
             '^(snmp-server host (\S+)( informs| traps| version (1|2c|3 (\S+))| vrf (\S+))*) (\S+)(.*)',
             # TODO: see if we need to make the occurence of snmp keyword optional for Juniper
             '^(\s?snmp( \S+)* (community|trap-group)) [^ ;]+(.*)']
 
 def generate_default_sensitive_item_regexes():
+    """Compile and return the default password and community line regexes."""
     return [(re.compile(line)) for line in default_password_line_regexes + default_community_line_regexes]
 
 def replace_matching_item(compiled_regexes, input_line):
+    """Check a line against compiled regexes and replace the line with a comment upon the first match."""
     for compiled_regex in compiled_regexes:
         if compiled_regex.match(input_line) is not None:
             logging.debug("Match found on " + input_line.rstrip())
