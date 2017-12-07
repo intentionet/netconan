@@ -9,14 +9,13 @@ if __name__ == '__main__':
     parser.add_argument('-i', '--inputdirectory', help='Directory containing configurtions to anonymize', default='./configs/')
     parser.add_argument('-o', '--outputdirectory', help='Directory to place anonymized configs', default='./anon_configs/')
     parser.add_argument('-p', '--anonymizepwdandcomm', help='Remove password and snmp community lines', action='store_true', default=False)
-    parser.add_argument('-l', '--loglevel', help='Determines what level of logs to display (DEBUG|INFO|WARNING|ERROR|CRITICAL)', default='INFO')
+    parser.add_argument('-l', '--loglevel', help='Determines what level of logs to display (DEBUG|INFO|WARNING|ERROR|CRITICAL)',
+                        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default='INFO')
     options = parser.parse_args()
     input_dir = options.inputdirectory
     output_dir = options.outputdirectory
 
     numeric_level = getattr(logging, options.loglevel.upper(), None)
-    if not isinstance(numeric_level, int):
-        raise ValueError('Invalid log level: %s' % options.loglevel)
     logging.basicConfig(format='%(levelname)s %(message)s', level=numeric_level)
 
     if not os.path.exists(output_dir):
