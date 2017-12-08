@@ -6,14 +6,14 @@ import logging
 # Taken from RANCID password scrubbing regexes
 default_pwd_line_regexes = [
     '^(\s*password( \d)?) (\S+)( .*)?',
-    '^(\s*username (\S+) password( \d)?) (\S+)( .*)?',
+    '^(\s*username( \S+)+ (password|secret)( \d)?) (\S+)( .*)?',
     '^(\s*(enable )?(password|passwd)( level \d+)?)( \d)? (\S+)( .*)?',
-    '^(\s*(enable )?secret) (\S+)( .*)?',
+    '^(\s*(enable )?secret( \d)?) (\S+)( .*)?',
     '^(\s*ip ftp password) (\S+)( .*)?',
     '^(\s*ip ospf authentication-key) (\S+)( .*)?',
     '^(\s*isis password) (\S+)( level-\d)?( .*)?',
     '^(\s*(domain-password|area-password)) (\S+)( .*)?',
-    '^(\s*ip ospf message-digest-key \d+ md5) (\S+)( .*)?',
+    '^(\s*ip ospf message-digest-key \d+ md5( \d)?) (\S+)( .*)?',
     '^(\s*standby( \d*)? authentication) (\S+)( .*)?',
     '^(\s*l2tp tunnel( \S+)? password) (\S+)( .*)?',
     '^(\s*digest secret(\s7)?) (\S+)( .*)?',
@@ -26,23 +26,21 @@ default_pwd_line_regexes = [
     '^(\s*ntp authentication-key \d+ md5) (\S+)( .*)?',
     '^(\s*syscon( password| address \S+)) (\S+)( .*)?',
     '^(\s*snmp-server user( \S+)+ (auth (md5|sha))) (\S+)( .*)?',
-    # TODO: These overlap with others, merge them into other regexes above
-    '^(\s*username (\S+)(\s.*)? secret) (\S+)( .*)?',
-    '^(\s*username (\S+)(\s.*)? password( \d)?) (\S+)( .*)?',
+    '^((crypto )?isakmp key( \d)?) (\S+) (.*)',
+    '^(\s*set session-key (in|out)bound ah \d+) (\S+)( .*)?',
+    '^(\s*set session-key (in|out)bound esp \d+( authenticator| cipher)?) '
+    '(\S+)( .*)?',
     # TODO: Followup on these; just copied from RANCID, they do not have tests
     # I didn't see how to generate config lines for these in Cisco
     '^( cable shared-secret) (.*)',
     '^\s+(wpa-psk ascii|hex \d) (.*)',
     '(\s+ldap-login-password) \S+(.*)',
-    '^(( ikev1)?( pre-shared-key | key |\s?failover key )\
-    (ascii-text |hexadecimal )?).*(.*)',
+    '^(( ikev1)?( pre-shared-key | key |\s?failover key )'
+    '(ascii-text |hexadecimal )?).*(.*)',
     '^(vpdn username (\S+) password)(.*)',
-    '^(\s+key-string \d?)(.*)',
-    '^((crypto )?isakmp key( \d)?) \S+ (.*)',
-    '^(  message-digest-key \d+ md5 (7|encrypted)) (.*)',
+    '^(\s*key-string \d?)(.*)',
+    '^(\s*message-digest-key \d+ md5 (7|encrypted)) (.*)',
     '^\s*(.*?neighbor.*?) (\S*) password (.*)',
-    '^( set session-key (in|out)bound ah \d+) (.*)',
-    '^( set session-key (in|out)bound esp \d+ (authenticator|cypher)) (.*)',
     '^(wlccp \S+ username (\S+)(\s.*)? password( \d)?) (\S+)(.*)',
     # These are from JUNOS
     '(\s*authentication-key )[^ ;]+(.*)',
@@ -51,16 +49,18 @@ default_pwd_line_regexes = [
     '^(.*\s(secret|simple-password) )[^ ;]+(.*)',
     '(\s+encrypted-password )[^ ;]+(.*)',
     '(\s+ssh-(rsa|dsa) )\"(.*)',
-    '^\s+((pre-shared-|)key (ascii-text|hexadecimal)) [^ ;]+(.*)']
+    '^\s+((pre-shared-|)key (ascii-text|hexadecimal)) [^ ;]+(.*)'
+]
 # Taken from RANCID community scrubbing regexes
 default_com_line_regexes = [
     '^((snmp-server .*community)( [08])?) (\S+)(.*)',
     # TODO: confirm this catches all community possibilities for snmp-server
-    '^(snmp-server host (\S+)( informs| traps| version \
-    (1|2c|3 (\S+))| vrf (\S+))*) (\S+)(.*)',
+    '^(snmp-server host (\S+)( informs| traps| version '
+    '(1|2c|3 (\S+))| vrf (\S+))*) (\S+)(.*)',
     # This is from JUNOS
     # TODO: see if we need to make the snmp keyword optional for Juniper
-    '^(\s?snmp( \S+)* (community|trap-group)) [^ ;]+(.*)']
+    '^(\s?snmp( \S+)* (community|trap-group)) [^ ;]+(.*)'
+]
 
 
 def generate_default_sensitive_item_regexes():

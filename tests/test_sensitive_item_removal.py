@@ -13,10 +13,11 @@ cisco_password_lines = [
     ('enable password level 12 RemoveMe', 'RemoveMe'),
     ('enable password 7 122A00190102180D3C2E', '122A00190102180D3C2E'),
     ('enable secret 5 $1$wtHI$0rN7R8PKwC30AsCGA77vy.', '$1$wtHI$0rN7R8PKwC30AsCGA77vy.'),
-    ('username Someone view SomeoneView password 7 122A00190102180D3C2E', '122A00190102180D3C2E'),
+    ('username Someone view Someview password 7 122A00190102180D3C2E', '122A00190102180D3C2E'),
     ('username Someone password RemoveMe', 'RemoveMe'),
     ('username Someone secret 5 $1$wtHI$0rN7R8PKwC30AsCGA77vy.', '$1$wtHI$0rN7R8PKwC30AsCGA77vy.'),
     ('username Someone secret RemoveMe', 'RemoveMe'),
+    ('username Someone view Someview secret RemoveMe', 'RemoveMe'),
     ('ip ftp password RemoveMe', 'RemoveMe'),
     ('ip ftp password 0 RemoveMe', 'RemoveMe'),
     ('ip ftp password 7 122A00190102180D3C2E', '122A00190102180D3C2E'),
@@ -55,7 +56,12 @@ cisco_password_lines = [
     ('snmp-server user Someone Somegroup remote Crap v3 auth md5 RemoveMe', 'RemoveMe'),
     ('snmp-server user Someone Somegroup v3 auth sha RemoveMe priv 3des RemoveMe', 'RemoveMe'),
     # TODO: Figure out SHA format, this line throws: Error in Auth password
-    ('snmp-server user Someone Somegroup v3 encrypted auth sha RemoveMe', 'RemoveMe')
+    ('snmp-server user Someone Somegroup v3 encrypted auth sha RemoveMe', 'RemoveMe'),
+    ('crypto isakmp key RemoveMe address 1.1.1.1 255.255.255.0', 'RemoveMe'),
+    ('crypto isakmp key 6 RemoveMe hostname Something', 'RemoveMe'),
+    ('set session-key inbound ah 4294967295 1234abcdef', '1234abcdef'),
+    ('set session-key outbound esp 256 authenticator 1234abcdef', '1234abcdef'),
+    ('set session-key outbound esp 256 cipher 1234abcdef authenticator 1234abcdef', '1234abcdef')
 ]
 
 cisco_snmp_community_lines = [
