@@ -13,7 +13,9 @@ echo -e "\n  ..... Running flake8 on tests to check style and docstrings"
 flake8 conan/tests --ignore=E501
 
 echo -e "\n  ..... Running unit tests with pytest"
+pushd conan
 python setup.py test
+popd
 
 set +x
 echo 'Success!'
