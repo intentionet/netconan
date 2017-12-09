@@ -4,8 +4,4 @@ python:
   - 3.5
   - 3.6
 
-os: linux
-
-sudo: true
-
 script: ./.travis/build.sh

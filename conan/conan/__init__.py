@@ -6,4 +6,4 @@ __name__ = 'conan'
 
 __url__ = 'https://github.com/intentionet/conan'
 
-__version__ = "0.0"
+__version__ = "0.1.0"

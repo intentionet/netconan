@@ -5,8 +5,7 @@ import logging
 import os
 
 
-def anonymize_files_in_dir(input_dir_path,
-                           output_dir_path,
+def anonymize_files_in_dir(input_dir_path, output_dir_path,
                            compiled_regexes=None):
     """Anonymize each file in the input directory and save to the output directory.
 
