@@ -1,6 +1,7 @@
 """Test removal of passwords and snmp communities."""
 
 from conan.sensitive_item_removal import replace_matching_item, generate_default_sensitive_item_regexes
+import pytest
 
 # Tuple format is config_line, sensitive_text (should not be in output line)
 # TODO: Add in additional test lines (these are just first pass from IOS)
@@ -77,13 +78,23 @@ cisco_snmp_community_lines = [
 # TODO: Add Juniper config lines
 
 
-def test_cisco_pwd_and_com_removal():
+@pytest.fixture(scope='module')
+def regexes():
+    """Compile regexes once for all tests in this module."""
+    return generate_default_sensitive_item_regexes()
+
+
+@pytest.mark.parametrize('config_line,sensitive_text', cisco_password_lines + cisco_snmp_community_lines)
+def test_pwd_and_com_removal_cisco(regexes, config_line, sensitive_text):
     """Test removal of passwords and communities from Cisco style config lines."""
-    regexes = generate_default_sensitive_item_regexes()
+    assert(sensitive_text not in replace_matching_item(regexes, config_line))
 
-    sensitive_lines = cisco_password_lines + cisco_snmp_community_lines
-    for (line, sensitive_text) in sensitive_lines:
-        assert(sensitive_text not in replace_matching_item(regexes, line))
 
-    line = 'this is a test'
-    assert(line == replace_matching_item(regexes, line))
+@pytest.mark.parametrize('config_line', [
+                         'nothing in this string should be replaced',
+                         'interface GigabitEthernet0/0',
+                         'ip address 1.2.3.4 255.255.255.0'
+                         ])
+def test_pwd_and_com_removal_insensitive_lines(regexes, config_line):
+    """Make sure benign lines are not affected by sensitive_item_removal."""
+    assert(config_line == replace_matching_item(regexes, config_line))
