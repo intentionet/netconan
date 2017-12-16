@@ -1,7 +1,7 @@
 """Generate & apply default regexes for finding & removing sensitive info."""
 
-import re
 import logging
+import re
 
 # Taken from RANCID password scrubbing regexes
 default_pwd_line_regexes = [
