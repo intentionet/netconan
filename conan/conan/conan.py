@@ -23,7 +23,7 @@ if __name__ == '__main__':
                         action='store_true', default=False)
     parser.add_argument('-r', '--randomseed',
                         help='Random seed for IP anonymization',
-                        type=float, default=None)
+                        type=int, default=None)
     loglevel_choices = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
     parser.add_argument('-l', '--loglevel',
                         help='Determines what level of logs to display \

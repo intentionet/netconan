@@ -73,6 +73,7 @@ def replace_matching_item(compiled_regexes, input_line):
     """If line matches a regex, replace the line with a comment."""
     for compiled_regex in compiled_regexes:
         if compiled_regex.match(input_line) is not None:
-            logging.debug("Match found on " + input_line.rstrip())
+            logging.debug("Line '{}' matches pattern '{}'"
+                          .format(input_line.rstrip(), compiled_regex.pattern))
             return "! Sensitive line SCRUBBED\n"
     return input_line

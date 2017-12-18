@@ -3,6 +3,7 @@
 import logging
 import os
 import random
+import sys
 
 from ip_anonymization import tree_node, anonymize_ip_addr
 from sensitive_item_removal import replace_matching_item, \
@@ -10,11 +11,8 @@ from sensitive_item_removal import replace_matching_item, \
 
 
 def anonymize_files_in_dir(input_dir_path, output_dir_path, anon_pwd, anon_ip,
-                           random_seed):
-    """Anonymize each file in the input directory and save to the output directory.
-
-    This only applies sensitive line removal if compiled_regexes is not None.
-    """
+                           random_seed=None):
+    """Anonymize each file in input directory and save to output directory."""
     compiled_regexes = None
     ip_tree = None
     if anon_pwd:
@@ -22,9 +20,9 @@ def anonymize_files_in_dir(input_dir_path, output_dir_path, anon_pwd, anon_ip,
     if anon_ip:
         ip_tree = tree_node(None)
         if random_seed is None:
-            random_seed = random.random()
-        random.seed(random_seed)
+            random_seed = random.randrange(sys.maxsize)
         logging.debug('Using random seed: {}'.format(random_seed))
+        random.seed(random_seed)
 
     for file_name in os.listdir(input_dir_path):
         input_file = os.path.join(input_dir_path, file_name)
@@ -39,6 +37,7 @@ def anonymize_file(filename_in, filename_out, compiled_regexes=None,
     """Anonymize contents of input file and save to the output file.
 
     This only applies sensitive line removal if compiled_regexes is not None.
+    This only applies ip anonymization if ip_tree is not None.
     """
     logging.debug("File in " + filename_in)
     logging.debug("File out " + filename_out)

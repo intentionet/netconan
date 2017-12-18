@@ -28,21 +28,21 @@ def anonymize_ip_addr(my_ip_tree, line):
         return line
     for match in matches:
         ip_str = match[0]
-        byte1 = int(match[1])
-        byte2 = int(match[2])
-        byte3 = int(match[3])
-        byte4 = int(match[4])
-        ip_int = _ip_addr_to_int(byte1, byte2, byte3, byte4)
+        byte0 = int(match[1])
+        byte1 = int(match[2])
+        byte2 = int(match[3])
+        byte3 = int(match[4])
+        ip_int = _ip_addr_to_int(byte0, byte1, byte2, byte3)
         if _is_mask(ip_int):
             logging.debug("Skipping mask {}".format(ip_str))
             continue
 
         if len(match[6]) > 0:
-            subnet_bits = int(match[6])
+            prefix_bits = int(match[6])
         else:
-            subnet_bits = 32
+            prefix_bits = 32
 
-        new_ip = _convert_to_anon_ip(my_ip_tree, ip_int, subnet_bits)
+        new_ip = _convert_to_anon_ip(my_ip_tree, ip_int, prefix_bits)
         new_ip_str = _ip_int_to_str(new_ip)
         line = line.replace(ip_str, new_ip_str)
 
@@ -50,33 +50,26 @@ def anonymize_ip_addr(my_ip_tree, line):
     return line
 
 
-def _convert_to_anon_ip(node, ip_int, subnet_bits=32):
+def _convert_to_anon_ip(node, ip_int, prefix_bits=32):
     """Anonymize an IP address using an existing IP tree root node.
 
     If there is not already an anonymized address for the input address,
-    one is generated.
+    one is generated and added to the tree.
     """
-    i = 32
     new_ip_int = 0
-    zeros_count = 32 - subnet_bits
-
-    # Shift bits onto new_ip_int from the ip tree
-    while i > zeros_count:
-        i -= 1
+    for i in range(31, 31 - prefix_bits, -1):
+        # This is the next bit to anonymize
         msb = (ip_int >> i) & 1
-        new_ip_int = (new_ip_int << 1)
-        # Go ahead and populate both child nodes
-        # Sacrifice some space to simplify control flow
+        # Go ahead and populate both left and right nodes
+        # Sacrifice space to simplify control flow
         if node.left is None:
             node.left = tree_node(random.randint(0, 1))
             node.right = tree_node(1 - node.left.value)
         if msb:
             node = node.right
-            new_ip_int += node.value
         else:
             node = node.left
-            new_ip_int += node.value
-    new_ip_int = new_ip_int << zeros_count
+        new_ip_int |= node.value << i
     return new_ip_int
 
 
@@ -87,11 +80,11 @@ def _ip_addr_to_int(byte0, byte1, byte2, byte3):
 
 def _ip_int_to_str(ip_addr):
     """Convert integer IP address into a quad-octet-style string."""
-    byte4 = str(ip_addr & 0xFF)
-    byte3 = str((ip_addr >> 8) & 0xFF)
-    byte2 = str((ip_addr >> 16) & 0xFF)
-    byte1 = str((ip_addr >> 24) & 0xFF)
-    return "{}.{}.{}.{}".format(byte1, byte2, byte3, byte4)
+    byte3 = str(ip_addr & 0xFF)
+    byte2 = str((ip_addr >> 8) & 0xFF)
+    byte1 = str((ip_addr >> 16) & 0xFF)
+    byte0 = str((ip_addr >> 24) & 0xFF)
+    return "{}.{}.{}.{}".format(byte0, byte1, byte2, byte3)
 
 
 def _is_mask(possible_mask_int):
