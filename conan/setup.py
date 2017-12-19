@@ -44,7 +44,7 @@ setup(
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=[
-        # Requires nothing yet, but that may change soon
+        'ipaddress'
     ],
 
     # List additional groups of dependencies here (e.g. development
