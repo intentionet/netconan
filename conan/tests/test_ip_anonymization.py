@@ -4,6 +4,8 @@ import ipaddress
 import pytest
 import random
 
+from six import u
+
 from conan.ip_anonymization import tree_node, anonymize_ip_addr, _convert_to_anon_ip, _is_mask
 
 
@@ -37,7 +39,7 @@ def test_anonymize_ip_addr(ip_tree, line, ip_addr):
                          ])
 def test__convert_to_anon_ip(ip_tree, ip_addr):
     """Test conversion from original to anonymized IP address."""
-    ip_int = int(ipaddress.IPv4Address(unicode(ip_addr)))
+    ip_int = int(ipaddress.IPv4Address(u(ip_addr)))
     ip_int_anon = _convert_to_anon_ip(ip_tree, ip_int)
 
     # Anonymized ip address should not match the original address
