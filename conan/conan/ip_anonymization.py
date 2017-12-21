@@ -93,13 +93,6 @@ def _is_mask(possible_mask_int):
          0110 has two
          0101 has three
     """
-    # Counting the number of times consecutive bits do not match (transitions)
-    # gives us a reasonable idea of whether or not something is a mask
-    # e.g. 1100 (mask) has only one place where consecutive bits don't match
-    #      0000 (mask) has zero
-    #      0110 (not mask) has two
-    #      0101 (not mask) has three
-    # With 0 or 1 transitions, we will assume the value is a mask
     prev_bit = possible_mask_int & 1
     delta_count = 0
     for pos in range(1, 32):
