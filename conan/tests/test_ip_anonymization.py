@@ -1,11 +1,9 @@
 """Test anonymization of IP addresses and related functions."""
 
-import ipaddress
 import pytest
 import random
 
-from conan.ip_anonymization import tree_node, anonymize_ip_addr, _convert_to_anon_ip, _is_mask
-from six import u
+from conan.ip_anonymization import tree_node, anonymize_ip_addr, _convert_to_anon_ip, _ip_to_int, _is_mask
 
 
 @pytest.fixture(scope='module')
@@ -21,6 +19,7 @@ def ip_tree():
                          ('ip address {} 255.0.0.0', '10.0.0.0'),
                          ('ip address {}/16', '10.0.0.0'),
                          ('tacacs-server host {}', '10.1.1.17'),
+                         ('tacacs-server host {}', '001.021.201.012'),
                          ('syscon address {} Password', '10.73.212.5')
                          ])
 def test_anonymize_ip_addr(ip_tree, line, ip_addr):
@@ -38,7 +37,7 @@ def test_anonymize_ip_addr(ip_tree, line, ip_addr):
                          ])
 def test__convert_to_anon_ip(ip_tree, ip_addr):
     """Test conversion from original to anonymized IP address."""
-    ip_int = int(ipaddress.IPv4Address(u(ip_addr)))
+    ip_int = _ip_to_int(ip_addr)
     ip_int_anon = _convert_to_anon_ip(ip_tree, ip_int)
 
     # Anonymized ip address should not match the original address
@@ -60,16 +59,27 @@ def test__convert_to_anon_ip(ip_tree, ip_addr):
         # Confirm the bit that is different in the original addresses is different in the anonymized addresses
         assert(ip_int_similar_anon & diff_mask != ip_int_anon & diff_mask)
 
-    # Confirm we anonymize exactly the right number of bits for a specified prefix bit count
-    for i in range(0, 32):
-        subnet_mask = 0xFFFFFFFF & (0xFFFFFFFF << (32 - i))
-        masked_ip_int_anon = _convert_to_anon_ip(ip_tree, ip_int, prefix_bits=i)
 
-        # Confirm the prefixes match
-        assert(masked_ip_int_anon & subnet_mask == ip_int_anon & subnet_mask)
-
-        # Confirm anything beyond the prefix is 0, not anonymized
-        assert((masked_ip_int_anon & ~subnet_mask) == 0)
+@pytest.mark.parametrize('ip_addr, ip_int', [
+                         ('0.0.0.0', 0),
+                         ('0.0.0.3', 3),
+                         ('128.0.0.0', 2147483648),
+                         ('0.127.0.0', 8323072),
+                         ('10.73.212.5', 172610565),
+                         ('010.73.212.05', 172610565),
+                         ('255.255.255.255', 4294967295),
+                         ('170.255.85.1', 2868860161),
+                         ('10.11.12.13', 168496141),
+                         ('010.11.12.13', 168496141),
+                         ('10.011.12.13', 168496141),
+                         ('10.011.12.13', 168496141),
+                         ('10.11.012.13', 168496141),
+                         ('10.11.12.013', 168496141),
+                         ('010.0011.00000012.000', 168496128)
+                         ])
+def test__ip_to_int(ip_addr, ip_int):
+    """Test ability to convert from IP address string to integer representation."""
+    assert(_ip_to_int(ip_addr) == ip_int)
 
 
 @pytest.mark.parametrize('possible_mask, is_mask_result', [

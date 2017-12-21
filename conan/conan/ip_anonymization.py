@@ -35,17 +35,12 @@ def anonymize_ip_addr(my_ip_tree, line):
         return line
     for match in matches:
         ip_str = match[0]
-        ip_int = int(ipaddress.IPv4Address(u(ip_str)))
+        ip_int = _ip_to_int(ip_str)
         if _is_mask(ip_int):
             logging.debug("Skipping mask {}".format(ip_str))
             continue
 
-        if len(match) > 3:
-            prefix_bits = int(match[3])
-        else:
-            prefix_bits = 32
-
-        new_ip = _convert_to_anon_ip(my_ip_tree, ip_int, prefix_bits)
+        new_ip = _convert_to_anon_ip(my_ip_tree, ip_int)
         new_ip_str = str(ipaddress.IPv4Address(new_ip))
         line = line.replace(ip_str, new_ip_str)
 
@@ -53,7 +48,7 @@ def anonymize_ip_addr(my_ip_tree, line):
     return line
 
 
-def _convert_to_anon_ip(node, ip_int, prefix_bits=32):
+def _convert_to_anon_ip(node, ip_int):
     """Anonymize an IP address using an existing IP tree root node.
 
     The bits of a given source IP address define a branch in the binary tree,
@@ -63,7 +58,7 @@ def _convert_to_anon_ip(node, ip_int, prefix_bits=32):
     are randomly generated as needed and are the inverse of their sibling.
     """
     new_ip_int = 0
-    for i in range(31, 31 - prefix_bits, -1):
+    for i in range(31, -1, -1):
         # This is the next bit to anonymize
         msb = (ip_int >> i) & 1
         if node.left is None:
@@ -77,6 +72,15 @@ def _convert_to_anon_ip(node, ip_int, prefix_bits=32):
             node = node.left
         new_ip_int |= node.value << i
     return new_ip_int
+
+
+def _ip_to_int(ip_str):
+    """Convert an IP address string to integer representation."""
+    # Need to strip leading zeros so ipaddress does not assume octal notation
+    ip_str = re.sub('0*(\d+)\.0*(\d+)\.0*(\d+)\.0*(\d+)',
+                    r'\1.\2.\3.\4', ip_str)
+    ip_int = int(ipaddress.IPv4Address(u(ip_str)))
+    return int(ip_int)
 
 
 def _is_mask(possible_mask_int):
