@@ -66,9 +66,9 @@ def _convert_to_anon_ip(node, ip_int, prefix_bits=32):
     for i in range(31, 31 - prefix_bits, -1):
         # This is the next bit to anonymize
         msb = (ip_int >> i) & 1
-        # Go ahead and populate both left and right nodes, sacrificing space to
-        # simplify control flow
         if node.left is None:
+            # Go ahead and populate both left and right nodes, sacrificing
+            # space to simplify control flow
             node.left = tree_node(random.randint(0, 1))
             node.right = tree_node(1 - node.left.value)
         if msb:

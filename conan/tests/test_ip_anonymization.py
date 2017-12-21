@@ -4,9 +4,8 @@ import ipaddress
 import pytest
 import random
 
-from six import u
-
 from conan.ip_anonymization import tree_node, anonymize_ip_addr, _convert_to_anon_ip, _is_mask
+from six import u
 
 
 @pytest.fixture(scope='module')
