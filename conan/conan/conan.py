@@ -1,10 +1,11 @@
 """Handle invoking Conan from the command line."""
 
-from sensitive_item_removal import generate_default_sensitive_item_regexes
-from anonymize_files import anonymize_files_in_dir
 import argparse
-import os
 import logging
+import os
+
+from anonymize_files import anonymize_files_in_dir
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -17,6 +18,12 @@ if __name__ == '__main__':
     parser.add_argument('-p', '--anonymizepwdandcomm',
                         help='Remove password and snmp community lines',
                         action='store_true', default=False)
+    parser.add_argument('-a', '--anonymizeipaddr',
+                        help='Anonymize IP addresses',
+                        action='store_true', default=False)
+    parser.add_argument('-r', '--randomseed',
+                        help='Random seed for IP anonymization',
+                        type=int, default=None)
     loglevel_choices = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
     parser.add_argument('-l', '--loglevel',
                         help='Determines what level of logs to display \
@@ -35,7 +42,6 @@ if __name__ == '__main__':
     # If compiled_regexes is None,
     # then passwd removal is skipped in anonymize_files_in_dir
     compiled_regexes = None
-    if options.anonymizepwdandcomm:
-        compiled_regexes = generate_default_sensitive_item_regexes()
 
-    anonymize_files_in_dir(input_dir, output_dir, compiled_regexes)
+    anonymize_files_in_dir(input_dir, output_dir, options.anonymizepwdandcomm,
+                           options.anonymizeipaddr, options.randomseed)

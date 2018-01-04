@@ -1,7 +1,8 @@
 """Test removal of passwords and snmp communities."""
 
-from conan.sensitive_item_removal import replace_matching_item, generate_default_sensitive_item_regexes
 import pytest
+
+from conan.sensitive_item_removal import replace_matching_item, generate_default_sensitive_item_regexes
 
 # Tuple format is config_line, sensitive_text (should not be in output line)
 # TODO: Add in additional test lines (these are just first pass from IOS)
@@ -84,7 +85,7 @@ def regexes():
     return generate_default_sensitive_item_regexes()
 
 
-@pytest.mark.parametrize('config_line,sensitive_text', cisco_password_lines + cisco_snmp_community_lines)
+@pytest.mark.parametrize('config_line, sensitive_text', cisco_password_lines + cisco_snmp_community_lines)
 def test_pwd_and_com_removal_cisco(regexes, config_line, sensitive_text):
     """Test removal of passwords and communities from Cisco style config lines."""
     config_line = config_line.format(sensitive_text)
