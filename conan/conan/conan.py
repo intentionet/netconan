@@ -26,8 +26,7 @@ if __name__ == '__main__':
                         type=int, default=None)
     loglevel_choices = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
     parser.add_argument('-l', '--loglevel',
-                        help='Determines what level of logs to display \
-                        (DEBUG|INFO|WARNING|ERROR|CRITICAL)',
+                        help='Determines what level of logs to display',
                         choices=loglevel_choices, default='INFO')
     options = parser.parse_args()
     input_dir = options.inputdirectory

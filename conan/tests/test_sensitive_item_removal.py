@@ -1,8 +1,9 @@
 """Test removal of passwords and snmp communities."""
 
+from conan.sensitive_item_removal import replace_matching_item, \
+    generate_default_sensitive_item_regexes, _sensitive_item_formats, \
+    _anonymize_value, _check_sensitive_item_format
 import pytest
-
-from conan.sensitive_item_removal import replace_matching_item, generate_default_sensitive_item_regexes
 
 # Tuple format is config_line, sensitive_text (should not be in output line)
 # TODO: Add in additional test lines (these are just first pass from IOS)
@@ -78,6 +79,25 @@ cisco_snmp_community_lines = [
 
 # TODO: Add Juniper config lines
 
+unique_passwords = [
+    '12345ABCDEF',
+    'ABCDEF123456789',
+    'F',
+    'FF',
+    '1A2B3C4D5E6F',
+    '0000000A0000000',
+    'DEADBEEF',
+    '15260305170338051C362636',
+    'ThisIsATest',
+    'FLgBaJHXdYY_AcHZZMgQ_RhTDJXHUBAAB',
+    '122A00190102180D3C2E',
+    '$1$wtHI$0rN7R8PKwC30AsCGA77vy.',
+    'JDYkqyIFWeBvzpljSfWmRZrmRSRE8syxKlOSjP9RCCkFinZbJI3GD5c6rckJR/Qju2PKLmOewbheAA==',
+    'Password',
+    '2ndPassword',
+    'PasswordThree'
+]
+
 
 @pytest.fixture(scope='module')
 def regexes():
@@ -85,11 +105,77 @@ def regexes():
     return generate_default_sensitive_item_regexes()
 
 
-@pytest.mark.parametrize('config_line, sensitive_text', cisco_password_lines + cisco_snmp_community_lines)
+@pytest.mark.parametrize('val', unique_passwords)
+def test__anonymize_value(val):
+    """Test sensitive item anonymization."""
+    pwd_lookup = {}
+    anon_val = _anonymize_value(val, pwd_lookup)
+    val_format = _check_sensitive_item_format(val)
+    anon_val_format = _check_sensitive_item_format(anon_val)
+
+    # Confirm the anonymized value does not match the original value
+    assert(anon_val != val)
+
+    # Confirm format for anonmymized value matches format of the original value
+    assert(anon_val_format == val_format)
+
+    # Confirm reanonymizing same source value results in same anonymized value
+    assert(anon_val == _anonymize_value(val, pwd_lookup))
+
+
+def test__anonymize_value_unique():
+    """Test that unique sensitive items have unique anonymized values."""
+    pwd_lookup = {}
+    anon_vals = [_anonymize_value(pwd, pwd_lookup) for pwd in unique_passwords]
+    anon_val_count = len(anon_vals)
+
+    for i in range(anon_val_count):
+        for j in range(i + 1, anon_val_count):
+            # Confirm unique source values have unique anonymized values
+            assert(anon_vals[i] != anon_vals[j])
+
+
+@pytest.mark.parametrize('val, format_', [
+                         ('094F4107180B', _sensitive_item_formats.type7),
+                         ('00071C080555', _sensitive_item_formats.type7),
+                         ('1608030A2B25', _sensitive_item_formats.type7),
+                         ('070C2E424F072E04043A0E1E01', _sensitive_item_formats.type7),
+                         ('01999999', _sensitive_item_formats.numeric),
+                         ('987654321', _sensitive_item_formats.numeric),
+                         ('0000000000000000', _sensitive_item_formats.numeric),
+                         ('1234567890', _sensitive_item_formats.numeric),
+                         ('7', _sensitive_item_formats.numeric),
+                         ('A', _sensitive_item_formats.hexadecimal),
+                         ('0FFFFFFFFF', _sensitive_item_formats.hexadecimal),
+                         ('ABCDEF', _sensitive_item_formats.hexadecimal),
+                         ('7ab34c2fe31', _sensitive_item_formats.hexadecimal),
+                         ('deadBEEF', _sensitive_item_formats.hexadecimal),
+                         ('27a', _sensitive_item_formats.hexadecimal),
+                         ('$1$SALT$mutX1.3APXbr8JdR/Xi6t.', _sensitive_item_formats.md5),
+                         ('$1$SALT$X8i6w2OOpAaEMNBGfSoZC0', _sensitive_item_formats.md5),
+                         ('$1$SALT$ddio24/QfJatZkSKGuB4Z/', _sensitive_item_formats.md5),
+                         ('$1$salt$rwny14pmwbMjy1WTfxf4h/', _sensitive_item_formats.md5),
+                         ('$1$salt$BFdHEr6MVYydPmpY3FPXV/', _sensitive_item_formats.md5),
+                         ('$1$salt$jp6JinwkFEV.2OCDaXrmO1', _sensitive_item_formats.md5),
+                         ('$1$./4k$OVkG7VKh5GKt1/XjSO78.0', _sensitive_item_formats.md5),
+                         ('thisIsATest', _sensitive_item_formats.text),
+                         ('conan', _sensitive_item_formats.text),
+                         ('STRING', _sensitive_item_formats.text),
+                         ('text_here', _sensitive_item_formats.text),
+                         ('more-text-here0', _sensitive_item_formats.text),
+                         ('ABCDEFG', _sensitive_item_formats.text)
+                         ])
+def test__check_sensitive_item_format(val, format_):
+    """Test sensitive item format detection."""
+    assert(_check_sensitive_item_format(val) == format_)
+
+
+@pytest.mark.parametrize('config_line,sensitive_text', cisco_password_lines + cisco_snmp_community_lines)
 def test_pwd_and_com_removal_cisco(regexes, config_line, sensitive_text):
     """Test removal of passwords and communities from Cisco style config lines."""
     config_line = config_line.format(sensitive_text)
-    assert(sensitive_text not in replace_matching_item(regexes, config_line))
+    pwd_lookup = {}
+    assert(sensitive_text not in replace_matching_item(regexes, config_line, pwd_lookup))
 
 
 @pytest.mark.parametrize('config_line', [
@@ -99,4 +185,5 @@ def test_pwd_and_com_removal_cisco(regexes, config_line, sensitive_text):
                          ])
 def test_pwd_and_com_removal_insensitive_lines(regexes, config_line):
     """Make sure benign lines are not affected by sensitive_item_removal."""
-    assert(config_line == replace_matching_item(regexes, config_line))
+    pwd_lookup = {}
+    assert(config_line == replace_matching_item(regexes, config_line, pwd_lookup))
