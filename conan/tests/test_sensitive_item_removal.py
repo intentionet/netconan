@@ -127,12 +127,12 @@ def test__anonymize_value_unique():
     """Test that unique sensitive items have unique anonymized values."""
     pwd_lookup = {}
     anon_vals = [_anonymize_value(pwd, pwd_lookup) for pwd in unique_passwords]
-    anon_val_count = len(anon_vals)
+    unique_anon_vals = set()
 
-    for i in range(anon_val_count):
-        for j in range(i + 1, anon_val_count):
-            # Confirm unique source values have unique anonymized values
-            assert(anon_vals[i] != anon_vals[j])
+    for anon_val in anon_vals:
+        # Confirm unique source values have unique anonymized values
+        assert(anon_val not in unique_anon_vals)
+        unique_anon_vals.add(anon_val)
 
 
 @pytest.mark.parametrize('val, format_', [

@@ -4,6 +4,7 @@
 import regex
 import logging
 
+from binascii import b2a_hex
 from enum import Enum
 from passlib.hash import cisco_type7, md5_crypt
 
@@ -19,6 +20,7 @@ from passlib.hash import cisco_type7, md5_crypt
 #       note that the regexes use lookbehinds and lookaheads so we can easily
 #       extract and replace just the sensitive information
 #  2. sensitive item regex-match-index
+#       note that if this is None, any matching config line will be removed
 default_pwd_line_regexes = [
     [('^(\s*password( level)?( \d)?) \K(\S+)(?= ?.*)', 4)],
     [('^(\s*username( \S+)+ (password|secret)( \d)?) \K(\S+)(?= ?.*)', 5)],
@@ -46,10 +48,8 @@ default_pwd_line_regexes = [
     [('^(\s*set session-key (in|out)bound ah \d+) \K(\S+)(?= ?.*)', 3)],
     [('^(\s*set session-key (in|out)bound esp \d+ cipher?) \K(\S+)(?= ?.*)', 3),
      ('^(\s*set session-key (in|out)bound esp \d+(( cipher \S+)? authenticator)) \K(\S+)(?= ?.*)', 5)],
-    # TODO: Followup on these; didn't see how to generate config lines for
-    #       these
-    # They were just copied from RANCID:
-    #       They do not have tests
+    # TODO: Follow-up on these.  They were just copied from RANCID so currently:
+    #       They are untested in general and need cases added for unit tests
     #       They do not specifically capture sensitive info
     #       They just identify lines where sensitive info exists
     [('^( cable shared-secret) (.*)', None)],
@@ -107,17 +107,21 @@ def _anonymize_value(val, lookup):
         return lookup[val]
 
     if item_format == _sensitive_item_formats.type7:
+        # Not salting sensitive data, using static salt here to more easily
+        # identify anonymized lines
         anon_val = cisco_type7.using(salt=9).hash(anon_val)
 
     if item_format == _sensitive_item_formats.numeric:
         # These are the ASCII character values for anon_val converted to decimal
-        anon_val = str(int(''.join('{:x}'.format(ord(c)) for c in anon_val), 16))
+        anon_val = str(int(b2a_hex(anon_val), 16))
 
     if item_format == _sensitive_item_formats.hexadecimal:
         # These are the ASCII character values for anon_val in hexadecimal
-        anon_val = ''.join('{:x}'.format(ord(c)) for c in anon_val)
+        anon_val = b2a_hex(anon_val)
 
     if item_format == _sensitive_item_formats.md5:
+        # Not salting sensitive data, using static salt here to more easily
+        # identify anonymized lines
         anon_val = md5_crypt.using(salt='CNAN').hash(anon_val)
 
     lookup[val] = anon_val
@@ -149,8 +153,13 @@ def generate_default_sensitive_item_regexes():
 def replace_matching_item(compiled_regexes, input_line, pwd_lookup):
     """If line matches a regex, anonymize or remove the line."""
     output_line = input_line
+
+    # Note: compiled_regexes is a list of lists; the inner list is a group of
+    # related regexes
     for compiled_regex_grp in compiled_regexes:
         match_found = False
+
+        # Apply all related regexes before returning the output_line
         for compiled_re, sensitive_item_num in compiled_regex_grp:
             match = compiled_re.match(output_line)
             if match is None:
@@ -158,6 +167,8 @@ def replace_matching_item(compiled_regexes, input_line, pwd_lookup):
             match_found = True
             logging.debug('Match found on ' + output_line.rstrip())
 
+            # If this regex cannot preserve text around sensitive info,
+            # then just remove the whole line
             if sensitive_item_num is None:
                 logging.warning('Anonymizing sensitive info in lines like "{}"'
                                 ' is currently unsupported, so removing this '
@@ -169,6 +180,8 @@ def replace_matching_item(compiled_regexes, input_line, pwd_lookup):
             output_line = compiled_re.sub(anon_val, output_line)
             logging.debug('Anonymized input "{}" to "{}"'
                           .format(sensitive_val, anon_val))
+
+        # If any matches existed in this regex group, stop processing more regexes
         if match_found:
             break
     return output_line
