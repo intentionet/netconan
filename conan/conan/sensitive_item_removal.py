@@ -113,11 +113,11 @@ def _anonymize_value(val, lookup):
 
     if item_format == _sensitive_item_formats.numeric:
         # These are the ASCII character values for anon_val converted to decimal
-        anon_val = str(int(bytes(b2a_hex(anon_val)), 16))
+        anon_val = str(int(b2a_hex(bytes(anon_val)), 16))
 
     if item_format == _sensitive_item_formats.hexadecimal:
         # These are the ASCII character values for anon_val in hexadecimal
-        anon_val = bytes(b2a_hex(anon_val))
+        anon_val = b2a_hex(bytes(anon_val))
 
     if item_format == _sensitive_item_formats.md5:
         # Not salting sensitive data, using static salt here to more easily
