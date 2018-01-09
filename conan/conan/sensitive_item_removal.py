@@ -7,7 +7,7 @@ import logging
 from binascii import b2a_hex
 from enum import Enum
 from passlib.hash import cisco_type7, md5_crypt
-from six import b, u
+from six import b
 
 
 # Regexes taken from RANCID password scrubbing
