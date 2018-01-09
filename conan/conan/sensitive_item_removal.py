@@ -7,6 +7,7 @@ import logging
 from binascii import b2a_hex
 from enum import Enum
 from passlib.hash import cisco_type7, md5_crypt
+from six import b, u
 
 
 # Regexes taken from RANCID password scrubbing
@@ -113,11 +114,11 @@ def _anonymize_value(val, lookup):
 
     if item_format == _sensitive_item_formats.numeric:
         # These are the ASCII character values for anon_val converted to decimal
-        anon_val = str(int(b2a_hex(bytes(anon_val)), 16))
+        anon_val = str(int(b2a_hex(b(anon_val)), 16))
 
     if item_format == _sensitive_item_formats.hexadecimal:
         # These are the ASCII character values for anon_val in hexadecimal
-        anon_val = b2a_hex(bytes(anon_val))
+        anon_val = b2a_hex(b(anon_val)).decode()
 
     if item_format == _sensitive_item_formats.md5:
         # Not salting sensitive data, using static salt here to more easily
