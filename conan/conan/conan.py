@@ -8,6 +8,7 @@ from conan.anonymize_files import anonymize_files_in_dir
 
 
 def main():
+    """Conan tool entry point."""
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--inputdirectory',
                         help='Directory containing configurtions to anonymize',
