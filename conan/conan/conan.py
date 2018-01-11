@@ -4,10 +4,11 @@ import argparse
 import logging
 import os
 
-from anonymize_files import anonymize_files_in_dir
+from conan.anonymize_files import anonymize_files_in_dir
 
 
-if __name__ == '__main__':
+def main():
+    """Conan tool entry point."""
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--inputdirectory',
                         help='Directory containing configurtions to anonymize',
@@ -38,9 +39,9 @@ if __name__ == '__main__':
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    # If compiled_regexes is None,
-    # then passwd removal is skipped in anonymize_files_in_dir
-    compiled_regexes = None
-
     anonymize_files_in_dir(input_dir, output_dir, options.anonymizepwdandcomm,
                            options.anonymizeipaddr, options.randomseed)
+
+
+if __name__ == '__main__':
+    main()
