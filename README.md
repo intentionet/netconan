@@ -1,6 +1,11 @@
 # conan
 Configuration Anonymizer
 
+## Installing conan
+In the directory with setup.py, run:
+
+`pip install -e .`
+
 ## Running conan
 Conan processes all files not starting with `.` housed in the top level of the specified input directory and saves processed files in the specified output directory.  Use the help flag `-h` to learn more about accepted parameters.
 
@@ -13,8 +18,8 @@ With the `anonymizeipaddr` flag (`-a`), conan will replace all IPv4 addresses th
 ### Example usage
 To anonymize sensitive lines and IP addresses on all configs in `~\config` and save the anonymized versions in `~\anon_configs`:
 
-`python conan.py -p -a -i ~/configs -o ~/anon_configs`
+`conan -p -a -i ~/configs -o ~/anon_configs`
 
 For development/debugging purposes, `loglevel DEBUG`, `randomseed ######` (for consistent anonymization outputs), and `dumpipaddrmap` (to save original-to-anonymized IP mapping) may be set:
 
-`python conan.py -p -a -i ~/configs -o ~/anon_configs -l DEBUG -r 4913368284060515126 -d ~/ip_mapping.txt`
+`conan -p -a -i ~/configs -o ~/anon_configs -l DEBUG -r 4913368284060515126 -d ~/ip_mapping.txt`
