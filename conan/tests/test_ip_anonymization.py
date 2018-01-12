@@ -1,9 +1,20 @@
 """Test anonymization of IP addresses and related functions."""
 
+import ipaddress
 import pytest
 import random
+import regex
 
-from conan.ip_anonymization import tree_node, anonymize_ip_addr, _convert_to_anon_ip, _ip_to_int, _is_mask
+from conan.ip_anonymization import tree_node, anonymize_ip_addr, _convert_to_anon_ip, dump_iptree, _ip_to_int, _is_mask
+
+ip_list = [('10.11.12.13'),
+           ('10.10.10.10'),
+           ('10.1.1.17'),
+           ('237.73.212.5'),
+           ('123.45.67.89'),
+           ('92.210.0.255'),
+           ('128.7.55.12'),
+           ('223.123.21.99')]
 
 
 @pytest.fixture(scope='module')
@@ -14,27 +25,52 @@ def ip_tree():
     return tree_node(None)
 
 
-@pytest.mark.parametrize('line, ip_addr', [
-                         ('ip address {} 255.255.255.254', '123.45.67.89'),
-                         ('ip address {} 255.0.0.0', '10.0.0.0'),
-                         ('ip address {}/16', '10.0.0.0'),
-                         ('tacacs-server host {}', '10.1.1.17'),
-                         ('tacacs-server host {}', '001.021.201.012'),
-                         ('syscon address {} Password', '10.73.212.5')
+@pytest.mark.parametrize('line, ip_addrs', [
+                         ('ip address {} 255.255.255.254', ['123.45.67.89']),
+                         ('ip address {} 255.0.0.0', ['10.0.0.0']),
+                         ('ip address {}', ['10.0.0.0/16']),
+                         ('tacacs-server host {}', ['10.1.1.17']),
+                         ('tacacs-server host {}', ['001.021.201.012']),
+                         ('syscon address {} Password', ['10.73.212.5']),
+                         ('1 permit tcp host {} host {} eq 2', ['1.2.3.4', '1.2.3.45']),
+                         ('1 permit tcp host {} host {} eq 2', ['1.2.123.4', '11.2.123.4']),
+                         ('1 permit tcp host {} host {} eq 2', ['1.2.30.45', '1.2.30.4']),
+                         ('1 permit tcp host {} host {} eq 2', ['11.20.3.4', '1.20.3.4']),
+                         ('something host {} host {} host {}', ['1.2.3.4', '1.2.3.5', '1.2.3.45'])
                          ])
-def test_anonymize_ip_addr(ip_tree, line, ip_addr):
+def test_anonymize_ip_addr(ip_tree, line, ip_addrs):
     """Test IP address removal config lines."""
-    line_w_ip = line.format(ip_addr)
+    line_w_ip = line.format(*ip_addrs)
     anon_line = anonymize_ip_addr(ip_tree, line_w_ip)
 
-    # Make sure the original ip address is removed from the anonymized line
-    assert(ip_addr not in anon_line)
+    # Now anonymize each IP address individually & build another anonymized line
+    anon_ip_addrs = [anonymize_ip_addr(ip_tree, ip_addr) for ip_addr in ip_addrs]
+    individually_anon_line = line.format(*anon_ip_addrs)
+
+    # Make sure anonymizing each address individually is the same as
+    # anonymizing all at once
+    assert(anon_line == individually_anon_line)
+
+    for ip_addr in ip_addrs:
+        # Make sure the original ip address(es) are removed from the anonymized line
+        assert(ip_addr not in anon_line)
 
 
-@pytest.mark.parametrize('ip_addr', [
-                         ('10.11.12.13'),
-                         ('92.210.0.255')
-                         ])
+def check_ip_class(ip_int):
+    """Return the letter corresponding to the IP class the ip_int is in."""
+    if ((ip_int & 0b10000000000000000000000000000000) == 0b00000000000000000000000000000000):
+        return 'A'
+    elif ((ip_int & 0b11000000000000000000000000000000) == 0b10000000000000000000000000000000):
+        return 'B'
+    elif ((ip_int & 0b11100000000000000000000000000000) == 0b11000000000000000000000000000000):
+        return 'C'
+    elif ((ip_int & 0b11110000000000000000000000000000) == 0b11100000000000000000000000000000):
+        return 'D'
+    else:
+        return 'E'
+
+
+@pytest.mark.parametrize('ip_addr', ip_list)
 def test__convert_to_anon_ip(ip_tree, ip_addr):
     """Test conversion from original to anonymized IP address."""
     ip_int = _ip_to_int(ip_addr)
@@ -42,6 +78,9 @@ def test__convert_to_anon_ip(ip_tree, ip_addr):
 
     # Anonymized ip address should not match the original address
     assert(ip_int != ip_int_anon)
+
+    # Anonymized ip address class should match the class of the original ip address
+    assert(check_ip_class(ip_int) == check_ip_class(ip_int_anon))
 
     # Confirm prefixes for similar addresses are preserved after anonymization
     for i in range(0, 32):
@@ -58,6 +97,38 @@ def test__convert_to_anon_ip(ip_tree, ip_addr):
 
         # Confirm the bit that is different in the original addresses is different in the anonymized addresses
         assert(ip_int_similar_anon & diff_mask != ip_int_anon & diff_mask)
+
+
+def test_dump_iptree(tmpdir, ip_tree):
+    """Test ability to accurately dump IP address anonymization mapping."""
+    ip_mapping = {}
+    ip_mapping_from_dump = {}
+
+    # Make sure all addresses to be checked are in ip_tree and generate reference mapping
+    for ip_addr in ip_list:
+        ip_int = _ip_to_int(ip_addr)
+        ip_int_anon = _convert_to_anon_ip(ip_tree, ip_int)
+        ip_addr_anon = str(ipaddress.IPv4Address(ip_int_anon))
+        ip_mapping[ip_addr] = ip_addr_anon
+
+    filename = str(tmpdir.mkdir("test").join("test_dump_iptree.txt"))
+    with open(filename, 'w') as f_tmp:
+        dump_iptree(ip_tree, f_tmp)
+
+    with open(filename, 'r') as f_tmp:
+        # Build mapping dict from the output of the ip_tree dump
+        for line in f_tmp.readlines():
+            m = regex.match('\s*(\d+\.\d+.\d+.\d+)\s+(\d+\.\d+.\d+.\d+)\s*', line)
+            ip_addr = m.group(1)
+            ip_addr_anon = m.group(2)
+            print('{}\t{}'.format(ip_addr, ip_addr_anon))
+            ip_mapping_from_dump[ip_addr] = ip_addr_anon
+
+    for ip_addr in ip_mapping:
+        ip_addr_anon = ip_mapping[ip_addr]
+        ip_addr_anon_lookup = ip_mapping_from_dump[ip_addr]
+        # Confirm anon addresses from ip_tree dump match anon addresses from _convert_to_anon_ip
+        assert(ip_addr_anon == ip_addr_anon_lookup)
 
 
 @pytest.mark.parametrize('ip_addr, ip_int', [

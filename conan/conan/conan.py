@@ -24,6 +24,9 @@ if __name__ == '__main__':
     parser.add_argument('-r', '--randomseed',
                         help='Random seed for IP anonymization',
                         type=int, default=None)
+    parser.add_argument('-d', '--dumpipaddrmap',
+                        help='Dump IP address anonymization map to specified file',
+                        default=None)
     loglevel_choices = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
     parser.add_argument('-l', '--loglevel',
                         help='Determines what level of logs to display',
@@ -38,9 +41,6 @@ if __name__ == '__main__':
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    # If compiled_regexes is None,
-    # then passwd removal is skipped in anonymize_files_in_dir
-    compiled_regexes = None
-
     anonymize_files_in_dir(input_dir, output_dir, options.anonymizepwdandcomm,
-                           options.anonymizeipaddr, options.randomseed)
+                           options.anonymizeipaddr, options.randomseed,
+                           options.dumpipaddrmap)

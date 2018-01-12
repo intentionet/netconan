@@ -3,7 +3,7 @@
 import ipaddress
 import logging
 import random
-import re
+import regex
 
 from six import u
 
@@ -29,26 +29,41 @@ def anonymize_ip_addr(my_ip_tree, line):
     quad-octet that consists solely of an initial group of 1s followed by 0s
     or initial 0s followed by 1s will be unchanged.
     """
-    pattern = '(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(/(\d{1,3}))?'
-    matches = re.findall(pattern, line)
+    pattern = '((\d{1,3})\.\d{1,3}\.\d{1,3}\.\d{1,3})(/(\d{1,3}))?'
+    matches = regex.findall(pattern, line)
     if matches is None:
         return line
+
+    # Using string.format to replace multiple IP addresses independently
+    # within each line, so each source IP address be replaced with '{}' for now
+    new_line = line.replace('{', '{{')
+    new_line = new_line.replace('}', '}}')
+    new_line = regex.sub(pattern, '{}', new_line)
+
+    ip_addrs = []
     for match in matches:
         ip_str = match[0]
+        first_octet = match[1]
         ip_int = _ip_to_int(ip_str)
         if _is_mask(ip_int):
             logging.debug("Skipping mask {}".format(ip_str))
-            continue
+            ip_addrs.append(ip_str)
+        elif int(first_octet) >= 224:
+            # TODO: handle this better in the future or remove it,
+            # just skipping anything in class D and class E for now
+            logging.debug("Skipping addresses reserved for multicast and R&D {}"
+                          .format(ip_str))
+            ip_addrs.append(ip_str)
+        else:
+            new_ip = _convert_to_anon_ip(my_ip_tree, ip_int)
+            new_ip_str = str(ipaddress.IPv4Address(new_ip))
+            ip_addrs.append(new_ip_str)
+            logging.debug("Replaced {} with {}".format(ip_str, new_ip_str))
 
-        new_ip = _convert_to_anon_ip(my_ip_tree, ip_int)
-        new_ip_str = str(ipaddress.IPv4Address(new_ip))
-        line = line.replace(ip_str, new_ip_str)
-
-        logging.debug("Replaced {} with {}".format(ip_str, new_ip_str))
-    return line
+    return new_line.format(*ip_addrs)
 
 
-def _convert_to_anon_ip(node, ip_int):
+def _convert_to_anon_ip(node, ip_int, preserve_ip_class=True):
     """Anonymize an IP address using an existing IP tree root node.
 
     The bits of a given source IP address define a branch in the binary tree,
@@ -58,9 +73,25 @@ def _convert_to_anon_ip(node, ip_int):
     are randomly generated as needed and are the inverse of their sibling.
     """
     new_ip_int = 0
-    for i in range(31, -1, -1):
-        # This is the next bit to anonymize
-        msb = (ip_int >> i) & 1
+    i = 32
+
+    if preserve_ip_class:
+        # Skip leading 1's as these indicate class up to the fourth 1
+        for i in range(i - 1, 27, -1):
+            msb = ip_int & (1 << i)
+            new_ip_int |= msb
+            if node.left is None:
+                node.left = tree_node(0)
+                node.right = tree_node(1)
+            if msb:
+                node = node.right
+            else:
+                node = node.left
+                break
+
+    for j in range(i - 1, -1, -1):
+        # msb is the next bit to anonymize
+        msb = (ip_int >> j) & 1
         if node.left is None:
             # Go ahead and populate both left and right nodes, sacrificing
             # space to simplify control flow
@@ -70,15 +101,39 @@ def _convert_to_anon_ip(node, ip_int):
             node = node.right
         else:
             node = node.left
-        new_ip_int |= node.value << i
+        new_ip_int |= node.value << j
     return new_ip_int
+
+
+def dump_iptree(ip_tree, file_out, depth=0, input_addr=0, output_addr=0):
+    """Recursively traverse ip_tree and write translations to output file."""
+    # Root node value does not contribute to output_addr, so only update
+    # output_addr for nodes after root
+    if depth > 0:
+        output_addr = (output_addr << 1) + ip_tree.value
+
+    # Only dump nodes at max depth (32) i.e. full 32bit anonymization
+    if depth == 32:
+        org_ip_str = str(ipaddress.IPv4Address(input_addr))
+        new_ip_str = str(ipaddress.IPv4Address(output_addr))
+        logging.debug('dumped {}\t{}'.format(org_ip_str, new_ip_str))
+        file_out.write('{}\t{}\n'.format(org_ip_str, new_ip_str))
+        return
+
+    depth += 1
+    if ip_tree.left is not None:
+        left_path = (input_addr << 1)
+        dump_iptree(ip_tree.left, file_out, depth, left_path, output_addr)
+    if ip_tree.right is not None:
+        right_path = (input_addr << 1) + 1
+        dump_iptree(ip_tree.right, file_out, depth, right_path, output_addr)
 
 
 def _ip_to_int(ip_str):
     """Convert an IP address string to integer representation."""
     # Need to strip leading zeros so ipaddress does not assume octal notation
-    ip_str = re.sub('0*(\d+)\.0*(\d+)\.0*(\d+)\.0*(\d+)',
-                    r'\1.\2.\3.\4', ip_str)
+    ip_str = regex.sub('0*(\d+)\.0*(\d+)\.0*(\d+)\.0*(\d+)',
+                       r'\1.\2.\3.\4', ip_str)
     ip_int = int(ipaddress.IPv4Address(u(ip_str)))
     return int(ip_int)
 

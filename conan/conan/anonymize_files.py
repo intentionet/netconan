@@ -5,13 +5,13 @@ import os
 import random
 import sys
 
-from ip_anonymization import tree_node, anonymize_ip_addr
+from ip_anonymization import tree_node, anonymize_ip_addr, dump_iptree
 from sensitive_item_removal import replace_matching_item, \
     generate_default_sensitive_item_regexes
 
 
 def anonymize_files_in_dir(input_dir_path, output_dir_path, anon_pwd, anon_ip,
-                           random_seed=None):
+                           random_seed=None, iptree_filename=None):
     """Anonymize each file in input directory and save to output directory."""
     compiled_regexes = None
     ip_tree = None
@@ -32,6 +32,10 @@ def anonymize_files_in_dir(input_dir_path, output_dir_path, anon_pwd, anon_ip,
         if os.path.isfile(input_file) and not file_name.startswith('.'):
             logging.info("Anonymizing " + file_name)
             anonymize_file(input_file, output_file, compiled_regexes, ip_tree, pwd_lookup)
+
+    if iptree_filename is not None:
+        with open(iptree_filename, 'w') as f_out:
+            dump_iptree(ip_tree, f_out)
 
 
 def anonymize_file(filename_in, filename_out, compiled_regexes=None,
