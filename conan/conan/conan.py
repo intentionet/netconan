@@ -4,10 +4,11 @@ import argparse
 import logging
 import os
 
-from anonymize_files import anonymize_files_in_dir
+from conan.anonymize_files import anonymize_files_in_dir
 
 
-if __name__ == '__main__':
+def main():
+    """Conan tool entry point."""
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--inputdirectory',
                         help='Directory containing configurtions to anonymize',
@@ -44,3 +45,7 @@ if __name__ == '__main__':
     anonymize_files_in_dir(input_dir, output_dir, options.anonymizepwdandcomm,
                            options.anonymizeipaddr, options.randomseed,
                            options.dumpipaddrmap)
+
+
+if __name__ == '__main__':
+    main()

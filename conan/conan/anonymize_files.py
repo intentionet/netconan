@@ -5,8 +5,8 @@ import os
 import random
 import sys
 
-from ip_anonymization import tree_node, anonymize_ip_addr
-from sensitive_item_removal import replace_matching_item, \
+from conan.ip_anonymization import tree_node, anonymize_ip_addr
+from conan.sensitive_item_removal import replace_matching_item, \
     generate_default_sensitive_item_regexes
 
 
