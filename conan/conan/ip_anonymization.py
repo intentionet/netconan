@@ -67,8 +67,8 @@ def anonymize_ip_addr(my_ip_tree, line):
     if matches is None:
         return line
 
-    # Using string.format to replace multiple IP addresses independently
-    # within each line, so each source IP address be replaced with '{}' for now
+    # Escape existing curly braces since string.format will be used to insert
+    # anonymized IP addresses
     new_line = line.replace('{', '{{')
     new_line = new_line.replace('}', '}}')
     new_line = regex.sub(pattern, '{}', new_line)
