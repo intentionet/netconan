@@ -94,7 +94,7 @@ def anonymize_ip_addr(my_ip_tree, line):
     return new_line.format(*ip_addrs)
 
 
-def _convert_to_anon_ip(node, ip_int, preserve_ip_class=True):
+def _convert_to_anon_ip(node, ip_int):
     """Anonymize an IP address using an existing IP tree root node.
 
     The bits of a given source IP address define a branch in the binary tree,
@@ -104,11 +104,10 @@ def _convert_to_anon_ip(node, ip_int, preserve_ip_class=True):
     are randomly generated as needed and are the inverse of their sibling.
     """
     new_ip_int = 0
-    i = 31
 
-    for j in range(i, -1, -1):
+    for i in range(31, -1, -1):
         # msb is the next bit to anonymize
-        msb = (ip_int >> j) & 1
+        msb = (ip_int >> i) & 1
         if node.left is None:
             # Go ahead and populate both left and right nodes, sacrificing
             # space to simplify control flow
@@ -118,7 +117,7 @@ def _convert_to_anon_ip(node, ip_int, preserve_ip_class=True):
             node = node.right
         else:
             node = node.left
-        new_ip_int |= node.value << j
+        new_ip_int |= node.value << i
     return new_ip_int
 
 
