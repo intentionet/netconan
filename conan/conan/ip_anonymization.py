@@ -47,6 +47,8 @@ class tree_node():
     def preserve_ipv4_class(self):
         """Initialize tree to preserve IPv4 classes (call only on root node)."""
         node = self
+        # IP classes are defined by the number of leading 1's in the address up
+        # to the fourth 1, so setup the tree to preserve those
         for i in range(0, 5):
             node.left = tree_node(0)
             node.right = tree_node(1)
@@ -119,30 +121,6 @@ def _convert_to_anon_ip(node, ip_int):
             node = node.left
         new_ip_int |= node.value << i
     return new_ip_int
-
-
-def dump_iptree(ip_tree, file_out, depth=0, input_addr=0, output_addr=0):
-    """Recursively traverse ip_tree and write translations to output file."""
-    # Root node value does not contribute to output_addr, so only update
-    # output_addr for nodes after root
-    if depth > 0:
-        output_addr = (output_addr << 1) + ip_tree.value
-
-    # Only dump nodes at max depth (32) i.e. full 32bit anonymization
-    if depth == 32:
-        org_ip_str = str(ipaddress.IPv4Address(input_addr))
-        new_ip_str = str(ipaddress.IPv4Address(output_addr))
-        logging.debug('dumped {}\t{}'.format(org_ip_str, new_ip_str))
-        file_out.write('{}\t{}\n'.format(org_ip_str, new_ip_str))
-        return
-
-    depth += 1
-    if ip_tree.left is not None:
-        left_path = (input_addr << 1)
-        dump_iptree(ip_tree.left, file_out, depth, left_path, output_addr)
-    if ip_tree.right is not None:
-        right_path = (input_addr << 1) + 1
-        dump_iptree(ip_tree.right, file_out, depth, right_path, output_addr)
 
 
 def _ip_to_int(ip_str):
