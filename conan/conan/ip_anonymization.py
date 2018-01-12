@@ -82,8 +82,8 @@ def anonymize_ip_addr(my_ip_tree, line):
             logging.debug("Skipping mask {}".format(ip_str))
             ip_addrs.append(ip_str)
         elif int(first_octet) >= 224:
-            # TODO: handle this better in the future or remove it,
-            # just skipping anything in IP class D and class E for now
+            # TODO: consider just removing this and anonymizing (if preserving
+            # class), but skipping anything in IP class D and class E for now
             logging.debug("Skipping addresses reserved for multicast and R&D {}"
                           .format(ip_str))
             ip_addrs.append(ip_str)

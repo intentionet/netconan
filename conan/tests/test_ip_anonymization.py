@@ -60,13 +60,13 @@ def test_anonymize_ip_addr(ip_tree, line, ip_addrs):
 
 def check_ip_class(ip_int):
     """Return the letter corresponding to the IP class the ip_int is in."""
-    if ((ip_int & 0b10000000000000000000000000000000) == 0b00000000000000000000000000000000):
+    if ((ip_int & 0x80000000) == 0x00000000):
         return 'A'
-    elif ((ip_int & 0b11000000000000000000000000000000) == 0b10000000000000000000000000000000):
+    elif ((ip_int & 0xC0000000) == 0x80000000):
         return 'B'
-    elif ((ip_int & 0b11100000000000000000000000000000) == 0b11000000000000000000000000000000):
+    elif ((ip_int & 0xE0000000) == 0xC0000000):
         return 'C'
-    elif ((ip_int & 0b11110000000000000000000000000000) == 0b11100000000000000000000000000000):
+    elif ((ip_int & 0xF0000000) == 0xE0000000):
         return 'D'
     else:
         return 'E'
@@ -127,10 +127,8 @@ def test_dump_iptree(tmpdir, ip_tree):
             ip_mapping_from_dump[ip_addr] = ip_addr_anon
 
     for ip_addr in ip_mapping:
-        ip_addr_anon = ip_mapping[ip_addr]
-        ip_addr_anon_lookup = ip_mapping_from_dump[ip_addr]
         # Confirm anon addresses from ip_tree dump match anon addresses from _convert_to_anon_ip
-        assert(ip_addr_anon == ip_addr_anon_lookup)
+        assert(ip_mapping[ip_addr] == ip_mapping_from_dump[ip_addr])
 
 
 @pytest.mark.parametrize('ip_addr, ip_int', [
