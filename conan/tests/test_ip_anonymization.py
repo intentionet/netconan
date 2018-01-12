@@ -30,7 +30,7 @@ def ip_tree():
 @pytest.mark.parametrize('line, ip_addrs', [
                          ('ip address {} 255.255.255.254', ['123.45.67.89']),
                          ('ip address {} 255.0.0.0', ['10.0.0.0']),
-                         ('ip address {}', ['10.0.0.0/16']),
+                         ('ip address {}/16', ['10.0.0.0']),
                          ('tacacs-server host {}', ['10.1.1.17']),
                          ('tacacs-server host {}', ['001.021.201.012']),
                          ('syscon address {} Password', ['10.73.212.5']),

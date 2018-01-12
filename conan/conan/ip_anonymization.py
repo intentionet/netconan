@@ -62,7 +62,7 @@ def anonymize_ip_addr(my_ip_tree, line):
     quad-octet that consists solely of an initial group of 1s followed by 0s
     or initial 0s followed by 1s will be unchanged.
     """
-    pattern = '((\d{1,3})\.\d{1,3}\.\d{1,3}\.\d{1,3})(/(\d{1,3}))?'
+    pattern = '((\d{1,3})\.\d{1,3}\.\d{1,3}\.\d{1,3})(?=/(\d{1,3}))?'
     matches = regex.findall(pattern, line)
     if matches is None:
         return line
