@@ -5,7 +5,7 @@ import os
 import random
 import sys
 
-from ip_anonymization import tree_node, anonymize_ip_addr, dump_iptree
+from ip_anonymization import tree_node, anonymize_ip_addr
 from sensitive_item_removal import replace_matching_item, \
     generate_default_sensitive_item_regexes
 
@@ -21,6 +21,7 @@ def anonymize_files_in_dir(input_dir_path, output_dir_path, anon_pwd, anon_ip,
         pwd_lookup = {}
     if anon_ip:
         ip_tree = tree_node(None)
+        ip_tree.preserve_ipv4_class()
         if random_seed is None:
             random_seed = random.randrange(sys.maxsize)
         logging.debug('Using random seed: {}'.format(random_seed))
@@ -35,7 +36,7 @@ def anonymize_files_in_dir(input_dir_path, output_dir_path, anon_pwd, anon_ip,
 
     if iptree_filename is not None:
         with open(iptree_filename, 'w') as f_out:
-            dump_iptree(ip_tree, f_out)
+            ip_tree.dump_to_file(f_out)
 
 
 def anonymize_file(filename_in, filename_out, compiled_regexes=None,

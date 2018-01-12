@@ -5,7 +5,7 @@ import pytest
 import random
 import regex
 
-from conan.ip_anonymization import tree_node, anonymize_ip_addr, _convert_to_anon_ip, dump_iptree, _ip_to_int, _is_mask
+from conan.ip_anonymization import tree_node, anonymize_ip_addr, _convert_to_anon_ip, _ip_to_int, _is_mask
 
 ip_list = [('10.11.12.13'),
            ('10.10.10.10'),
@@ -22,7 +22,9 @@ def ip_tree():
     """Generate an IP tree once for all tests in this module."""
     # Setting seed here so the ip anonymization results are consistent for testing
     random.seed(1)
-    return tree_node(None)
+    root = tree_node(None)
+    root.preserve_ipv4_class()
+    return root
 
 
 @pytest.mark.parametrize('line, ip_addrs', [
@@ -113,7 +115,7 @@ def test_dump_iptree(tmpdir, ip_tree):
 
     filename = str(tmpdir.mkdir("test").join("test_dump_iptree.txt"))
     with open(filename, 'w') as f_tmp:
-        dump_iptree(ip_tree, f_tmp)
+        ip_tree.dump_to_file(f_tmp)
 
     with open(filename, 'r') as f_tmp:
         # Build mapping dict from the output of the ip_tree dump

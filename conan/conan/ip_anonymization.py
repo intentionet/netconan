@@ -21,6 +21,37 @@ class tree_node():
         self.right = None
         self.value = value
 
+    def dump_to_file(self, file_out, depth=0, input_addr=0, output_addr=0):
+        """Recursively traverse tree and write translations to output file."""
+        # Root node value does not contribute to output_addr, so only update
+        # output_addr for nodes after root (depth > 0)
+        if depth > 0:
+            output_addr = (output_addr << 1) + self.value
+
+        # Only dump nodes at max depth (32) i.e. full 32bit anonymization
+        if depth == 32:
+            org_ip_str = str(ipaddress.IPv4Address(input_addr))
+            new_ip_str = str(ipaddress.IPv4Address(output_addr))
+            logging.debug('dumped {}\t{}'.format(org_ip_str, new_ip_str))
+            file_out.write('{}\t{}\n'.format(org_ip_str, new_ip_str))
+            return
+
+        depth += 1
+        if self.left is not None:
+            left_path = (input_addr << 1)
+            self.left.dump_to_file(file_out, depth, left_path, output_addr)
+        if self.right is not None:
+            right_path = (input_addr << 1) + 1
+            self.right.dump_to_file(file_out, depth, right_path, output_addr)
+
+    def preserve_ipv4_class(self):
+        """Initialize tree to preserve IPv4 classes (call only on root node)."""
+        node = self
+        for i in range(0, 5):
+            node.left = tree_node(0)
+            node.right = tree_node(1)
+            node = node.right
+
 
 def anonymize_ip_addr(my_ip_tree, line):
     """Replace each IP address in the line with an anonymized IP address.
@@ -50,7 +81,7 @@ def anonymize_ip_addr(my_ip_tree, line):
             ip_addrs.append(ip_str)
         elif int(first_octet) >= 224:
             # TODO: handle this better in the future or remove it,
-            # just skipping anything in class D and class E for now
+            # just skipping anything in IP class D and class E for now
             logging.debug("Skipping addresses reserved for multicast and R&D {}"
                           .format(ip_str))
             ip_addrs.append(ip_str)
@@ -73,23 +104,9 @@ def _convert_to_anon_ip(node, ip_int, preserve_ip_class=True):
     are randomly generated as needed and are the inverse of their sibling.
     """
     new_ip_int = 0
-    i = 32
+    i = 31
 
-    if preserve_ip_class:
-        # Skip leading 1's as these indicate class up to the fourth 1
-        for i in range(i - 1, 27, -1):
-            msb = ip_int & (1 << i)
-            new_ip_int |= msb
-            if node.left is None:
-                node.left = tree_node(0)
-                node.right = tree_node(1)
-            if msb:
-                node = node.right
-            else:
-                node = node.left
-                break
-
-    for j in range(i - 1, -1, -1):
+    for j in range(i, -1, -1):
         # msb is the next bit to anonymize
         msb = (ip_int >> j) & 1
         if node.left is None:
