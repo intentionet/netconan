@@ -1,5 +1,6 @@
 """Handle invoking Conan from the command line."""
 
+from __future__ import absolute_import
 import argparse
 import logging
 import os
@@ -25,6 +26,9 @@ def main():
     parser.add_argument('-r', '--randomseed',
                         help='Random seed for IP anonymization',
                         type=int, default=None)
+    parser.add_argument('-d', '--dumpipaddrmap',
+                        help='Dump IP address anonymization map to specified file',
+                        default=None)
     loglevel_choices = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
     parser.add_argument('-l', '--loglevel',
                         help='Determines what level of logs to display',
@@ -40,7 +44,8 @@ def main():
         os.makedirs(output_dir)
 
     anonymize_files_in_dir(input_dir, output_dir, options.anonymizepwdandcomm,
-                           options.anonymizeipaddr, options.randomseed)
+                           options.anonymizeipaddr, options.randomseed,
+                           options.dumpipaddrmap)
 
 
 if __name__ == '__main__':
