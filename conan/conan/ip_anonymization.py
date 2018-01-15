@@ -49,7 +49,7 @@ class tree_node():
         node = self
         # IP classes are defined by the number of leading 1's in the address up
         # to the fourth 1, so setup the tree to preserve those
-        for i in range(0, 5):
+        for i in range(0, 4):
             node.left = tree_node(0)
             node.right = tree_node(1)
             node = node.right
