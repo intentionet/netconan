@@ -136,7 +136,7 @@ def _anonymize_value(val, lookup):
         anon_val = md5_crypt.using(salt='CNAN').hash(anon_val)
 
     if item_format == _sensitive_item_formats.sha512:
-        # Hash anon_val w/rounds=5000 to omit rounds parameter being in hash output
+        # Hash anon_val w/standard rounds=5000 to omit rounds parameter from hash output
         anon_val = sha512_crypt.using(rounds=5000).hash(anon_val)
 
     if item_format == _sensitive_item_formats.juniper_type9:
