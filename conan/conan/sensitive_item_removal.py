@@ -63,13 +63,13 @@ default_pwd_line_regexes = [
     [('^\s*(.*?neighbor.*?) (\S*) password (.*)', None)],
     [('^(wlccp \S+ username (\S+)(\s.*)? password( \d)?) (\S+)(.*)', None)],
     # These are from JUNOS
-    [('(\s*authentication-key )[^ ;]+(.*)', None)],
-    [('(\s*md5 \d+ key )[^ ;]+(.*)', None)],
-    [('(\s*hello-authentication-key )[^ ;]+(.*)', None)],
-    [('^(.*\s(secret|simple-password) )[^ ;]+(.*)', None)],
-    [('(\s+encrypted-password )[^ ;]+(.*)', None)],
-    [('(\s+ssh-(rsa|dsa) )\"(.*)', None)],
-    [('^\s+((pre-shared-|)key (ascii-text|hexadecimal)) [^ ;]+(.*)', None)]
+    [('((\S*\s+)*authentication-key )[^ ;]+(.*)', None)],
+    [('((\S*\s+)*md5 \d+ key )[^ ;]+(.*)', None)],
+    [('((\S*\s+)*hello-authentication-key )[^ ;]+(.*)', None)],
+    [('^((\S*\s+)*(secret|simple-password) )[^ ;]+(.*)', None)],
+    [('((\S*\s+)*encrypted-password )[^ ;]+(.*)', None)],
+    [('((\S*\s+)*ssh-(rsa|dsa) )\"(.*)', None)],
+    [('^(\S*\s+)*((pre-shared-|)key (ascii-text|hexadecimal)) [^ ;]+(.*)', None)]
 ]
 # Taken from RANCID community scrubbing regexes
 default_com_line_regexes = [
@@ -100,8 +100,7 @@ class _sensitive_item_formats(Enum):
     md5 = 4
     text = 5
     sha512 = 6
-    juniper_type1 = 7
-    juniper_type9 = 8
+    juniper_type9 = 7
 
 
 def _anonymize_value(val, lookup):
@@ -132,9 +131,10 @@ def _anonymize_value(val, lookup):
         anon_val = b2a_hex(b(anon_val)).decode()
 
     if item_format == _sensitive_item_formats.md5:
+        old_salt_size = len(val.split('$')[2])
         # Not salting sensitive data, using static salt here to more easily
         # identify anonymized lines
-        anon_val = md5_crypt.using(salt='CNAN').hash(anon_val)
+        anon_val = md5_crypt.using(salt='0' * old_salt_size).hash(anon_val)
 
     if item_format == _sensitive_item_formats.sha512:
         # Hash anon_val w/standard rounds=5000 to omit rounds parameter from hash output
@@ -144,11 +144,6 @@ def _anonymize_value(val, lookup):
         # TODO: encode base anon_val instead of just returning a constant here
         # This value corresponds to encoding: ConanRemoved
         anon_val = '$9$lhsMWXJZjP5FNdDkmPF3Ap0BEyVb2Gjq8Xds'
-
-    if item_format == _sensitive_item_formats.juniper_type1:
-        # Not salting sensitive data, using static salt here to more easily
-        # identify anonymized lines
-        anon_val = md5_crypt.using(salt='Conan123').hash(anon_val)
 
     lookup[val] = anon_val
     return anon_val
@@ -164,15 +159,12 @@ def _check_sensitive_item_format(val):
         return _sensitive_item_formats.cisco_type7
     if regex.match(r'^[0-9a-fA-F]+$', val):
         return _sensitive_item_formats.hexadecimal
-    if regex.match(r'^\$1\$[\S]{4}\$[\S]{22}$', val):
+    if regex.match(r'^\$1\$[\S]+\$[\S]+$', val):
         return _sensitive_item_formats.md5
     if regex.match(r'^\$6\$[\S]+$', val):
         return _sensitive_item_formats.sha512
     if regex.match(r'^\$9\$[\S]+$', val):
         return _sensitive_item_formats.juniper_type9
-    # TODO: confirm this format matches all juniper type1 values (i.e. 8 char salt)
-    if regex.match(r'^\$1\$[\S]{8}\$[\S]+$', val):
-        return _sensitive_item_formats.juniper_type1
     return _sensitive_item_formats.text
 
 
