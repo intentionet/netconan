@@ -79,14 +79,15 @@ default_com_line_regexes = [
      '(?:1|2c|3 \S+)| vrf \S+)*) \K(\S+)(?=.*)', 4)],
     # This is from JUNOS
     # TODO: see if we need to make the snmp keyword optional for Juniper
-    [('^(\s?snmp( \S+)* (community|trap-group)) \K([^ ;]+)(?=.*)', 4)]
+    [('^((\S+\s+)*snmp( \S+)* (community|trap-group)) \K([^ ;]+)(?=.*)', 5)]
 ]
 # These are catch-all regexes to find lines that seem like they might contain
 # sensitive info
 default_catch_all_regexes = [
     [('.*\s"?\K(\$9\$[^ ;"]+)(?="?\s?.*)', 1)],
     [('.*\s"?\K(\$1\$[^ ;"]+)(?="?\s?.*)', 1)],
-    [('.*encrypted-password\s\K(\S+)(?=\s?.*)', None)]
+    [('.*encrypted-password\s\K(\S+)(?=\s?.*)', None)],
+    [('.*\s+key\s+"\K([^"]+)(?=".*)', 1)]
 ]
 
 

@@ -89,7 +89,10 @@ juniper_password_lines = [
     ('set security ike policy test-ike-policy pre-shared-key ascii-text "{}"', '$9$/E6g9tO1IcSrvfTCu1hKv-VwgJD'),
     ('set system root-authentication encrypted-password "{}"', '$1$CXKwIUfL$6vLSvatE2TCaM25U4u9Bh1'),
     ('set system login user admin authentication encrypted-password "{}"', '$1$67Q0XA3z$YqiBW/xxKWr74oHPXEkIv1'),
-    ('set system login user someone authenitcation "{}"', '$1$CNANTest$xAfu6Am1d5D/.6OVICuOu/')
+    ('set system login user someone authenitcation "{}"', '$1$CNANTest$xAfu6Am1d5D/.6OVICuOu/'),
+    ('set system license keys key "{}"', 'SOMETHING sensitive text here'),
+    ('set snmp community {} authorization read-only', 'SECRETTEXT'),
+    ('set snmp trap-group {} otherstuff', 'SECRETTEXT')
 ]
 
 # TODO: Add more Arista config lines
