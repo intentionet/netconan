@@ -110,7 +110,9 @@ unique_passwords = [
     'JDYkqyIFWeBvzpljSfWmRZrmRSRE8syxKlOSjP9RCCkFinZbJI3GD5c6rckJR/Qju2PKLmOewbheAA==',
     'Password',
     '2ndPassword',
-    'PasswordThree'
+    'PasswordThree',
+    '$9$HqfQ1IcrK8n/t0IcvM24aZGi6/t',
+    '$1$CNANTest$xAfu6Am1d5D/.6OVICuOu/'
 ]
 
 
@@ -178,7 +180,11 @@ def test__anonymize_value_unique():
                          ('STRING', _sensitive_item_formats.text),
                          ('text_here', _sensitive_item_formats.text),
                          ('more-text-here0', _sensitive_item_formats.text),
-                         ('ABCDEFG', _sensitive_item_formats.text)
+                         ('ABCDEFG', _sensitive_item_formats.text),
+                         ('$9$HqfQ1IcrK8n/t0IcvM24aZGi6/t', _sensitive_item_formats.juniper_type9),
+                         ('$9$YVgoZk.5n6AHq9tORlegoJGDkPfQCtOP5Qn9pRE', _sensitive_item_formats.juniper_type9),
+                         ('$1$CNANTest$xAfu6Am1d5D/.6OVICuOu/', _sensitive_item_formats.juniper_type1),
+                         ('$1$67Q0XA3z$YqiBW/xxKWr74oHPXEkIv1', _sensitive_item_formats.juniper_type1)
                          ])
 def test__check_sensitive_item_format(val, format_):
     """Test sensitive item format detection."""
