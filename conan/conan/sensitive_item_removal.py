@@ -84,8 +84,8 @@ default_com_line_regexes = [
 # These are catch-all regexes to find lines that seem like they might contain
 # sensitive info
 default_catch_all_regexes = [
-    [('.*\s\K(\$9\$[^ ;]+)(?=\s?.*)', None)],
-    [('.*\s\K(\$1\$[^ ;]+)(?=\s?.*)', None)],
+    [('.*\s"?\K(\$9\$[^ ;"]+)(?="?\s?.*)', 1)],
+    [('.*\s"?\K(\$1\$[^ ;"]+)(?="?\s?.*)', 1)],
     [('.*encrypted-password\s\K(\S+)(?=\s?.*)', None)]
 ]
 
@@ -98,6 +98,8 @@ class _sensitive_item_formats(Enum):
     hexadecimal = 3
     md5 = 4
     text = 5
+    juniper_type1 = 6
+    juniper_type9 = 7
 
 
 def _anonymize_value(val, lookup):
@@ -132,6 +134,16 @@ def _anonymize_value(val, lookup):
         # identify anonymized lines
         anon_val = md5_crypt.using(salt='CNAN').hash(anon_val)
 
+    if item_format == _sensitive_item_formats.juniper_type9:
+        # TODO: encode base anon_val instead of just returning a constant here
+        # This value corresponds to encoding: ConanRemoved
+        anon_val = '$9$lhsMWXJZjP5FNdDkmPF3Ap0BEyVb2Gjq8Xds'
+
+    if item_format == _sensitive_item_formats.juniper_type1:
+        # Not salting sensitive data, using static salt here to more easily
+        # identify anonymized lines
+        anon_val = md5_crypt.using(salt='Conan123').hash(anon_val)
+
     lookup[val] = anon_val
     return anon_val
 
@@ -148,6 +160,11 @@ def _check_sensitive_item_format(val):
         return _sensitive_item_formats.hexadecimal
     if regex.match(r'^\$1\$[\S]{4}\$[\S]{22}$', val):
         return _sensitive_item_formats.md5
+    if regex.match(r'^\$9\$[\S]+$', val):
+        return _sensitive_item_formats.juniper_type9
+    # TODO: confirm this format matches all juniper type1 values (i.e. 8 char salt)
+    if regex.match(r'^\$1\$[\S]{8}\$[\S]+$', val):
+        return _sensitive_item_formats.juniper_type1
     return _sensitive_item_formats.text
 
 

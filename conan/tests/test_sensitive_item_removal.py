@@ -80,7 +80,19 @@ cisco_snmp_community_lines = [
     ('snmp-server host 1.1.1.1 {} vrrp', 'RemoveMe')
 ]
 
-# TODO: Add Juniper config lines
+# TODO: Add more Juniper config lines
+juniper_password_lines = [
+    ('secret "{}"', '$9$Be4EhyVb2GDkevYo'),
+    ('set interfaces irb unit 5 family inet address 1.2.3.0/24 vrrp-group 5 authentication-key "{}"', '$9$i.m5OBEevLz3RSevx7-VwgZj5TFCA0Tz9p'),
+    ('set system tacplus-server 1.2.3.4 secret "{}"', '$9$HqfQ1IcrK8n/t0IcvM24aZGi6/t'),
+    ('set system tacplus-server 1.2.3.4 secret "{}"', '$9$YVgoZk.5n6AHq9tORlegoJGDkPfQCtOP5Qn9pRE'),
+    ('set security ike policy test-ike-policy pre-shared-key ascii-text "{}"', '$9$/E6g9tO1IcSrvfTCu1hKv-VwgJD'),
+    ('set system root-authentication encrypted-password "{}"', '$1$CXKwIUfL$6vLSvatE2TCaM25U4u9Bh1'),
+    ('set system login user admin authentication encrypted-password "{}"', '$1$67Q0XA3z$YqiBW/xxKWr74oHPXEkIv1'),
+    ('set system login user someone authenitcation "{}"', '$1$CNANTest$xAfu6Am1d5D/.6OVICuOu/')
+]
+
+# TODO: Add Arista config lines
 
 unique_passwords = [
     '12345ABCDEF',
@@ -173,9 +185,10 @@ def test__check_sensitive_item_format(val, format_):
     assert(_check_sensitive_item_format(val) == format_)
 
 
-@pytest.mark.parametrize('config_line,sensitive_text', cisco_password_lines + cisco_snmp_community_lines)
-def test_pwd_and_com_removal_cisco(regexes, config_line, sensitive_text):
-    """Test removal of passwords and communities from Cisco style config lines."""
+@pytest.mark.parametrize('config_line,sensitive_text', cisco_password_lines +
+                         cisco_snmp_community_lines + juniper_password_lines)
+def test_pwd_and_com_removal(regexes, config_line, sensitive_text):
+    """Test removal of passwords and communities from config lines."""
     config_line = config_line.format(sensitive_text)
     pwd_lookup = {}
     assert(sensitive_text not in replace_matching_item(regexes, config_line, pwd_lookup))
