@@ -6,7 +6,7 @@ import logging
 
 from binascii import b2a_hex
 from enum import Enum
-from passlib.hash import cisco_type7, md5_crypt
+from passlib.hash import cisco_type7, md5_crypt, sha512_crypt
 from six import b
 
 
@@ -24,7 +24,7 @@ from six import b
 #       note that if this is None, any matching config line will be removed
 default_pwd_line_regexes = [
     [('^(\s*password( level)?( \d)?) \K(\S+)(?= ?.*)', 4)],
-    [('^(\s*username( \S+)+ (password|secret)( \d)?) \K(\S+)(?= ?.*)', 5)],
+    [('^(\s*username( \S+)+ (password|secret)( \d| sha512)?) \K(\S+)(?= ?.*)', 5)],
     [('^(\s*(enable )?(password|passwd)( level \d+)?( \d)?) \K(\S+)(?= ?.*)', 6)],
     [('^(\s*(enable )?secret( \d)?) \K(\S+)(?= ?.*)', 4)],
     [('^(\s*ip ftp password( \d)?) \K(\S+)(?= ?.*)', 3)],
@@ -93,13 +93,14 @@ default_catch_all_regexes = [
 class _sensitive_item_formats(Enum):
     """Enum for recognized sensitive item formats (e.g. type7, md5, text)."""
 
-    type7 = 1
+    cisco_type7 = 1
     numeric = 2
     hexadecimal = 3
     md5 = 4
     text = 5
-    juniper_type1 = 6
-    juniper_type9 = 7
+    sha512 = 6
+    juniper_type1 = 7
+    juniper_type9 = 8
 
 
 def _anonymize_value(val, lookup):
@@ -116,7 +117,7 @@ def _anonymize_value(val, lookup):
     if val in lookup:
         return lookup[val]
 
-    if item_format == _sensitive_item_formats.type7:
+    if item_format == _sensitive_item_formats.cisco_type7:
         # Not salting sensitive data, using static salt here to more easily
         # identify anonymized lines
         anon_val = cisco_type7.using(salt=9).hash(anon_val)
@@ -133,6 +134,10 @@ def _anonymize_value(val, lookup):
         # Not salting sensitive data, using static salt here to more easily
         # identify anonymized lines
         anon_val = md5_crypt.using(salt='CNAN').hash(anon_val)
+
+    if item_format == _sensitive_item_formats.sha512:
+        # Hash anon_val w/rounds=5000 to omit rounds parameter being in hash output
+        anon_val = sha512_crypt.using(rounds=5000).hash(anon_val)
 
     if item_format == _sensitive_item_formats.juniper_type9:
         # TODO: encode base anon_val instead of just returning a constant here
@@ -155,11 +160,13 @@ def _check_sensitive_item_format(val):
     if regex.match(r'^[0-9]+$', val):
         return _sensitive_item_formats.numeric
     if regex.match(r'^[01][0-9]([0-9a-fA-F]{2})+$', val):
-        return _sensitive_item_formats.type7
+        return _sensitive_item_formats.cisco_type7
     if regex.match(r'^[0-9a-fA-F]+$', val):
         return _sensitive_item_formats.hexadecimal
     if regex.match(r'^\$1\$[\S]{4}\$[\S]{22}$', val):
         return _sensitive_item_formats.md5
+    if regex.match(r'^\$6\$[\S]+$', val):
+        return _sensitive_item_formats.sha512
     if regex.match(r'^\$9\$[\S]+$', val):
         return _sensitive_item_formats.juniper_type9
     # TODO: confirm this format matches all juniper type1 values (i.e. 8 char salt)

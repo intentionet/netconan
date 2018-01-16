@@ -92,7 +92,10 @@ juniper_password_lines = [
     ('set system login user someone authenitcation "{}"', '$1$CNANTest$xAfu6Am1d5D/.6OVICuOu/')
 ]
 
-# TODO: Add Arista config lines
+# TODO: Add more Arista config lines
+arista_password_lines = [
+    ('username noc secret sha512 {}', '$6$RMxgK5ALGIf.nWEC$tHuKCyfNtJMCY561P52dTzHUmYMmLxb/Mxik.j3vMUs8lMCPocM00/NAS.SN6GCWx7d/vQIgxnClyQLAb7n3x0')
+]
 
 unique_passwords = [
     '12345ABCDEF',
@@ -112,7 +115,8 @@ unique_passwords = [
     '2ndPassword',
     'PasswordThree',
     '$9$HqfQ1IcrK8n/t0IcvM24aZGi6/t',
-    '$1$CNANTest$xAfu6Am1d5D/.6OVICuOu/'
+    '$1$CNANTest$xAfu6Am1d5D/.6OVICuOu/',
+    '$6$NQJRTiqxZiNR0aWI$hU1EPleWl6wGcMtDxaMEqNhN8WnxEqmeFjWC5h8oh5USSn5P9ZgFXbf2giO8nEtM.yBXO3O6b.76LQ1zlmG3B0'
 ]
 
 
@@ -153,10 +157,10 @@ def test__anonymize_value_unique():
 
 
 @pytest.mark.parametrize('val, format_', [
-                         ('094F4107180B', _sensitive_item_formats.type7),
-                         ('00071C080555', _sensitive_item_formats.type7),
-                         ('1608030A2B25', _sensitive_item_formats.type7),
-                         ('070C2E424F072E04043A0E1E01', _sensitive_item_formats.type7),
+                         ('094F4107180B', _sensitive_item_formats.cisco_type7),
+                         ('00071C080555', _sensitive_item_formats.cisco_type7),
+                         ('1608030A2B25', _sensitive_item_formats.cisco_type7),
+                         ('070C2E424F072E04043A0E1E01', _sensitive_item_formats.cisco_type7),
                          ('01999999', _sensitive_item_formats.numeric),
                          ('987654321', _sensitive_item_formats.numeric),
                          ('0000000000000000', _sensitive_item_formats.numeric),
@@ -184,7 +188,8 @@ def test__anonymize_value_unique():
                          ('$9$HqfQ1IcrK8n/t0IcvM24aZGi6/t', _sensitive_item_formats.juniper_type9),
                          ('$9$YVgoZk.5n6AHq9tORlegoJGDkPfQCtOP5Qn9pRE', _sensitive_item_formats.juniper_type9),
                          ('$1$CNANTest$xAfu6Am1d5D/.6OVICuOu/', _sensitive_item_formats.juniper_type1),
-                         ('$1$67Q0XA3z$YqiBW/xxKWr74oHPXEkIv1', _sensitive_item_formats.juniper_type1)
+                         ('$1$67Q0XA3z$YqiBW/xxKWr74oHPXEkIv1', _sensitive_item_formats.juniper_type1),
+                         ('$6$RMxgK5ALGIf.nWEC$tHuKCyfNtJMCY561P52dTzHUmYMmLxb/Mxik.j3vMUs8lMCPocM00/NAS.SN6GCWx7d/vQIgxnClyQLAb7n3x0', _sensitive_item_formats.sha512)
                          ])
 def test__check_sensitive_item_format(val, format_):
     """Test sensitive item format detection."""
@@ -192,7 +197,8 @@ def test__check_sensitive_item_format(val, format_):
 
 
 @pytest.mark.parametrize('config_line,sensitive_text', cisco_password_lines +
-                         cisco_snmp_community_lines + juniper_password_lines)
+                         cisco_snmp_community_lines + juniper_password_lines +
+                         arista_password_lines)
 def test_pwd_and_com_removal(regexes, config_line, sensitive_text):
     """Test removal of passwords and communities from config lines."""
     config_line = config_line.format(sensitive_text)
