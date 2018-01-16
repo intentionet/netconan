@@ -71,9 +71,12 @@ cisco_snmp_community_lines = [
     ('snmp-server community {} ro 1', 'RemoveMe'),
     ('snmp-server community {} Something', 'RemoveMe'),
     ('snmp-server host 1.1.1.1 vrf Something informs {} config', 'RemoveMe'),
+    ('snmp-server host 1.1.1.1 informs version 1 {} ipsec', 'RemoveMe'),
+    ('snmp-server host 1.1.1.1 traps version 2c {}', 'RemoveMe'),
     ('snmp-server host 1.1.1.1 informs version 3 auth {} ipsec', 'RemoveMe'),
-    ('snmp-server host 1.1.1.1 traps version 2c noauth {}', 'RemoveMe'),
-    ('snmp-server host 1.1.1.1 informs version 1 priv {} memory', 'RemoveMe'),
+    ('snmp-server host 1.1.1.1 traps version 3 noauth {}', 'RemoveMe'),
+    ('snmp-server host 1.1.1.1 informs version 3 priv {} memory', 'RemoveMe'),
+    ('snmp-server host 1.1.1.1 version 2c {}', 'RemoveMe'),
     ('snmp-server host 1.1.1.1 {} vrrp', 'RemoveMe')
 ]
 

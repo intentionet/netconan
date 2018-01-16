@@ -76,10 +76,17 @@ default_com_line_regexes = [
     [('^((snmp-server .*community)( [08])?) \K(\S+)(?=.*)', 4)],
     # TODO: confirm this catches all community possibilities for snmp-server
     [('^(snmp-server host (\S+)( informs| traps| version '
-     '(?:1|2c|3) \S+| vrf \S+)*) \K(\S+)(?=.*)', 4)],
+     '(?:1|2c|3 \S+)| vrf \S+)*) \K(\S+)(?=.*)', 4)],
     # This is from JUNOS
     # TODO: see if we need to make the snmp keyword optional for Juniper
     [('^(\s?snmp( \S+)* (community|trap-group)) \K([^ ;]+)(?=.*)', 4)]
+]
+# These are catch-all regexes to find lines that seem like they might contain
+# sensitive info
+default_catch_all_regexes = [
+    [('.*\s\K(\$9\$[^ ;]+)(?=\s?.*)', None)],
+    [('.*\s\K(\$1\$[^ ;]+)(?=\s?.*)', None)],
+    [('.*encrypted-password\s\K(\S+)(?=\s?.*)', None)]
 ]
 
 
@@ -146,7 +153,8 @@ def _check_sensitive_item_format(val):
 
 def generate_default_sensitive_item_regexes():
     """Compile and return the default password and community line regexes."""
-    combined_regexes = default_pwd_line_regexes + default_com_line_regexes
+    combined_regexes = default_pwd_line_regexes + default_com_line_regexes + \
+        default_catch_all_regexes
     return [[(regex.compile(regex_), num) for regex_, num in group]
             for group in combined_regexes]
 
