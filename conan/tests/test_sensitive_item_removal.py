@@ -143,6 +143,13 @@ def test__anonymize_value(val):
     # Confirm format for anonmymized value matches format of the original value
     assert(anon_val_format == val_format)
 
+    if (val_format == _sensitive_item_formats.md5):
+        org_salt_size = len(val.split('$')[2])
+        anon_salt_size = len(anon_val.split('$')[2])
+        # Make sure salt size is preserved for md5 sensitive items
+        # (Cisco should stay 4 character, Juniper 8 character, etc)
+        assert(org_salt_size == anon_salt_size)
+
     # Confirm reanonymizing same source value results in same anonymized value
     assert(anon_val == _anonymize_value(val, pwd_lookup))
 
@@ -182,6 +189,8 @@ def test__anonymize_value_unique():
                          ('$1$salt$BFdHEr6MVYydPmpY3FPXV/', _sensitive_item_formats.md5),
                          ('$1$salt$jp6JinwkFEV.2OCDaXrmO1', _sensitive_item_formats.md5),
                          ('$1$./4k$OVkG7VKh5GKt1/XjSO78.0', _sensitive_item_formats.md5),
+                         ('$1$CNANTest$xAfu6Am1d5D/.6OVICuOu/', _sensitive_item_formats.md5),
+                         ('$1$67Q0XA3z$YqiBW/xxKWr74oHPXEkIv1', _sensitive_item_formats.md5),
                          ('thisIsATest', _sensitive_item_formats.text),
                          ('conan', _sensitive_item_formats.text),
                          ('STRING', _sensitive_item_formats.text),
@@ -190,8 +199,6 @@ def test__anonymize_value_unique():
                          ('ABCDEFG', _sensitive_item_formats.text),
                          ('$9$HqfQ1IcrK8n/t0IcvM24aZGi6/t', _sensitive_item_formats.juniper_type9),
                          ('$9$YVgoZk.5n6AHq9tORlegoJGDkPfQCtOP5Qn9pRE', _sensitive_item_formats.juniper_type9),
-                         ('$1$CNANTest$xAfu6Am1d5D/.6OVICuOu/', _sensitive_item_formats.md5),
-                         ('$1$67Q0XA3z$YqiBW/xxKWr74oHPXEkIv1', _sensitive_item_formats.md5),
                          ('$6$RMxgK5ALGIf.nWEC$tHuKCyfNtJMCY561P52dTzHUmYMmLxb/Mxik.j3vMUs8lMCPocM00/NAS.SN6GCWx7d/vQIgxnClyQLAb7n3x0', _sensitive_item_formats.sha512)
                          ])
 def test__check_sensitive_item_format(val, format_):
@@ -218,6 +225,6 @@ def test_pwd_and_com_removal_insensitive_lines(regexes, config_line):
     """Make sure benign lines are not affected by sensitive_item_removal."""
     pwd_lookup = {}
     # Collapse all whitespace in original config_line and add newline since
-    # that will be affected by replace_matching_item
+    # that will be done by replace_matching_item
     config_line = '{}\n'.format(' '.join(config_line.split()))
     assert(config_line == replace_matching_item(regexes, config_line, pwd_lookup))
