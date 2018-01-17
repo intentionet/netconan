@@ -23,71 +23,71 @@ from six import b
 #  2. sensitive item regex-match-index
 #       note that if this is None, any matching config line will be removed
 default_pwd_line_regexes = [
-    [('^(\s*password( level)?( \d)?) \K(\S+)(?= ?.*)', 4)],
-    [('^(\s*username( \S+)+ (password|secret)( \d| sha512)?) \K(\S+)(?= ?.*)', 5)],
-    [('^(\s*(enable )?(password|passwd)( level \d+)?( \d)?) \K(\S+)(?= ?.*)', 6)],
-    [('^(\s*(enable )?secret( \d)?) \K(\S+)(?= ?.*)', 4)],
-    [('^(\s*ip ftp password( \d)?) \K(\S+)(?= ?.*)', 3)],
-    [('^(\s*ip ospf authentication-key( \d)?) \K(\S+)(?= ?.*)', 3)],
-    [('^(\s*isis password) \K(\S+)(?=( level-\d)?( ?.*))', 2)],
-    [('^(\s*(domain-password|area-password)) \K(\S+)(?= ?.*)', 3)],
-    [('^(\s*ip ospf message-digest-key \d+ md5( \d)?) \K(\S+)(?= ?.*)', 3)],
-    [('^(\s*standby( \d*)? authentication( text| md5 key-string( \d)?)?) \K(\S+)(?= ?.*)', 5)],
-    [('^(\s*l2tp tunnel( \S+)? password( \d)?) \K(\S+)(?= ?.*)', 4)],
-    [('^(\s*digest secret(\s\d)?) \K(\S+)(?= ?.*)', 3)],
-    [('^(\s*ppp .* hostname) \K(\S+)(?= ?.*)', 2)],
-    [('^(\s*ppp .* password( \d)?) \K(\S+)(?= ?.*)', 3)],
-    [('^(\s*(ikev2 )?(local|remote)-authentication pre-shared-key) \K(\S+)(?= ?.*)', 4)],
-    [('^(\s*(\S )*pre-shared-key( remote| local)?( hex| \d)?) \K(\S+)(?= ?.*)', 5)],
-    [('^(\s*(tacacs|radius)-server\s(\w*[-\s\s\S+])*\s?key)( ?\d?) \K(\S+)(?= ?.*)', 5)],
-    [('^(\s*key( \d)?) \K(\S+)(?= ?.*)', 3)],
-    [('^(\s*ntp authentication-key \d+ md5) \K(\S+)(?= ?.*)', 2)],
-    [('^(\s*syscon( password| address \S+)) \K(\S+)(?= ?.*)', 3)],
-    [('^(\s*snmp-server user( \S+)+ (auth (md5|sha))) \K(\S+)(?= ?.*)', 5),
-     ('^(\s*snmp-server user( \S+)+ priv (3des|aes|des)) \K(\S+)(?= ?.*)', 4)],
-    [('^((crypto )?isakmp key( \d)?) \K(\S+)(?= .*)', 4)],
-    [('^(\s*set session-key (in|out)bound ah \d+) \K(\S+)(?= ?.*)', 3)],
-    [('^(\s*set session-key (in|out)bound esp \d+ cipher?) \K(\S+)(?= ?.*)', 3),
-     ('^(\s*set session-key (in|out)bound esp \d+(( cipher \S+)? authenticator)) \K(\S+)(?= ?.*)', 5)],
+    [('(password( level)?( \d)?) \K(\S+)(?= ?.*)', 4)],
+    [('(username( \S+)+ (password|secret)( \d| sha512)?) \K(\S+)(?= ?.*)', 5)],
+    [('((enable )?(password|passwd)( level \d+)?( \d)?) \K(\S+)(?= ?.*)', 6)],
+    [('((enable )?secret( \d)?) \K(\S+)(?= ?.*)', 4)],
+    [('(ip ftp password( \d)?) \K(\S+)(?= ?.*)', 3)],
+    [('(ip ospf authentication-key( \d)?) \K(\S+)(?= ?.*)', 3)],
+    [('(isis password) \K(\S+)(?=( level-\d)?( ?.*))', 2)],
+    [('((domain-password|area-password)) \K(\S+)(?= ?.*)', 3)],
+    [('(ip ospf message-digest-key \d+ md5( \d)?) \K(\S+)(?= ?.*)', 3)],
+    [('(standby( \d*)? authentication( text| md5 key-string( \d)?)?) \K(\S+)(?= ?.*)', 5)],
+    [('(l2tp tunnel( \S+)? password( \d)?) \K(\S+)(?= ?.*)', 4)],
+    [('(digest secret( \d)?) \K(\S+)(?= ?.*)', 3)],
+    [('(ppp .* hostname) \K(\S+)(?= ?.*)', 2)],
+    [('(ppp .* password( \d)?) \K(\S+)(?= ?.*)', 3)],
+    [('((ikev2 )?(local|remote)-authentication pre-shared-key) \K(\S+)(?= ?.*)', 4)],
+    [('((\S )*pre-shared-key( remote| local)?( hex| \d)?) \K(\S+)(?= ?.*)', 5)],
+    [('((tacacs|radius)-server (\S+ )*key)( \d)? \K(\S+)(?= ?.*)', 5)],
+    [('(key( \d)?) \K(\S+)(?= ?.*)', 3)],
+    [('(ntp authentication-key \d+ md5) \K(\S+)(?= ?.*)', 2)],
+    [('(syscon( password| address \S+)) \K(\S+)(?= ?.*)', 3)],
+    [('(snmp-server user( \S+)+ (auth (md5|sha))) \K(\S+)(?= ?.*)', 5),
+     ('(snmp-server user( \S+)+ priv (3des|aes|des)) \K(\S+)(?= ?.*)', 4)],
+    [('((crypto )?isakmp key( \d)?) \K(\S+)(?= .*)', 4)],
+    [('(set session-key (in|out)bound ah \d+) \K(\S+)(?= ?.*)', 3)],
+    [('(set session-key (in|out)bound esp \d+ cipher?) \K(\S+)(?= ?.*)', 3),
+     ('(set session-key (in|out)bound esp \d+(( cipher \S+)? authenticator)) \K(\S+)(?= ?.*)', 5)],
     # TODO: Follow-up on these.  They were just copied from RANCID so currently:
     #       They are untested in general and need cases added for unit tests
     #       They do not specifically capture sensitive info
     #       They just identify lines where sensitive info exists
-    [('^( cable shared-secret) (.*)', None)],
-    [('^\s+(wpa-psk ascii|hex \d) (.*)', None)],
-    [('(\s+ldap-login-password) \S+(.*)', None)],
-    [('^(( ikev1)?( pre-shared-key | key |\s?failover key )(ascii-text |hexadecimal )?).*(.*)', None)],
-    [('^(vpdn username (\S+) password)(.*)', None)],
-    [('^(\s*key-string \d?)(.*)', None)],
-    [('^(\s*message-digest-key \d+ md5 (7|encrypted)) (.*)', None)],
-    [('^\s*(.*?neighbor.*?) (\S*) password (.*)', None)],
-    [('^(wlccp \S+ username (\S+)(\s.*)? password( \d)?) (\S+)(.*)', None)],
+    [('(cable shared-secret) (.*)', None)],
+    [('(wpa-psk ascii|hex \d) (.*)', None)],
+    [('(ldap-login-password) \S+(.*)', None)],
+    [('((ikev1 )?(pre-shared-key |key |failover key )(ascii-text |hexadecimal )?).*(.*)', None)],
+    [('(vpdn username (\S+) password)(.*)', None)],
+    [('(key-string \d?)(.*)', None)],
+    [('(message-digest-key \d+ md5 (7|encrypted)) (.*)', None)],
+    [('(.*?neighbor.*?) (\S*) password (.*)', None)],
+    [('(wlccp \S+ username (\S+)( .*)? password( \d)?) (\S+)(.*)', None)],
     # These are from JUNOS
-    [('((\S*\s+)*authentication-key )[^ ;]+(.*)', None)],
-    [('((\S*\s+)*md5 \d+ key )[^ ;]+(.*)', None)],
-    [('((\S*\s+)*hello-authentication-key )[^ ;]+(.*)', None)],
-    [('^((\S*\s+)*(secret|simple-password) )[^ ;]+(.*)', None)],
-    [('((\S*\s+)*encrypted-password )[^ ;]+(.*)', None)],
-    [('((\S*\s+)*ssh-(rsa|dsa) )\"(.*)', None)],
-    [('^(\S*\s+)*((pre-shared-|)key (ascii-text|hexadecimal)) [^ ;]+(.*)', None)]
+    [('(\S* )*authentication-key [^ ;]+(.*)', None)],
+    [('(\S* )*md5 \d+ key [^ ;]+(.*)', None)],
+    [('(\S* )*hello-authentication-key [^ ;]+(.*)', None)],
+    [('(\S* )*(secret|simple-password) [^ ;]+(.*)', None)],
+    [('(\S* )*encrypted-password [^ ;]+(.*)', None)],
+    [('(\S* )*ssh-(rsa|dsa) \"(.*)', None)],
+    [('(\S* )*((pre-shared-|)key (ascii-text|hexadecimal)) [^ ;]+(.*)', None)]
 ]
 # Taken from RANCID community scrubbing regexes
 default_com_line_regexes = [
-    [('^((snmp-server .*community)( [08])?) \K(\S+)(?=.*)', 4)],
+    [('((snmp-server .*community)( [08])?) \K(\S+)(?=.*)', 4)],
     # TODO: confirm this catches all community possibilities for snmp-server
-    [('^(snmp-server host (\S+)( informs| traps| version '
+    [('(snmp-server host (\S+)( informs| traps| version '
      '(?:1|2c|3 \S+)| vrf \S+)*) \K(\S+)(?=.*)', 4)],
     # This is from JUNOS
     # TODO: see if we need to make the snmp keyword optional for Juniper
-    [('^((\S+\s+)*snmp( \S+)* (community|trap-group)) \K([^ ;]+)(?=.*)', 5)]
+    [('((\S* )*snmp( \S+)* (community|trap-group)) \K([^ ;]+)(?=.*)', 5)]
 ]
 # These are catch-all regexes to find lines that seem like they might contain
 # sensitive info
 default_catch_all_regexes = [
-    [('.*\s"?\K(\$9\$[^ ;"]+)(?="?\s?.*)', 1)],
-    [('.*\s"?\K(\$1\$[^ ;"]+)(?="?\s?.*)', 1)],
-    [('.*encrypted-password\s\K(\S+)(?=\s?.*)', None)],
-    [('.*\s+key\s+"\K([^"]+)(?=".*)', 1)]
+    [('(\S* )*"?\K(\$9\$[^ ;"]+)(?="? ?.*)', 2)],
+    [('(\S* )*"?\K(\$1\$[^ ;"]+)(?="? ?.*)', 2)],
+    [('(\S* )*encrypted-password \K(\S+)(?= ?.*)', None)],
+    [('(\S* )*key "\K([^"]+)(?=".*)', 2)]
 ]
 
 
@@ -178,7 +178,8 @@ def generate_default_sensitive_item_regexes():
 
 def replace_matching_item(compiled_regexes, input_line, pwd_lookup):
     """If line matches a regex, anonymize or remove the line."""
-    output_line = input_line
+    # Collapse all whitespace to simplify regexes
+    output_line = '{}\n'.format(' '.join(input_line.split()))
 
     # Note: compiled_regexes is a list of lists; the inner list is a group of
     # related regexes

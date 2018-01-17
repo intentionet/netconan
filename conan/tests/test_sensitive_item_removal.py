@@ -8,7 +8,7 @@ import pytest
 # Tuple format is config_line, sensitive_text (should not be in output line)
 # TODO: Add in additional test lines (these are just first pass from IOS)
 cisco_password_lines = [
-    (' password 0 {}', 'RemoveMe'),
+    ('     password   0      \t{}', 'RemoveMe'),
     (' password 7 {}', '122A00190102180D3C2E'),
     ('username Someone password 0 {}', 'RemoveMe'),
     ('username Someone password {}', 'RemoveMe'),
@@ -211,10 +211,13 @@ def test_pwd_and_com_removal(regexes, config_line, sensitive_text):
 
 @pytest.mark.parametrize('config_line', [
                          'nothing in this string should be replaced',
-                         'interface GigabitEthernet0/0',
+                         '      interface GigabitEthernet0/0',
                          'ip address 1.2.3.4 255.255.255.0'
                          ])
 def test_pwd_and_com_removal_insensitive_lines(regexes, config_line):
     """Make sure benign lines are not affected by sensitive_item_removal."""
     pwd_lookup = {}
+    # Collapse all whitespace in original config_line and add newline since
+    # that will be affected by replace_matching_item
+    config_line = '{}\n'.format(' '.join(config_line.split()))
     assert(config_line == replace_matching_item(regexes, config_line, pwd_lookup))
