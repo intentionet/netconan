@@ -49,10 +49,11 @@ default_pwd_line_regexes = [
     [('(set session-key (in|out)bound ah \d+) \K(\S+)(?= ?.*)', 3)],
     [('(set session-key (in|out)bound esp \d+ cipher?) \K(\S+)(?= ?.*)', 3),
      ('(set session-key (in|out)bound esp \d+(( cipher \S+)? authenticator)) \K(\S+)(?= ?.*)', 5)],
-    # TODO: Follow-up on these.  They were just copied from RANCID so currently:
-    #       They are untested in general and need cases added for unit tests
-    #       They do not specifically capture sensitive info
-    #       They just identify lines where sensitive info exists
+    # TODO(https://github.com/intentionet/conan/issues/3):
+    # Follow-up on these.  They were just copied from RANCID so currently:
+    #   They are untested in general and need cases added for unit tests
+    #   They do not specifically capture sensitive info
+    #   They just identify lines where sensitive info exists
     [('(cable shared-secret) (.*)', None)],
     [('(wpa-psk ascii|hex \d) (.*)', None)],
     [('(ldap-login-password) \S+(.*)', None)],
@@ -74,11 +75,13 @@ default_pwd_line_regexes = [
 # Taken from RANCID community scrubbing regexes
 default_com_line_regexes = [
     [('((snmp-server .*community)( [08])?) \K(\S+)(?=.*)', 4)],
-    # TODO: confirm this catches all community possibilities for snmp-server
+    # TODO(https://github.com/intentionet/conan/issues/5):
+    # Confirm this catches all community possibilities for snmp-server
     [('(snmp-server host (\S+)( informs| traps| version '
      '(?:1|2c|3 \S+)| vrf \S+)*) \K(\S+)(?=.*)', 4)],
     # This is from JUNOS
-    # TODO: see if we need to make the snmp keyword optional for Juniper
+    # TODO(https://github.com/intentionet/conan/issues/4):
+    # See if we need to make the snmp keyword optional for Juniper
     [('((\S* )*snmp( \S+)* (community|trap-group)) \K([^ ;]+)(?=.*)', 5)]
 ]
 # These are catch-all regexes to find lines that seem like they might contain
@@ -141,9 +144,10 @@ def _anonymize_value(val, lookup):
         anon_val = sha512_crypt.using(rounds=5000).hash(anon_val)
 
     if item_format == _sensitive_item_formats.juniper_type9:
-        # TODO: encode base anon_val instead of just returning a constant here
-        # This value corresponds to encoding: ConanRemoved
-        anon_val = '$9$lhsMWXJZjP5FNdDkmPF3Ap0BEyVb2Gjq8Xds'
+        # TODO(https://github.com/intentionet/conan/issues/16)
+        # Encode base anon_val instead of just returning a constant here
+        # This value corresponds to encoding: Conan812183
+        anon_val = '$9$0000IRc-dsJGirewg4JDj9At0RhSreK8Xhc'
 
     lookup[val] = anon_val
     return anon_val

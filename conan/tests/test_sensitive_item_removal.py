@@ -6,7 +6,8 @@ from conan.sensitive_item_removal import replace_matching_item, \
 import pytest
 
 # Tuple format is config_line, sensitive_text (should not be in output line)
-# TODO: Add in additional test lines (these are just first pass from IOS)
+# TODO(https://github.com/intentionet/conan/issues/3):
+# Add in additional test lines (these are just first pass from IOS)
 cisco_password_lines = [
     ('     password   0      \t{}', 'RemoveMe'),
     (' password 7 {}', '122A00190102180D3C2E'),
@@ -80,7 +81,8 @@ cisco_snmp_community_lines = [
     ('snmp-server host 1.1.1.1 {} vrrp', 'RemoveMe')
 ]
 
-# TODO: Add more Juniper config lines
+# TODO(https://github.com/intentionet/conan/issues/4):
+# Add more Juniper config lines
 juniper_password_lines = [
     ('secret "{}"', '$9$Be4EhyVb2GDkevYo'),
     ('set interfaces irb unit 5 family inet address 1.2.3.0/24 vrrp-group 5 authentication-key "{}"', '$9$i.m5OBEevLz3RSevx7-VwgZj5TFCA0Tz9p'),
@@ -95,7 +97,8 @@ juniper_password_lines = [
     ('set snmp trap-group {} otherstuff', 'SECRETTEXT')
 ]
 
-# TODO: Add more Arista config lines
+# TODO(https://github.com/intentionet/conan/issues/3):
+# Add more Arista config lines
 arista_password_lines = [
     ('username noc secret sha512 {}', '$6$RMxgK5ALGIf.nWEC$tHuKCyfNtJMCY561P52dTzHUmYMmLxb/Mxik.j3vMUs8lMCPocM00/NAS.SN6GCWx7d/vQIgxnClyQLAb7n3x0')
 ]
