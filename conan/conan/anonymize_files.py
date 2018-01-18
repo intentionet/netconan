@@ -32,7 +32,7 @@ def anonymize_files_in_dir(input_dir_path, output_dir_path, anon_pwd, anon_ip,
         input_file = os.path.join(input_dir_path, file_name)
         output_file = os.path.join(output_dir_path, file_name)
         if os.path.isfile(input_file) and not file_name.startswith('.'):
-            logging.info("Anonymizing " + file_name)
+            logging.info("Anonymizing {}".format(file_name))
             anonymize_file(input_file, output_file, compiled_regexes, ip_tree, pwd_lookup)
 
     if iptree_filename is not None:
@@ -47,8 +47,8 @@ def anonymize_file(filename_in, filename_out, compiled_regexes=None,
     This only applies sensitive line removal if compiled_regexes and pwd_lookup
     are not None.  This only applies ip anonymization if ip_tree is not None.
     """
-    logging.debug("File in " + filename_in)
-    logging.debug("File out " + filename_out)
+    logging.debug("File in  {}".format(filename_in))
+    logging.debug("File out {}".format(filename_out))
     with open(filename_out, 'w') as f_out, open(filename_in, 'r') as f_in:
         for line in f_in:
             output_line = line
@@ -58,6 +58,6 @@ def anonymize_file(filename_in, filename_out, compiled_regexes=None,
             if ip_tree is not None:
                 output_line = anonymize_ip_addr(ip_tree, output_line)
             if line != output_line:
-                logging.debug("Input line:  " + line.rstrip())
-                logging.debug("Output line: " + output_line.rstrip())
+                logging.debug("Input line:  {}".format(line.rstrip()))
+                logging.debug("Output line: {}".format(output_line.rstrip()))
             f_out.write(output_line)

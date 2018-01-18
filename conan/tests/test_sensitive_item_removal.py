@@ -6,9 +6,10 @@ from conan.sensitive_item_removal import replace_matching_item, \
 import pytest
 
 # Tuple format is config_line, sensitive_text (should not be in output line)
-# TODO: Add in additional test lines (these are just first pass from IOS)
+# TODO(https://github.com/intentionet/conan/issues/3):
+# Add in additional test lines (these are just first pass from IOS)
 cisco_password_lines = [
-    (' password 0 {}', 'RemoveMe'),
+    ('     password   0      \t{}', 'RemoveMe'),
     (' password 7 {}', '122A00190102180D3C2E'),
     ('username Someone password 0 {}', 'RemoveMe'),
     ('username Someone password {}', 'RemoveMe'),
@@ -71,13 +72,36 @@ cisco_snmp_community_lines = [
     ('snmp-server community {} ro 1', 'RemoveMe'),
     ('snmp-server community {} Something', 'RemoveMe'),
     ('snmp-server host 1.1.1.1 vrf Something informs {} config', 'RemoveMe'),
+    ('snmp-server host 1.1.1.1 informs version 1 {} ipsec', 'RemoveMe'),
+    ('snmp-server host 1.1.1.1 traps version 2c {}', 'RemoveMe'),
     ('snmp-server host 1.1.1.1 informs version 3 auth {} ipsec', 'RemoveMe'),
-    ('snmp-server host 1.1.1.1 traps version 2c noauth {}', 'RemoveMe'),
-    ('snmp-server host 1.1.1.1 informs version 1 priv {} memory', 'RemoveMe'),
+    ('snmp-server host 1.1.1.1 traps version 3 noauth {}', 'RemoveMe'),
+    ('snmp-server host 1.1.1.1 informs version 3 priv {} memory', 'RemoveMe'),
+    ('snmp-server host 1.1.1.1 version 2c {}', 'RemoveMe'),
     ('snmp-server host 1.1.1.1 {} vrrp', 'RemoveMe')
 ]
 
-# TODO: Add Juniper config lines
+# TODO(https://github.com/intentionet/conan/issues/4):
+# Add more Juniper config lines
+juniper_password_lines = [
+    ('secret "{}"', '$9$Be4EhyVb2GDkevYo'),
+    ('set interfaces irb unit 5 family inet address 1.2.3.0/24 vrrp-group 5 authentication-key "{}"', '$9$i.m5OBEevLz3RSevx7-VwgZj5TFCA0Tz9p'),
+    ('set system tacplus-server 1.2.3.4 secret "{}"', '$9$HqfQ1IcrK8n/t0IcvM24aZGi6/t'),
+    ('set system tacplus-server 1.2.3.4 secret "{}"', '$9$YVgoZk.5n6AHq9tORlegoJGDkPfQCtOP5Qn9pRE'),
+    ('set security ike policy test-ike-policy pre-shared-key ascii-text "{}"', '$9$/E6g9tO1IcSrvfTCu1hKv-VwgJD'),
+    ('set system root-authentication encrypted-password "{}"', '$1$CXKwIUfL$6vLSvatE2TCaM25U4u9Bh1'),
+    ('set system login user admin authentication encrypted-password "{}"', '$1$67Q0XA3z$YqiBW/xxKWr74oHPXEkIv1'),
+    ('set system login user someone authenitcation "{}"', '$1$CNANTest$xAfu6Am1d5D/.6OVICuOu/'),
+    ('set system license keys key "{}"', 'SOMETHING sensitive text here'),
+    ('set snmp community {} authorization read-only', 'SECRETTEXT'),
+    ('set snmp trap-group {} otherstuff', 'SECRETTEXT')
+]
+
+# TODO(https://github.com/intentionet/conan/issues/3):
+# Add more Arista config lines
+arista_password_lines = [
+    ('username noc secret sha512 {}', '$6$RMxgK5ALGIf.nWEC$tHuKCyfNtJMCY561P52dTzHUmYMmLxb/Mxik.j3vMUs8lMCPocM00/NAS.SN6GCWx7d/vQIgxnClyQLAb7n3x0')
+]
 
 unique_passwords = [
     '12345ABCDEF',
@@ -95,7 +119,10 @@ unique_passwords = [
     'JDYkqyIFWeBvzpljSfWmRZrmRSRE8syxKlOSjP9RCCkFinZbJI3GD5c6rckJR/Qju2PKLmOewbheAA==',
     'Password',
     '2ndPassword',
-    'PasswordThree'
+    'PasswordThree',
+    '$9$HqfQ1IcrK8n/t0IcvM24aZGi6/t',
+    '$1$CNANTest$xAfu6Am1d5D/.6OVICuOu/',
+    '$6$NQJRTiqxZiNR0aWI$hU1EPleWl6wGcMtDxaMEqNhN8WnxEqmeFjWC5h8oh5USSn5P9ZgFXbf2giO8nEtM.yBXO3O6b.76LQ1zlmG3B0'
 ]
 
 
@@ -119,6 +146,13 @@ def test__anonymize_value(val):
     # Confirm format for anonmymized value matches format of the original value
     assert(anon_val_format == val_format)
 
+    if (val_format == _sensitive_item_formats.md5):
+        org_salt_size = len(val.split('$')[2])
+        anon_salt_size = len(anon_val.split('$')[2])
+        # Make sure salt size is preserved for md5 sensitive items
+        # (Cisco should stay 4 character, Juniper 8 character, etc)
+        assert(org_salt_size == anon_salt_size)
+
     # Confirm reanonymizing same source value results in same anonymized value
     assert(anon_val == _anonymize_value(val, pwd_lookup))
 
@@ -136,10 +170,10 @@ def test__anonymize_value_unique():
 
 
 @pytest.mark.parametrize('val, format_', [
-                         ('094F4107180B', _sensitive_item_formats.type7),
-                         ('00071C080555', _sensitive_item_formats.type7),
-                         ('1608030A2B25', _sensitive_item_formats.type7),
-                         ('070C2E424F072E04043A0E1E01', _sensitive_item_formats.type7),
+                         ('094F4107180B', _sensitive_item_formats.cisco_type7),
+                         ('00071C080555', _sensitive_item_formats.cisco_type7),
+                         ('1608030A2B25', _sensitive_item_formats.cisco_type7),
+                         ('070C2E424F072E04043A0E1E01', _sensitive_item_formats.cisco_type7),
                          ('01999999', _sensitive_item_formats.numeric),
                          ('987654321', _sensitive_item_formats.numeric),
                          ('0000000000000000', _sensitive_item_formats.numeric),
@@ -158,21 +192,28 @@ def test__anonymize_value_unique():
                          ('$1$salt$BFdHEr6MVYydPmpY3FPXV/', _sensitive_item_formats.md5),
                          ('$1$salt$jp6JinwkFEV.2OCDaXrmO1', _sensitive_item_formats.md5),
                          ('$1$./4k$OVkG7VKh5GKt1/XjSO78.0', _sensitive_item_formats.md5),
+                         ('$1$CNANTest$xAfu6Am1d5D/.6OVICuOu/', _sensitive_item_formats.md5),
+                         ('$1$67Q0XA3z$YqiBW/xxKWr74oHPXEkIv1', _sensitive_item_formats.md5),
                          ('thisIsATest', _sensitive_item_formats.text),
                          ('conan', _sensitive_item_formats.text),
                          ('STRING', _sensitive_item_formats.text),
                          ('text_here', _sensitive_item_formats.text),
                          ('more-text-here0', _sensitive_item_formats.text),
-                         ('ABCDEFG', _sensitive_item_formats.text)
+                         ('ABCDEFG', _sensitive_item_formats.text),
+                         ('$9$HqfQ1IcrK8n/t0IcvM24aZGi6/t', _sensitive_item_formats.juniper_type9),
+                         ('$9$YVgoZk.5n6AHq9tORlegoJGDkPfQCtOP5Qn9pRE', _sensitive_item_formats.juniper_type9),
+                         ('$6$RMxgK5ALGIf.nWEC$tHuKCyfNtJMCY561P52dTzHUmYMmLxb/Mxik.j3vMUs8lMCPocM00/NAS.SN6GCWx7d/vQIgxnClyQLAb7n3x0', _sensitive_item_formats.sha512)
                          ])
 def test__check_sensitive_item_format(val, format_):
     """Test sensitive item format detection."""
     assert(_check_sensitive_item_format(val) == format_)
 
 
-@pytest.mark.parametrize('config_line,sensitive_text', cisco_password_lines + cisco_snmp_community_lines)
-def test_pwd_and_com_removal_cisco(regexes, config_line, sensitive_text):
-    """Test removal of passwords and communities from Cisco style config lines."""
+@pytest.mark.parametrize('config_line,sensitive_text', cisco_password_lines +
+                         cisco_snmp_community_lines + juniper_password_lines +
+                         arista_password_lines)
+def test_pwd_and_com_removal(regexes, config_line, sensitive_text):
+    """Test removal of passwords and communities from config lines."""
     config_line = config_line.format(sensitive_text)
     pwd_lookup = {}
     assert(sensitive_text not in replace_matching_item(regexes, config_line, pwd_lookup))
@@ -180,10 +221,13 @@ def test_pwd_and_com_removal_cisco(regexes, config_line, sensitive_text):
 
 @pytest.mark.parametrize('config_line', [
                          'nothing in this string should be replaced',
-                         'interface GigabitEthernet0/0',
+                         '      interface GigabitEthernet0/0',
                          'ip address 1.2.3.4 255.255.255.0'
                          ])
 def test_pwd_and_com_removal_insensitive_lines(regexes, config_line):
     """Make sure benign lines are not affected by sensitive_item_removal."""
     pwd_lookup = {}
+    # Collapse all whitespace in original config_line and add newline since
+    # that will be done by replace_matching_item
+    config_line = '{}\n'.format(' '.join(config_line.split()))
     assert(config_line == replace_matching_item(regexes, config_line, pwd_lookup))
