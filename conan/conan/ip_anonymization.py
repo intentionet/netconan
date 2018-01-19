@@ -2,9 +2,9 @@
 
 import ipaddress
 import logging
-import random
 import regex
 
+from hashlib import md5
 from six import u
 
 
@@ -55,7 +55,7 @@ class tree_node():
             node = node.right
 
 
-def anonymize_ip_addr(my_ip_tree, line):
+def anonymize_ip_addr(my_ip_tree, line, salt):
     """Replace each IP address in the line with an anonymized IP address.
 
     Quad-octets that look like masks will be left unchanged.  That is, any
@@ -88,7 +88,7 @@ def anonymize_ip_addr(my_ip_tree, line):
                           .format(ip_str))
             ip_addrs.append(ip_str)
         else:
-            new_ip = _convert_to_anon_ip(my_ip_tree, ip_int)
+            new_ip = _convert_to_anon_ip(my_ip_tree, ip_int, salt)
             new_ip_str = str(ipaddress.IPv4Address(new_ip))
             ip_addrs.append(new_ip_str)
             logging.debug("Replaced {} with {}".format(ip_str, new_ip_str))
@@ -96,14 +96,14 @@ def anonymize_ip_addr(my_ip_tree, line):
     return new_line.format(*ip_addrs)
 
 
-def _convert_to_anon_ip(node, ip_int):
+def _convert_to_anon_ip(node, ip_int, salt):
     """Anonymize an IP address using an existing IP tree root node.
 
     The bits of a given source IP address define a branch in the binary tree,
     where each source bit selects an edge (1=right, 0=left) from the previous
     node and the value at the next node is the anonymized bit.  This process
     is repeated until all prefix bits are exhausted.  The values at each node
-    are randomly generated as needed and are the inverse of their sibling.
+    are pseudorandomly generated as needed and are the inverse of their sibling.
     """
     new_ip_int = 0
 
@@ -111,10 +111,15 @@ def _convert_to_anon_ip(node, ip_int):
         # msb is the next bit to anonymize
         msb = (ip_int >> i) & 1
         if node.left is None:
+            # Use the last bit of the hash as a pseudorandom bit
+            preceding_bits = '{:032b}'.format(ip_int)[:31 - i]
+            last_hash_digit = md5(salt + preceding_bits).hexdigest()[-1]
+            last_hash_bit = int(last_hash_digit, 16) & 1
+
             # Go ahead and populate both left and right nodes, sacrificing
             # space to simplify control flow
-            node.left = tree_node(random.randint(0, 1))
-            node.right = tree_node(1 - node.left.value)
+            node.left = tree_node(last_hash_bit)
+            node.right = tree_node(1 - last_hash_bit)
         if msb:
             node = node.right
         else:

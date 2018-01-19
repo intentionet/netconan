@@ -24,8 +24,8 @@ def main():
                         help='Anonymize IP addresses',
                         action='store_true', default=False)
     parser.add_argument('-r', '--randomseed',
-                        help='Random seed for IP anonymization',
-                        type=int, default=None)
+                        help='Random seed/salt for IP anonymization',
+                        default=None)
     parser.add_argument('-d', '--dumpipaddrmap',
                         help='Dump IP address anonymization map to specified file',
                         default=None)
