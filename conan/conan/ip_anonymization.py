@@ -113,6 +113,8 @@ def _convert_to_anon_ip(node, ip_int, salt):
         if node.left is None:
             # Use a hash as a deterministic pseudorandom bit generator here
             # so address anonymization is the same regardless of order/context
+
+            # This is a string of all source bits preceding the one to be anonymized
             preceding_bits = '{:032b}'.format(ip_int)[:31 - i]
             last_hash_digit = md5((salt + preceding_bits).encode()).hexdigest()[-1]
             last_hash_bit = int(last_hash_digit, 16) & 1
