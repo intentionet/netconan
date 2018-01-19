@@ -20,6 +20,6 @@ To anonymize sensitive lines and IP addresses on all configs in `~/config` and s
 
 `conan -p -a -i ~/configs -o ~/anon_configs`
 
-For development/debugging purposes, `loglevel DEBUG`, `randomseed ######` (specify randomseed/salt (non-whitespace character) for consistent anonymization outputs), and `dumpipaddrmap` (to save original-to-anonymized IP mapping) may be set:
+For development/debugging purposes, `loglevel DEBUG`, `randomseed ######` (specify random seed/salt (non-whitespace character) for consistent anonymization outputs), and `dumpipaddrmap` (to save original-to-anonymized IP mapping) may be set:
 
 `conan -p -a -i ~/configs -o ~/anon_configs -l DEBUG -r ConanRandomSeed1234 -d ~/ip_mapping.txt`

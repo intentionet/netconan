@@ -15,7 +15,7 @@ ip_list = [('10.11.12.13'),
            ('128.7.55.12'),
            ('223.123.21.99')]
 
-pseudo_rand_salt = 'saltForTest'
+salt = 'saltForTest'
 
 
 @pytest.fixture(scope='module')
@@ -42,10 +42,10 @@ def ip_tree():
 def test_anonymize_ip_addr(ip_tree, line, ip_addrs):
     """Test IP address removal config lines."""
     line_w_ip = line.format(*ip_addrs)
-    anon_line = anonymize_ip_addr(ip_tree, line_w_ip, pseudo_rand_salt)
+    anon_line = anonymize_ip_addr(ip_tree, line_w_ip, salt)
 
     # Now anonymize each IP address individually & build another anonymized line
-    anon_ip_addrs = [anonymize_ip_addr(ip_tree, ip_addr, pseudo_rand_salt) for ip_addr in ip_addrs]
+    anon_ip_addrs = [anonymize_ip_addr(ip_tree, ip_addr, salt) for ip_addr in ip_addrs]
     individually_anon_line = line.format(*anon_ip_addrs)
 
     # Make sure anonymizing each address individually is the same as
@@ -75,7 +75,7 @@ def check_ip_class(ip_int):
 def test__convert_to_anon_ip(ip_tree, ip_addr):
     """Test conversion from original to anonymized IP address."""
     ip_int = _ip_to_int(ip_addr)
-    ip_int_anon = _convert_to_anon_ip(ip_tree, ip_int, pseudo_rand_salt)
+    ip_int_anon = _convert_to_anon_ip(ip_tree, ip_int, salt)
 
     # Anonymized ip address should not match the original address
     assert(ip_int != ip_int_anon)
@@ -88,7 +88,7 @@ def test__convert_to_anon_ip(ip_tree, ip_addr):
         # Flip the ith bit of the org address and use that as the similar address
         diff_mask = (1 << i)
         ip_int_similar = ip_int ^ diff_mask
-        ip_int_similar_anon = _convert_to_anon_ip(ip_tree, ip_int_similar, pseudo_rand_salt)
+        ip_int_similar_anon = _convert_to_anon_ip(ip_tree, ip_int_similar, salt)
 
         # Using i + 1 since same_mask should mask off ith bit, not preserve it
         same_mask = 0xFFFFFFFF & (0xFFFFFFFF << (i + 1))
@@ -107,28 +107,28 @@ def test__convert_to_anon_ip_order_independent():
     ip_lookup_forward = {}
     for ip_addr in ip_list:
         ip_int = _ip_to_int(ip_addr)
-        ip_int_anon = _convert_to_anon_ip(ip_tree_forward, ip_int, pseudo_rand_salt)
+        ip_int_anon = _convert_to_anon_ip(ip_tree_forward, ip_int, salt)
         ip_lookup_forward[ip_int] = ip_int_anon
 
     ip_tree_reverse = tree_node(None)
     ip_tree_reverse.preserve_ipv4_class()
     for ip_addr in reversed(ip_list):
-        ip_int = _ip_to_int(ip_addr)
-        ip_int_anon = _convert_to_anon_ip(ip_tree_reverse, ip_int, pseudo_rand_salt)
+        ip_int_reverse = _ip_to_int(ip_addr)
+        ip_int_anon_reverse = _convert_to_anon_ip(ip_tree_reverse, ip_int_reverse, salt)
         # Confirm training the tree in reverse order does not affect
         # anonymization results
-        assert(ip_int_anon == ip_lookup_forward[ip_int])
+        assert(ip_int_anon_reverse == ip_lookup_forward[ip_int_reverse])
 
     ip_tree_extras = tree_node(None)
     ip_tree_extras.preserve_ipv4_class()
     for ip_addr in ip_list:
-        ip_int = _ip_to_int(ip_addr)
-        ip_int_anon = _convert_to_anon_ip(ip_tree_extras, ip_int, pseudo_rand_salt)
-        ip_int_inverted = ip_int ^ 0xFFFFFFFF
-        _convert_to_anon_ip(ip_tree_extras, ip_int_inverted, pseudo_rand_salt)
+        ip_int_extras = _ip_to_int(ip_addr)
+        ip_int_anon_extras = _convert_to_anon_ip(ip_tree_extras, ip_int_extras, salt)
+        ip_int_inverted = ip_int_extras ^ 0xFFFFFFFF
+        _convert_to_anon_ip(ip_tree_extras, ip_int_inverted, salt)
         # Confirm training the tree with extra addresses in-between does not
         # affect anonymization results
-        assert(ip_int_anon == ip_lookup_forward[ip_int])
+        assert(ip_int_anon_extras == ip_lookup_forward[ip_int_extras])
 
 
 def test_dump_iptree(tmpdir, ip_tree):
@@ -139,7 +139,7 @@ def test_dump_iptree(tmpdir, ip_tree):
     # Make sure all addresses to be checked are in ip_tree and generate reference mapping
     for ip_addr in ip_list:
         ip_int = _ip_to_int(ip_addr)
-        ip_int_anon = _convert_to_anon_ip(ip_tree, ip_int, pseudo_rand_salt)
+        ip_int_anon = _convert_to_anon_ip(ip_tree, ip_int, salt)
         ip_addr_anon = str(ipaddress.IPv4Address(ip_int_anon))
         ip_mapping[ip_addr] = ip_addr_anon
 
