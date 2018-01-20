@@ -111,24 +111,29 @@ def _convert_to_anon_ip(node, ip_int, salt):
         # msb is the next bit to anonymize
         msb = (ip_int >> i) & 1
         if node.left is None:
-            # Use a hash as a deterministic pseudorandom bit generator here
-            # so address anonymization is the same regardless of order/context
+            # Use a hash as a deterministic bit generator here so address
+            # anonymization is the same regardless of order/context
 
             # This is a string of all source bits preceding the one to be anonymized
             preceding_bits = '{:032b}'.format(ip_int)[:31 - i]
-            last_hash_digit = md5((salt + preceding_bits).encode()).hexdigest()[-1]
-            last_hash_bit = int(last_hash_digit, 16) & 1
+            rand_bit = _generate_bit_from_hash(salt + preceding_bits)
 
             # Go ahead and populate both left and right nodes, sacrificing
             # space to simplify control flow
-            node.left = tree_node(last_hash_bit)
-            node.right = tree_node(1 - last_hash_bit)
+            node.left = tree_node(rand_bit)
+            node.right = tree_node(1 - rand_bit)
         if msb:
             node = node.right
         else:
             node = node.left
         new_ip_int |= node.value << i
     return new_ip_int
+
+
+def _generate_bit_from_hash(hash_input):
+    """Return the last bit of the result from hashing the input string."""
+    last_hash_digit = md5((hash_input).encode()).hexdigest()[-1]
+    return int(last_hash_digit, 16) & 1
 
 
 def _ip_to_int(ip_str):

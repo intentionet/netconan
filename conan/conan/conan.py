@@ -23,8 +23,8 @@ def main():
     parser.add_argument('-a', '--anonymizeipaddr',
                         help='Anonymize IP addresses',
                         action='store_true', default=False)
-    parser.add_argument('-r', '--randomseed',
-                        help='Random seed/salt for IP anonymization',
+    parser.add_argument('-s', '--salt',
+                        help='Salt for IP anonymization',
                         default=None)
     parser.add_argument('-d', '--dumpipaddrmap',
                         help='Dump IP address anonymization map to specified file',
@@ -44,7 +44,7 @@ def main():
         os.makedirs(output_dir)
 
     anonymize_files_in_dir(input_dir, output_dir, options.anonymizepwdandcomm,
-                           options.anonymizeipaddr, options.randomseed,
+                           options.anonymizeipaddr, options.salt,
                            options.dumpipaddrmap)
 
 

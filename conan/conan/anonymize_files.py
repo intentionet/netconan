@@ -10,7 +10,7 @@ from conan.ip_anonymization import tree_node, anonymize_ip_addr
 from conan.sensitive_item_removal import replace_matching_item, \
     generate_default_sensitive_item_regexes
 
-DEFAULT_SALT_LENGTH = 16
+_DEFAULT_SALT_LENGTH = 16
 
 
 def anonymize_files_in_dir(input_dir_path, output_dir_path, anon_pwd, anon_ip,
@@ -27,7 +27,7 @@ def anonymize_files_in_dir(input_dir_path, output_dir_path, anon_pwd, anon_ip,
         ip_tree.preserve_ipv4_class()
         if random_salt is None:
             char_choices = string.ascii_letters + string.digits
-            random_salt = ''.join(random.choice(char_choices) for i in range(DEFAULT_SALT_LENGTH))
+            random_salt = ''.join(random.choice(char_choices) for i in range(_DEFAULT_SALT_LENGTH))
         logging.debug('Using random salt: "{}"'.format(random_salt))
 
     for file_name in os.listdir(input_dir_path):
