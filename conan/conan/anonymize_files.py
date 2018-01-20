@@ -4,15 +4,17 @@ from __future__ import absolute_import
 import logging
 import os
 import random
-import sys
+import string
 
 from conan.ip_anonymization import tree_node, anonymize_ip_addr
 from conan.sensitive_item_removal import replace_matching_item, \
     generate_default_sensitive_item_regexes
 
+_DEFAULT_SALT_LENGTH = 16
+
 
 def anonymize_files_in_dir(input_dir_path, output_dir_path, anon_pwd, anon_ip,
-                           random_seed=None, iptree_filename=None):
+                           salt=None, iptree_filename=None):
     """Anonymize each file in input directory and save to output directory."""
     compiled_regexes = None
     ip_tree = None
@@ -23,24 +25,25 @@ def anonymize_files_in_dir(input_dir_path, output_dir_path, anon_pwd, anon_ip,
     if anon_ip:
         ip_tree = tree_node(None)
         ip_tree.preserve_ipv4_class()
-        if random_seed is None:
-            random_seed = random.randrange(sys.maxsize)
-        logging.debug('Using random seed: {}'.format(random_seed))
-        random.seed(random_seed)
+        if salt is None:
+            char_choices = string.ascii_letters + string.digits
+            salt = ''.join(random.choice(char_choices) for i in range(_DEFAULT_SALT_LENGTH))
+        logging.debug('Using random salt: "{}"'.format(salt))
 
     for file_name in os.listdir(input_dir_path):
         input_file = os.path.join(input_dir_path, file_name)
         output_file = os.path.join(output_dir_path, file_name)
         if os.path.isfile(input_file) and not file_name.startswith('.'):
             logging.info("Anonymizing {}".format(file_name))
-            anonymize_file(input_file, output_file, compiled_regexes, ip_tree, pwd_lookup)
+            anonymize_file(input_file, output_file, salt,
+                           compiled_regexes, ip_tree, pwd_lookup)
 
     if iptree_filename is not None:
         with open(iptree_filename, 'w') as f_out:
             ip_tree.dump_to_file(f_out)
 
 
-def anonymize_file(filename_in, filename_out, compiled_regexes=None,
+def anonymize_file(filename_in, filename_out, salt, compiled_regexes=None,
                    ip_tree=None, pwd_lookup=None):
     """Anonymize contents of input file and save to the output file.
 
@@ -56,7 +59,7 @@ def anonymize_file(filename_in, filename_out, compiled_regexes=None,
                 output_line = replace_matching_item(compiled_regexes,
                                                     output_line, pwd_lookup)
             if ip_tree is not None:
-                output_line = anonymize_ip_addr(ip_tree, output_line)
+                output_line = anonymize_ip_addr(ip_tree, output_line, salt)
             if line != output_line:
                 logging.debug("Input line:  {}".format(line.rstrip()))
                 logging.debug("Output line: {}".format(output_line.rstrip()))
