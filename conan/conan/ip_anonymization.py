@@ -111,7 +111,7 @@ def _convert_to_anon_ip(node, ip_int, salt):
         # msb is the next bit to anonymize
         msb = (ip_int >> i) & 1
         if node.left is None:
-            # Use a hash as a deterministic bit generator here so address
+            # Use a salted hash as a deterministic bit generator here so address
             # anonymization is the same regardless of order/context
 
             # This is a string of all source bits preceding the one to be anonymized
