@@ -116,12 +116,12 @@ def _convert_to_anon_ip(node, ip_int, salt):
 
             # This is a string of all source bits preceding the one to be anonymized
             preceding_bits = '{:032b}'.format(ip_int)[:31 - i]
-            rand_bit = _generate_bit_from_hash(salt + preceding_bits)
+            anon_bit = _generate_bit_from_hash(salt + preceding_bits)
 
             # Go ahead and populate both left and right nodes, sacrificing
             # space to simplify control flow
-            node.left = tree_node(rand_bit)
-            node.right = tree_node(1 - rand_bit)
+            node.left = tree_node(anon_bit)
+            node.right = tree_node(1 - anon_bit)
         if msb:
             node = node.right
         else:
