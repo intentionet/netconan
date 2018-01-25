@@ -109,7 +109,7 @@ class _sensitive_item_formats(Enum):
 
 
 def anonymize_sensitive_words(sensitive_words, line, salt):
-    """Anonymize occurrences of the specified sensitive words in the input line."""
+    """Anonymize words from specified sensitive words list in the input line."""
     for sens_word in sensitive_words:
         sens_word_lower = sens_word.lower()
         if sens_word_lower in line.lower():

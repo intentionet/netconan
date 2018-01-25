@@ -139,7 +139,7 @@ def regexes():
                          ('something{}something', ['secret']),
                          ('{}', ['secret']),
                          ('a{0}b{0}c{0}d', ['secret']),
-                         ('testing {} and {}.', ['secret', 'blah']),
+                         ('testing {} and {}.', ['SECRET', 'blah']),
                          ('testing {}{}.', ['secret', 'blah'])
                          ])
 def test_anonymize_sensitive_words(raw_line, sensitive_words):
