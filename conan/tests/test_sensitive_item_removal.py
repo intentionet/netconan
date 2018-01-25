@@ -163,6 +163,7 @@ def test_anonymize_sensitive_words(raw_line, sensitive_words):
         # Make sure all sensitive words are removed from the anonymized line
         assert(sens_word not in anon_line)
 
+        # Test for case insensitivity
         # Make sure all sensitive words are removed from the lowercase line
         assert(sens_word.lower() not in anon_line_lower)
 
