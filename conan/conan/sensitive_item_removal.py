@@ -6,6 +6,8 @@ import logging
 
 from binascii import b2a_hex
 from enum import Enum
+# Using hashlib md5 since it is faster than passlib md5 hash
+from hashlib import md5
 from passlib.hash import cisco_type7, md5_crypt, sha512_crypt
 from six import b
 
@@ -104,6 +106,19 @@ class _sensitive_item_formats(Enum):
     text = 5
     sha512 = 6
     juniper_type9 = 7
+
+
+def anonymize_sensitive_words(sensitive_words, line, salt):
+    """Anonymize occurrences of the specified sensitive words in the input line."""
+    for sens_word in sensitive_words:
+        sens_word_lower = sens_word.lower()
+        if sens_word_lower in line.lower():
+            # Only using the last 6 digits of the hash result as the anonymized
+            # replacement to cut down on the size of the replacements
+            anon_word = md5((salt + sens_word_lower).encode()).hexdigest()[:6]
+            sens_word_regex = regex.compile(sens_word, regex.IGNORECASE)
+            line = sens_word_regex.sub(anon_word, line)
+    return line
 
 
 def _anonymize_value(val, lookup):
