@@ -130,6 +130,23 @@ def _convert_to_anon_ip(node, ip_int, salt):
     return new_ip_int
 
 
+def _convert_to_unanon_ip(ip_int, salt):
+    """Reverse the hash based anonymization for the given anonymized IP addr."""
+    unanon_ip_int = 0
+    preceding_bits = ''
+
+    for i in range(31, -1, -1):
+        # msb is the next bit to unanonymize
+        msb = (ip_int >> i) & 1
+
+        # This corresponds to the anonymized bit for the right node
+        hash_bit = 1 - _generate_bit_from_hash(salt + preceding_bits)
+        anon_bit = hash_bit ^ msb
+        preceding_bits += str(anon_bit)
+        print('msb:{} hash:{} anon:{} pre:{}'.format(msb, hash_bit, anon_bit, preceding_bits))
+
+
+
 def _generate_bit_from_hash(hash_input):
     """Return the last bit of the result from hashing the input string."""
     last_hash_digit = md5((hash_input).encode()).hexdigest()[-1]
