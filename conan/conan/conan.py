@@ -29,6 +29,9 @@ def main():
     parser.add_argument('-d', '--dumpipaddrmap',
                         help='Dump IP address anonymization map to specified file',
                         default=None)
+    parser.add_argument('-u', '--undoanonymizeipaddr',
+                        help='Undo IP address anonymization (must specify salt)',
+                        action='store_true', default=False)
     parser.add_argument('--sensitivewords', help='Comma separated list of '
                         'keywords to anonymize', default=None)
     loglevel_choices = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
@@ -49,9 +52,23 @@ def main():
     if options.sensitivewords is not None:
         sensitive_words = options.sensitivewords.split(',')
 
+    if options.undoanonymizeipaddr:
+        if options.anonymizeipaddr:
+            raise ValueError('Cannot anonymize and undo anonymization, select '
+                             'only one.')
+        if options.salt is None:
+            raise ValueError('Salt used for anonymization must be specified in '
+                             'order to undo anonymization.')
+
+    if options.dumpipaddrmap is not None:
+        if not options.anonymizeipaddr:
+            raise ValueError('Can only dump IP address map when anonymizing IP '
+                             'addresses.')
+
     anonymize_files_in_dir(input_dir, output_dir, options.anonymizepwdandcomm,
                            options.anonymizeipaddr, options.salt,
-                           options.dumpipaddrmap, sensitive_words)
+                           options.dumpipaddrmap, sensitive_words,
+                           options.undoanonymizeipaddr)
 
 
 if __name__ == '__main__':

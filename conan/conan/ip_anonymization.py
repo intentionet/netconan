@@ -55,12 +55,16 @@ class tree_node():
             node = node.right
 
 
-def anonymize_ip_addr(my_ip_tree, line, salt):
+def anonymize_ip_addr(my_ip_tree, line, salt, undo_ip_anon=False):
     """Replace each IP address in the line with an anonymized IP address.
 
     Quad-octets that look like masks will be left unchanged.  That is, any
     quad-octet that consists solely of an initial group of 1s followed by 0s
     or initial 0s followed by 1s will be unchanged.
+
+    If undo_ip_anon is True, then each IP address encountered will be
+    treated as an address already anonymized using the specified salt, and it
+    will be replaced with the unanonymized address.
     """
     pattern = '((\d{1,3})\.\d{1,3}\.\d{1,3}\.\d{1,3})(?=/(\d{1,3}))?'
     matches = regex.findall(pattern, line)
@@ -88,7 +92,10 @@ def anonymize_ip_addr(my_ip_tree, line, salt):
                           .format(ip_str))
             ip_addrs.append(ip_str)
         else:
-            new_ip = _convert_to_anon_ip(my_ip_tree, ip_int, salt)
+            if undo_ip_anon:
+                new_ip = _convert_to_unanon_ip(ip_int, salt)
+            else:
+                new_ip = _convert_to_anon_ip(my_ip_tree, ip_int, salt)
             new_ip_str = str(ipaddress.IPv4Address(new_ip))
             ip_addrs.append(new_ip_str)
             logging.debug("Replaced {} with {}".format(ip_str, new_ip_str))

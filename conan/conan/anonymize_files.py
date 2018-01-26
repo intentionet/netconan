@@ -15,7 +15,8 @@ _DEFAULT_SALT_LENGTH = 16
 
 
 def anonymize_files_in_dir(input_dir_path, output_dir_path, anon_pwd, anon_ip,
-                           salt=None, iptree_filename=None, sensitive_words=None):
+                           salt=None, iptree_filename=None, sensitive_words=None,
+                           undo_ip_anon=False):
     """Anonymize each file in input directory and save to output directory."""
     compiled_regexes = None
     ip_tree = None
@@ -41,15 +42,17 @@ def anonymize_files_in_dir(input_dir_path, output_dir_path, anon_pwd, anon_ip,
         if os.path.isfile(input_file) and not file_name.startswith('.'):
             logging.info("Anonymizing {}".format(file_name))
             anonymize_file(input_file, output_file, salt, compiled_regexes,
-                           ip_tree, pwd_lookup, sensitive_word_regexes)
+                           ip_tree, pwd_lookup, sensitive_word_regexes,
+                           undo_ip_anon)
 
-    if iptree_filename is not None:
+    if iptree_filename is not None and ip_tree is not None:
         with open(iptree_filename, 'w') as f_out:
             ip_tree.dump_to_file(f_out)
 
 
 def anonymize_file(filename_in, filename_out, salt, compiled_regexes=None,
-                   ip_tree=None, pwd_lookup=None, sensitive_word_regexes=None):
+                   ip_tree=None, pwd_lookup=None, sensitive_word_regexes=None,
+                   undo_ip_anon=False):
     """Anonymize contents of input file and save to the output file.
 
     This only applies sensitive line removal if compiled_regexes and pwd_lookup
@@ -63,8 +66,9 @@ def anonymize_file(filename_in, filename_out, salt, compiled_regexes=None,
             if compiled_regexes is not None and pwd_lookup is not None:
                 output_line = replace_matching_item(compiled_regexes,
                                                     output_line, pwd_lookup)
-            if ip_tree is not None:
-                output_line = anonymize_ip_addr(ip_tree, output_line, salt)
+            if ip_tree is not None or undo_ip_anon:
+                output_line = anonymize_ip_addr(ip_tree, output_line, salt,
+                                                undo_ip_anon)
             if sensitive_word_regexes is not None:
                 output_line = anonymize_sensitive_words(sensitive_word_regexes,
                                                         output_line, salt)
