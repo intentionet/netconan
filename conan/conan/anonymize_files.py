@@ -8,7 +8,8 @@ import string
 
 from conan.ip_anonymization import tree_node, anonymize_ip_addr
 from conan.sensitive_item_removal import anonymize_sensitive_words, \
-    replace_matching_item, generate_default_sensitive_item_regexes
+    replace_matching_item, generate_default_sensitive_item_regexes, \
+    generate_sensitive_word_regexes
 
 _DEFAULT_SALT_LENGTH = 16
 
@@ -19,12 +20,15 @@ def anonymize_files_in_dir(input_dir_path, output_dir_path, anon_pwd, anon_ip,
     compiled_regexes = None
     ip_tree = None
     pwd_lookup = None
+    sensitive_word_regexes = None
     if anon_pwd:
         compiled_regexes = generate_default_sensitive_item_regexes()
         pwd_lookup = {}
     if anon_ip:
         ip_tree = tree_node(None)
         ip_tree.preserve_ipv4_class()
+    if sensitive_words is not None:
+        sensitive_word_regexes = generate_sensitive_word_regexes(sensitive_words)
     # The salt is only used for IP and sensitive word anonymization:
     if salt is None:
         char_choices = string.ascii_letters + string.digits
@@ -37,7 +41,7 @@ def anonymize_files_in_dir(input_dir_path, output_dir_path, anon_pwd, anon_ip,
         if os.path.isfile(input_file) and not file_name.startswith('.'):
             logging.info("Anonymizing {}".format(file_name))
             anonymize_file(input_file, output_file, salt, compiled_regexes,
-                           ip_tree, pwd_lookup, sensitive_words)
+                           ip_tree, pwd_lookup, sensitive_word_regexes)
 
     if iptree_filename is not None:
         with open(iptree_filename, 'w') as f_out:
@@ -45,7 +49,7 @@ def anonymize_files_in_dir(input_dir_path, output_dir_path, anon_pwd, anon_ip,
 
 
 def anonymize_file(filename_in, filename_out, salt, compiled_regexes=None,
-                   ip_tree=None, pwd_lookup=None, sensitive_words=None):
+                   ip_tree=None, pwd_lookup=None, sensitive_word_regexes=None):
     """Anonymize contents of input file and save to the output file.
 
     This only applies sensitive line removal if compiled_regexes and pwd_lookup
@@ -61,8 +65,8 @@ def anonymize_file(filename_in, filename_out, salt, compiled_regexes=None,
                                                     output_line, pwd_lookup)
             if ip_tree is not None:
                 output_line = anonymize_ip_addr(ip_tree, output_line, salt)
-            if sensitive_words is not None:
-                output_line = anonymize_sensitive_words(sensitive_words,
+            if sensitive_word_regexes is not None:
+                output_line = anonymize_sensitive_words(sensitive_word_regexes,
                                                         output_line, salt)
             if line != output_line:
                 logging.debug("Input line:  {}".format(line.rstrip()))

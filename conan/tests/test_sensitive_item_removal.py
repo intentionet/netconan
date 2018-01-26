@@ -2,7 +2,8 @@
 
 from conan.sensitive_item_removal import anonymize_sensitive_words, \
     replace_matching_item, generate_default_sensitive_item_regexes, \
-    _sensitive_item_formats, _anonymize_value, _check_sensitive_item_format
+    generate_sensitive_word_regexes, _sensitive_item_formats, \
+    _anonymize_value, _check_sensitive_item_format
 import pytest
 
 # Tuple format is config_line, sensitive_text (should not be in output line)
@@ -125,7 +126,7 @@ unique_passwords = [
     '$6$NQJRTiqxZiNR0aWI$hU1EPleWl6wGcMtDxaMEqNhN8WnxEqmeFjWC5h8oh5USSn5P9ZgFXbf2giO8nEtM.yBXO3O6b.76LQ1zlmG3B0'
 ]
 
-salt = 'saltForTest'
+SALT = 'saltForTest'
 
 
 @pytest.fixture(scope='module')
@@ -144,16 +145,16 @@ def regexes():
                          ])
 def test_anonymize_sensitive_words(raw_line, sensitive_words):
     """Test anonymization of specified sensitive words."""
-    salt = 'saltForTest'
+    sens_word_regexes = generate_sensitive_word_regexes(sensitive_words)
     line = raw_line.format(*sensitive_words)
-    anon_line = anonymize_sensitive_words(sensitive_words, line, salt)
+    anon_line = anonymize_sensitive_words(sens_word_regexes, line, SALT)
 
     # Now anonymize each sensitive word individually & build another anon line
-    anon_words = [anonymize_sensitive_words(sensitive_words, word, salt) for word in sensitive_words]
+    anon_words = [anonymize_sensitive_words(sens_word_regexes, word, SALT) for word in sensitive_words]
     individually_anon_line = raw_line.format(*anon_words)
 
-    anon_line_lower = anonymize_sensitive_words(sensitive_words, line.lower(), salt)
-    anon_line_upper = anonymize_sensitive_words(sensitive_words, line.upper(), salt)
+    anon_line_lower = anonymize_sensitive_words(sens_word_regexes, line.lower(), SALT)
+    anon_line_upper = anonymize_sensitive_words(sens_word_regexes, line.upper(), SALT)
 
     # Make sure reanonymizing each word individually gives the same result as
     # anonymizing all at once, the first time
