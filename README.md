@@ -30,3 +30,7 @@ To anonymize sensitive lines, IP addresses, and any occurrences of `ConanSecret`
 For development/debugging purposes, `loglevel DEBUG`, `salt ######` (specify salt string for consistent IP and sensitive word anonymization outputs), and `dumpipaddrmap` (to save original-to-anonymized IP mapping) may be set:
 
 `conan -p -a --sensitivewords=ConanSecret,SensitiveText -i ~/configs -o ~/anon_configs -l DEBUG -s ConanSalt1234 -d ~/ip_mapping.txt`
+
+For development/debugging purposes, IP anonymization can be undone if the original salt value is saved.  To unanonymize IP addresses in files in the `~/anon_configs` directory:
+
+`conan -i ~/anon_configs -o ~/unanon_configs -s ConanSalt1234 -u`
