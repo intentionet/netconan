@@ -130,21 +130,33 @@ def _convert_to_anon_ip(node, ip_int, salt):
     return new_ip_int
 
 
-def _convert_to_unanon_ip(ip_int, salt):
+def _convert_to_unanon_ip(ip_int, salt, preserve_ipv4_class=True):
     """Reverse the hash based anonymization for the given anonymized IP addr."""
     unanon_ip_int = 0
     preceding_bits = ''
+    i = 31
+    if preserve_ipv4_class:
+        # Preserve the number of leading ones (up to 4) to preserve class
+        for j in range(4):
+            msb = (ip_int >> i) & 1
+            unanon_ip_int |= msb << i
+            preceding_bits += str(msb)
+            i -= 1
+            if not msb:
+                break
 
-    for i in range(31, -1, -1):
-        # msb is the next bit to unanonymize
-        msb = (ip_int >> i) & 1
+    for i in range(i, -1, -1):
+        anon_bit = (ip_int >> i) & 1
+        # For the given preceding_bits, zero_bit is the next anon_bit if the
+        # original/unanonymized bit was 0
+        zero_bit = _generate_bit_from_hash(salt + preceding_bits)
+        # If zero_bit = anon_bit, then unanon bit is 0 (left node in IP tree)
+        unanon_bit = zero_bit ^ anon_bit
 
-        # This corresponds to the anonymized bit for the right node
-        hash_bit = 1 - _generate_bit_from_hash(salt + preceding_bits)
-        anon_bit = hash_bit ^ msb
-        preceding_bits += str(anon_bit)
-        print('msb:{} hash:{} anon:{} pre:{}'.format(msb, hash_bit, anon_bit, preceding_bits))
-
+        preceding_bits += str(unanon_bit)
+        unanon_ip_int |= unanon_bit << i
+        print('msb:{} left:{} unanon:{} pre:{}'.format(anon_bit, zero_bit, unanon_bit, salt + preceding_bits))
+    return unanon_ip_int
 
 
 def _generate_bit_from_hash(hash_input):
