@@ -31,6 +31,6 @@ For development/debugging purposes, `loglevel DEBUG`, `salt ######` (specify sal
 
 `conan -p -a --sensitivewords=ConanSecret,SensitiveText -i ~/configs -o ~/anon_configs -l DEBUG -s ConanSalt1234 -d ~/ip_mapping.txt`
 
-For development/debugging purposes, IP anonymization can be undone if the original salt value is saved.  To unanonymize IP addresses in files in the `~/anon_configs` directory:
+For development/debugging purposes, IP anonymization can be undone if the original salt value is saved.  To unanonymize IP addresses in files in the `~/anon_configs` directory that were anonymized with salt `ConanSalt1234` and save to the output directory `~/unanon_configs`:
 
 `conan -i ~/anon_configs -o ~/unanon_configs -s ConanSalt1234 -u`
