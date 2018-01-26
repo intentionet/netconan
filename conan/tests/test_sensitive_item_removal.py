@@ -1,7 +1,8 @@
 """Test removal of passwords and snmp communities."""
 
-from conan.sensitive_item_removal import replace_matching_item, \
-    generate_default_sensitive_item_regexes, _sensitive_item_formats, \
+from conan.sensitive_item_removal import anonymize_sensitive_words, \
+    replace_matching_item, generate_default_sensitive_item_regexes, \
+    generate_sensitive_word_regexes, _sensitive_item_formats, \
     _anonymize_value, _check_sensitive_item_format
 import pytest
 
@@ -125,11 +126,50 @@ unique_passwords = [
     '$6$NQJRTiqxZiNR0aWI$hU1EPleWl6wGcMtDxaMEqNhN8WnxEqmeFjWC5h8oh5USSn5P9ZgFXbf2giO8nEtM.yBXO3O6b.76LQ1zlmG3B0'
 ]
 
+SALT = 'saltForTest'
+
 
 @pytest.fixture(scope='module')
 def regexes():
     """Compile regexes once for all tests in this module."""
     return generate_default_sensitive_item_regexes()
+
+
+@pytest.mark.parametrize('raw_line, sensitive_words', [
+                         ('something {} something', ['secret']),
+                         ('something{}something', ['secret']),
+                         ('{}', ['secret']),
+                         ('a{0}b{0}c{0}d', ['secret']),
+                         ('testing {} and {}.', ['SECRET', 'blah']),
+                         ('testing {}{}.', ['secret', 'blah'])
+                         ])
+def test_anonymize_sensitive_words(raw_line, sensitive_words):
+    """Test anonymization of specified sensitive words."""
+    sens_word_regexes = generate_sensitive_word_regexes(sensitive_words)
+    line = raw_line.format(*sensitive_words)
+    anon_line = anonymize_sensitive_words(sens_word_regexes, line, SALT)
+
+    # Now anonymize each sensitive word individually & build another anon line
+    anon_words = [anonymize_sensitive_words(sens_word_regexes, word, SALT) for word in sensitive_words]
+    individually_anon_line = raw_line.format(*anon_words)
+
+    anon_line_lower = anonymize_sensitive_words(sens_word_regexes, line.lower(), SALT)
+    anon_line_upper = anonymize_sensitive_words(sens_word_regexes, line.upper(), SALT)
+
+    # Make sure reanonymizing each word individually gives the same result as
+    # anonymizing all at once, the first time
+    assert(anon_line == individually_anon_line)
+
+    for sens_word in sensitive_words:
+        # Make sure all sensitive words are removed from the anonymized line
+        assert(sens_word not in anon_line)
+
+        # Test for case insensitivity
+        # Make sure all sensitive words are removed from the lowercase line
+        assert(sens_word.lower() not in anon_line_lower)
+
+        # Make sure all sensitive words are removed from the uppercase line
+        assert(sens_word.upper() not in anon_line_upper)
 
 
 @pytest.mark.parametrize('val', unique_passwords)

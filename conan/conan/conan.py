@@ -24,11 +24,13 @@ def main():
                         help='Anonymize IP addresses',
                         action='store_true', default=False)
     parser.add_argument('-s', '--salt',
-                        help='Salt for IP anonymization',
+                        help='Salt for IP and sensitive keyword anonymization',
                         default=None)
     parser.add_argument('-d', '--dumpipaddrmap',
                         help='Dump IP address anonymization map to specified file',
                         default=None)
+    parser.add_argument('--sensitivewords', help='Comma separated list of '
+                        'keywords to anonymize', default=None)
     loglevel_choices = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
     parser.add_argument('-l', '--loglevel',
                         help='Determines what level of logs to display',
@@ -43,9 +45,13 @@ def main():
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
+    sensitive_words = None
+    if options.sensitivewords is not None:
+        sensitive_words = options.sensitivewords.split(',')
+
     anonymize_files_in_dir(input_dir, output_dir, options.anonymizepwdandcomm,
                            options.anonymizeipaddr, options.salt,
-                           options.dumpipaddrmap)
+                           options.dumpipaddrmap, sensitive_words)
 
 
 if __name__ == '__main__':
