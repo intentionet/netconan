@@ -6,6 +6,8 @@ import logging
 
 from binascii import b2a_hex
 from enum import Enum
+from hashlib import md5
+# Using passlib for digests not supported by hashlib
 from passlib.hash import cisco_type7, md5_crypt, sha512_crypt
 from six import b
 
@@ -93,6 +95,9 @@ default_catch_all_regexes = [
     [('(\S* ?)*key "\K([^"]+)(?=".*)', 2)]
 ]
 
+# Number of digits to extract from hash for sensitive keyword replacement
+_ANON_SENSITIVE_WORD_LEN = 6
+
 
 class _sensitive_item_formats(Enum):
     """Enum for recognized sensitive item formats (e.g. type7, md5, text)."""
@@ -104,6 +109,18 @@ class _sensitive_item_formats(Enum):
     text = 5
     sha512 = 6
     juniper_type9 = 7
+
+
+def anonymize_sensitive_words(sensitive_word_regexes, line, salt):
+    """Anonymize words from specified sensitive words list in the input line."""
+    for sens_word_regex in sensitive_word_regexes:
+        if sens_word_regex.search(line) is not None:
+            sens_word = sens_word_regex.pattern
+            # Only using part of the hash result as the anonymized replacement
+            # to cut down on the size of the replacements
+            anon_word = md5((salt + sens_word).encode()).hexdigest()[:_ANON_SENSITIVE_WORD_LEN]
+            line = sens_word_regex.sub(anon_word, line)
+    return line
 
 
 def _anonymize_value(val, lookup):
@@ -178,6 +195,11 @@ def generate_default_sensitive_item_regexes():
         default_catch_all_regexes
     return [[(regex.compile(regex_), num) for regex_, num in group]
             for group in combined_regexes]
+
+
+def generate_sensitive_word_regexes(sensitive_words):
+    """Compile and return regexes for the specified list of sensitive words."""
+    return [regex.compile(sens_word, regex.IGNORECASE) for sens_word in sensitive_words]
 
 
 def replace_matching_item(compiled_regexes, input_line, pwd_lookup):
