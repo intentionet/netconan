@@ -145,6 +145,8 @@ def test__convert_to_unanon_ip(ip_addr):
     ip_int = _ip_to_int(ip_addr)
     ip_int_anon = _convert_to_anon_ip(ip_tree, ip_int, SALT)
     ip_int_unanon = _convert_to_unanon_ip(ip_int_anon, SALT)
+
+    # Make sure unanonymizing an anonymized address produces the original address
     assert(ip_int == ip_int_unanon)
 
 
