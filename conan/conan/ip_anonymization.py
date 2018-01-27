@@ -55,8 +55,8 @@ class tree_node():
             node = node.right
 
 
-def anonymize_ip_addr(my_ip_tree, line, salt, undo_ip_anon=False):
-    """Replace each IP address in the line with an anonymized IP address.
+def convert_ip_addr(my_ip_tree, line, salt, undo_ip_anon=False):
+    """Replace each IP address in the line with an (un)anonymized IP address.
 
     Quad-octets that look like masks will be left unchanged.  That is, any
     quad-octet that consists solely of an initial group of 1s followed by 0s

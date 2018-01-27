@@ -6,7 +6,7 @@ import os
 import random
 import string
 
-from conan.ip_anonymization import tree_node, anonymize_ip_addr
+from conan.ip_anonymization import tree_node, convert_ip_addr
 from conan.sensitive_item_removal import anonymize_sensitive_words, \
     replace_matching_item, generate_default_sensitive_item_regexes, \
     generate_sensitive_word_regexes
@@ -67,8 +67,8 @@ def anonymize_file(filename_in, filename_out, salt, compiled_regexes=None,
                 output_line = replace_matching_item(compiled_regexes,
                                                     output_line, pwd_lookup)
             if ip_tree is not None or undo_ip_anon:
-                output_line = anonymize_ip_addr(ip_tree, output_line, salt,
-                                                undo_ip_anon)
+                output_line = convert_ip_addr(ip_tree, output_line, salt,
+                                              undo_ip_anon)
             if sensitive_word_regexes is not None:
                 output_line = anonymize_sensitive_words(sensitive_word_regexes,
                                                         output_line, salt)

@@ -4,7 +4,7 @@ import ipaddress
 import pytest
 import regex
 
-from conan.ip_anonymization import tree_node, anonymize_ip_addr, _convert_to_anon_ip, \
+from conan.ip_anonymization import tree_node, convert_ip_addr, _convert_to_anon_ip, \
     _convert_to_unanon_ip, _ip_to_int, _is_mask
 
 ip_list = [('10.11.12.13'),
@@ -45,13 +45,13 @@ def ip_tree():
                          ('1 permit tcp host {} host {} eq 2', ['11.20.3.4', '1.20.3.4']),
                          ('something host {} host {} host {}', ['1.2.3.4', '1.2.3.5', '1.2.3.45'])
                          ])
-def test_anonymize_ip_addr(ip_tree, line, ip_addrs):
+def test_convert_ip_addr(ip_tree, line, ip_addrs):
     """Test IP address removal config lines."""
     line_w_ip = line.format(*ip_addrs)
-    anon_line = anonymize_ip_addr(ip_tree, line_w_ip, SALT)
+    anon_line = convert_ip_addr(ip_tree, line_w_ip, SALT)
 
     # Now anonymize each IP address individually & build another anonymized line
-    anon_ip_addrs = [anonymize_ip_addr(ip_tree, ip_addr, SALT) for ip_addr in ip_addrs]
+    anon_ip_addrs = [convert_ip_addr(ip_tree, ip_addr, SALT) for ip_addr in ip_addrs]
     individually_anon_line = line.format(*anon_ip_addrs)
 
     # Make sure anonymizing each address individually is the same as
