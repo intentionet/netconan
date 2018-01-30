@@ -65,7 +65,14 @@ default_pwd_line_regexes = [
     [('(message-digest-key \d+ md5 (7|encrypted)) (.*)', None)],
     [('(.*?neighbor.*?) (\S*) password (.*)', None)],
     [('(wlccp \S+ username (\S+)( .*)? password( \d)?) (\S+)(.*)', None)],
-    # These are from JUNOS
+
+    # These are regexes for JUNOS
+    # TODO(https://github.com/intentionet/conan/issues/4):
+    # Follow-up on these.  They were modified from RANCID's regexes and currently:
+    #   They do not have capture groups for sensitive info
+    #   They just identify lines where sensitive info exists
+    #   They need to be tested against config lines generated on a JUNOS router
+    #     (to make sure the regex handles different syntaxes allowed in the line)
     [('(\S* )*authentication-key [^ ;]+(.*)', None)],
     [('(\S* )*md5 \d+ key [^ ;]+(.*)', None)],
     [('(\S* )*hello-authentication-key [^ ;]+(.*)', None)],
@@ -84,6 +91,8 @@ default_com_line_regexes = [
     # This is from JUNOS
     # TODO(https://github.com/intentionet/conan/issues/4):
     # See if we need to make the snmp keyword optional for Juniper
+    # Also, this needs to be tested against config lines generated on a JUNOS router
+    #     (to make sure the regex handles different syntaxes allowed in the line)
     [('((\S* )*snmp( \S+)* (community|trap-group)) \K([^ ;]+)(?=.*)', 5)]
 ]
 # These are catch-all regexes to find lines that seem like they might contain
