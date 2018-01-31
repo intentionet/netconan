@@ -29,6 +29,12 @@ def anonymizer():
     return IpAnonymizer(SALT)
 
 
+@pytest.fixture(scope='module')
+def flip_anonymizer():
+    """Create an anonymizer that flips every bit."""
+    return IpAnonymizer(SALT, salter=lambda a, b: 1)
+
+
 @pytest.mark.parametrize('line, ip_addrs', [
                          ('ip address {} 255.255.255.254', ['123.45.67.89']),
                          ('ip address {} 255.0.0.0', ['10.0.0.0']),
@@ -60,7 +66,7 @@ def test_anonymize_ip_addr(anonymizer, line, ip_addrs):
         assert(ip_addr not in anon_line)
 
 
-def check_ip_class(ip_int):
+def get_ip_class(ip_int):
     """Return the letter corresponding to the IP class the ip_int is in."""
     if ((ip_int & 0x80000000) == 0x00000000):
         return 'A'
@@ -74,6 +80,24 @@ def check_ip_class(ip_int):
         return 'E'
 
 
+@pytest.mark.parametrize('ip_addr', [
+    '0.0.0.0', '127.255.255.255',  # Class A
+    '128.0.0.0', '191.255.255.255',  # Class B
+    '192.0.0.0', '223.255.255.255',  # Class C
+    '224.0.0.0', '239.255.255.255',  # Class D
+    '240.0.0.0', '247.255.255.255',  # Class E
+])
+def test_v4_class_preserved(flip_anonymizer, ip_addr):
+    ip_int = _ip_to_int(ip_addr)
+    ip_int_anon = flip_anonymizer.anonymize(ip_int)
+
+    # IP v4 class should match after anonymization
+    assert(get_ip_class(ip_int) == get_ip_class(ip_int_anon))
+
+    # Anonymized ip address should not match the original ip address
+    assert(ip_int != ip_int_anon)
+
+
 @pytest.mark.parametrize('ip_addr', ip_list)
 def test_anonymize(anonymizer, ip_addr):
     """Test conversion from original to anonymized IP address."""
@@ -82,9 +106,6 @@ def test_anonymize(anonymizer, ip_addr):
 
     # Anonymized ip address should not match the original address
     assert(ip_int != ip_int_anon)
-
-    # Anonymized ip address class should match the class of the original ip address
-    assert(check_ip_class(ip_int) == check_ip_class(ip_int_anon))
 
     # Confirm prefixes for similar addresses are preserved after anonymization
     for i in range(0, 32):
@@ -164,7 +185,6 @@ def test_dump_iptree(tmpdir, anonymizer):
             m = regex.match('\s*(\d+\.\d+.\d+.\d+)\s+(\d+\.\d+.\d+.\d+)\s*', line)
             ip_addr = m.group(1)
             ip_addr_anon = m.group(2)
-            print('{}\t{}'.format(ip_addr, ip_addr_anon))
             ip_mapping_from_dump[ip_addr] = ip_addr_anon
 
     for ip_addr in ip_mapping:

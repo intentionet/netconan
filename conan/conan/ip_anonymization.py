@@ -10,12 +10,19 @@ from hashlib import md5
 from six import iteritems, u
 
 
+def _generate_bit_from_hash(salt, string):
+    """Return the last bit of the result from hashing the input string."""
+    last_hash_digit = md5((salt + string).encode()).hexdigest()[-1]
+    return int(last_hash_digit, 16) & 1
+
+
 class _BaseIpAnonymizer(ABC):
-    def __init__(self, salt, length):
+    def __init__(self, salt, length, salter=_generate_bit_from_hash):
         self.salt = salt
         self.cache = bidict({'': ''})
         self.length = length
         self.fmt = '{:0lengthb}'.replace('length', str(length))
+        self.salter = salter
 
     def anonymize(self, ip_int):
         bits = self.fmt.format(ip_int)
@@ -28,7 +35,7 @@ class _BaseIpAnonymizer(ABC):
             return ret
 
         head, last = bits[:-1], int(bits[-1])
-        flip_last = _generate_bit_from_hash(self.salt + head)
+        flip_last = self.salter(self.salt, head)
         ret = self._anonymize_bits(head) + str(flip_last ^ last)
 
         # Cache before returning.
@@ -47,7 +54,7 @@ class _BaseIpAnonymizer(ABC):
 
         head, last = bits[:-1], int(bits[-1])
         orig_head = self._deanonymize_bits(head)
-        flip_last = _generate_bit_from_hash(self.salt + orig_head)
+        flip_last = self.salter(self.salt, orig_head)
         ret = orig_head + str(flip_last ^ last)
 
         # Cache before returning.
@@ -72,9 +79,9 @@ class _BaseIpAnonymizer(ABC):
 class IpAnonymizer(_BaseIpAnonymizer):
     """An anonymizer for IPv4 addresses."""
 
-    def __init__(self, salt):
+    def __init__(self, salt, **kwargs):
         """Create an anonymizer using the specified salt."""
-        super(IpAnonymizer, self).__init__(salt, 32)
+        super(IpAnonymizer, self).__init__(salt, 32, **kwargs)
         # preserve IPv4 classes
         for i in range(4):
             bits = '1' * i
@@ -132,12 +139,6 @@ def anonymize_ip_addr(anonymizer, line, undo_ip_anon=False):
             logging.debug("Replaced {} with {}".format(ip_str, new_ip_str))
 
     return new_line.format(*ip_addrs)
-
-
-def _generate_bit_from_hash(hash_input):
-    """Return the last bit of the result from hashing the input string."""
-    last_hash_digit = md5((hash_input).encode()).hexdigest()[-1]
-    return int(last_hash_digit, 16) & 1
 
 
 def _ip_to_int(ip_str):
