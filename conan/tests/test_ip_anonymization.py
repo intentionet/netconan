@@ -81,7 +81,7 @@ def get_ip_class(ip_int):
 
 
 def get_ip_class_mask(ip_int):
-    """Returns a mask indicating bits preserved when preserving class."""
+    """Return a mask indicating bits preserved when preserving class."""
     if (ip_int & 0xE0000000) == 0xE0000000:
         return 0xF0000000
     elif (ip_int & 0xC0000000) == 0xC0000000:
@@ -100,7 +100,7 @@ def get_ip_class_mask(ip_int):
     '240.0.0.0', '247.255.255.255',  # Class E
 ])
 def test_v4_class_preserved(flip_anonymizer, ip_addr):
-    """Tests that IPv4 classes are preserved."""
+    """Test that IPv4 classes are preserved."""
     ip_int = _ip_to_int(ip_addr)
     ip_int_anon = flip_anonymizer.anonymize(ip_int)
 
