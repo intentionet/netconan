@@ -42,8 +42,6 @@ def anonymizer():
                          ('1 permit tcp host {} host {} eq 2', ['11.20.3.4', '1.20.3.4']),
                          ('something host {} host {} host {}', ['1.2.3.4', '1.2.3.5', '1.2.3.45'])
                          ])
-
-
 def test_anonymize_ip_addr(anonymizer, line, ip_addrs):
     """Test IP address removal config lines."""
     line_w_ip = line.format(*ip_addrs)
