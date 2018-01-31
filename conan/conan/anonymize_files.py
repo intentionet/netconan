@@ -6,10 +6,11 @@ import os
 import random
 import string
 
-from conan.ip_anonymization import IpAnonymizer, anonymize_ip_addr
-from conan.sensitive_item_removal import anonymize_sensitive_words, \
-    replace_matching_item, generate_default_sensitive_item_regexes, \
-    generate_sensitive_word_regexes
+from conan.ip_anonymization import (
+    IpAnonymizer, IpV6Anonymizer, anonymize_ip_addr)
+from conan.sensitive_item_removal import (
+    anonymize_sensitive_words, replace_matching_item,
+    generate_default_sensitive_item_regexes, generate_sensitive_word_regexes)
 
 _DEFAULT_SALT_LENGTH = 16
 _CHAR_CHOICES = string.ascii_letters + string.digits
@@ -31,18 +32,24 @@ def anonymize_files_in_dir(input_dir_path, output_dir_path, anon_pwd, anon_ip,
     if anon_pwd:
         compiled_regexes = generate_default_sensitive_item_regexes()
         pwd_lookup = {}
-    if anon_ip or undo_ip_anon:
-        anonymizer = IpAnonymizer(salt)
     if sensitive_words is not None:
         sensitive_word_regexes = generate_sensitive_word_regexes(sensitive_words)
+    if anon_ip or undo_ip_anon:
+        anonymizer4 = IpAnonymizer(salt)
+        anonymizer6 = IpV6Anonymizer(salt)
 
     for file_name in os.listdir(input_dir_path):
         input_file = os.path.join(input_dir_path, file_name)
         output_file = os.path.join(output_dir_path, file_name)
         if os.path.isfile(input_file) and not file_name.startswith('.'):
             logging.info("Anonymizing {}".format(file_name))
-            anonymize_file(input_file, output_file, salt, compiled_regexes,
-                           anonymizer, pwd_lookup, sensitive_word_regexes, undo_ip_anon)
+            anonymize_file(input_file, output_file, salt,
+                           compiled_regexes=compiled_regexes,
+                           pwd_lookup=pwd_lookup,
+                           sensitive_word_regexes=sensitive_word_regexes,
+                           undo_ip_anon=undo_ip_anon,
+                           anonymizer4=anonymizer4,
+                           anonymizer6=anonymizer6)
 
     if dumpfile is not None:
         with open(dumpfile, 'w') as f_out:
@@ -50,7 +57,8 @@ def anonymize_files_in_dir(input_dir_path, output_dir_path, anon_pwd, anon_ip,
 
 
 def anonymize_file(filename_in, filename_out, salt, compiled_regexes=None,
-                   anonymizer=None, pwd_lookup=None, sensitive_word_regexes=None, undo_ip_anon=False):
+                   anonymizer4=None, anonymizer6=None, pwd_lookup=None,
+                   sensitive_word_regexes=None, undo_ip_anon=False):
     """Anonymize contents of input file and save to the output file.
 
     This only applies sensitive line removal if compiled_regexes and pwd_lookup
@@ -64,8 +72,11 @@ def anonymize_file(filename_in, filename_out, salt, compiled_regexes=None,
             if compiled_regexes is not None and pwd_lookup is not None:
                 output_line = replace_matching_item(compiled_regexes,
                                                     output_line, pwd_lookup)
-            if anonymizer is not None:
-                output_line = anonymize_ip_addr(anonymizer, output_line, undo_ip_anon)
+
+            if anonymizer6 is not None:
+                output_line = anonymize_ip_addr(anonymizer6, output_line, undo_ip_anon)
+            if anonymizer4 is not None:
+                    output_line = anonymize_ip_addr(anonymizer4, output_line, undo_ip_anon)
 
             if sensitive_word_regexes is not None:
                 output_line = anonymize_sensitive_words(sensitive_word_regexes,

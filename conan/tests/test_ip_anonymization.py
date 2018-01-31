@@ -1,24 +1,27 @@
 """Test anonymization of IP addresses and related functions."""
+from __future__ import unicode_literals
 
 import ipaddress
 import pytest
 import regex
 
-from conan.ip_anonymization import IpAnonymizer, anonymize_ip_addr, _ip_to_int, _is_mask
+from conan.ip_anonymization import IpAnonymizer, anonymize_ip_addr, _is_mask
 
-ip_list = [('10.11.12.13'),
-           ('10.10.10.10'),
-           ('10.1.1.17'),
-           ('237.73.212.5'),
-           ('123.45.67.89'),
-           ('92.210.0.255'),
-           ('128.7.55.12'),
-           ('223.123.21.99'),
-           ('193.99.99.99'),
-           ('225.99.99.99'),
-           ('241.99.99.99'),
-           ('249.99.99.99'),
-           ('254.254.254.254')]
+ip_list = [
+    ('10.11.12.13'),
+    ('10.10.10.10'),
+    ('10.1.1.17'),
+    ('237.73.212.5'),
+    ('123.45.67.89'),
+    ('92.210.0.255'),
+    ('128.7.55.12'),
+    ('223.123.21.99'),
+    ('193.99.99.99'),
+    ('225.99.99.99'),
+    ('241.99.99.99'),
+    ('249.99.99.99'),
+    ('254.254.254.254'),
+]
 
 SALT = 'saltForTest'
 
@@ -46,7 +49,7 @@ def flip_anonymizer():
                          ('1 permit tcp host {} host {} eq 2', ['1.2.123.4', '11.2.123.4']),
                          ('1 permit tcp host {} host {} eq 2', ['1.2.30.45', '1.2.30.4']),
                          ('1 permit tcp host {} host {} eq 2', ['11.20.3.4', '1.20.3.4']),
-                         ('something host {} host {} host {}', ['1.2.3.4', '1.2.3.5', '1.2.3.45'])
+                         ('something host {} host {} host {}', ['1.2.3.4', '1.2.3.5', '1.2.3.45']),
                          ])
 def test_anonymize_ip_addr(anonymizer, line, ip_addrs):
     """Test IP address removal config lines."""
@@ -101,7 +104,7 @@ def get_ip_class_mask(ip_int):
 ])
 def test_v4_class_preserved(flip_anonymizer, ip_addr):
     """Test that IPv4 classes are preserved."""
-    ip_int = _ip_to_int(ip_addr)
+    ip_int = int(flip_anonymizer.make_addr(ip_addr))
     ip_int_anon = flip_anonymizer.anonymize(ip_int)
 
     # IP v4 class should match after anonymization
@@ -118,7 +121,7 @@ def test_v4_class_preserved(flip_anonymizer, ip_addr):
 @pytest.mark.parametrize('ip_addr', ip_list)
 def test_anonymize(anonymizer, ip_addr):
     """Test conversion from original to anonymized IP address."""
-    ip_int = _ip_to_int(ip_addr)
+    ip_int = int(anonymizer.make_addr(ip_addr))
     ip_int_anon = anonymizer.anonymize(ip_int)
 
     # Anonymized ip address should not match the original address
@@ -146,13 +149,13 @@ def test_anonymize_ip_order_independent():
     anonymizer_forward = IpAnonymizer(SALT)
     ip_lookup_forward = {}
     for ip_addr in ip_list:
-        ip_int = _ip_to_int(ip_addr)
+        ip_int = int(anonymizer_forward.make_addr(ip_addr))
         ip_int_anon = anonymizer_forward.anonymize(ip_int)
         ip_lookup_forward[ip_int] = ip_int_anon
 
     anonymizer_reverse = IpAnonymizer(SALT)
     for ip_addr in reversed(ip_list):
-        ip_int_reverse = _ip_to_int(ip_addr)
+        ip_int_reverse = int(anonymizer_reverse.make_addr(ip_addr))
         ip_int_anon_reverse = anonymizer_reverse.anonymize(ip_int_reverse)
         # Confirm anonymizing in reverse order does not affect
         # anonymization results
@@ -160,7 +163,7 @@ def test_anonymize_ip_order_independent():
 
     anonymizer_extras = IpAnonymizer(SALT)
     for ip_addr in ip_list:
-        ip_int_extras = _ip_to_int(ip_addr)
+        ip_int_extras = int(anonymizer_extras.make_addr(ip_addr))
         ip_int_anon_extras = anonymizer_extras.anonymize(ip_int_extras)
         ip_int_inverted = ip_int_extras ^ 0xFFFFFFFF
         anonymizer_extras.anonymize(ip_int_inverted)
@@ -172,7 +175,7 @@ def test_anonymize_ip_order_independent():
 @pytest.mark.parametrize('ip_addr', ip_list)
 def test_deanonymize_ip(anonymizer, ip_addr):
     """Test reversing IP anonymization."""
-    ip_int = _ip_to_int(ip_addr)
+    ip_int = int(anonymizer.make_addr(ip_addr))
     ip_int_anon = anonymizer.anonymize(ip_int)
     ip_int_unanon = anonymizer.deanonymize(ip_int_anon)
 
@@ -187,7 +190,7 @@ def test_dump_iptree(tmpdir, anonymizer):
 
     # Make sure all addresses to be checked are in ip_tree and generate reference mapping
     for ip_addr in ip_list:
-        ip_int = _ip_to_int(ip_addr)
+        ip_int = int(anonymizer.make_addr(ip_addr))
         ip_int_anon = anonymizer.anonymize(ip_int)
         ip_addr_anon = str(ipaddress.IPv4Address(ip_int_anon))
         ip_mapping[ip_addr] = ip_addr_anon
@@ -209,29 +212,28 @@ def test_dump_iptree(tmpdir, anonymizer):
         assert(ip_mapping[ip_addr] == ip_mapping_from_dump[ip_addr])
 
 
-@pytest.mark.parametrize('ip_addr, ip_int', [
-                         ('0.0.0.0', 0),
-                         ('0.0.0.3', 3),
-                         ('128.0.0.0', 2147483648),
-                         ('0.127.0.0', 8323072),
-                         ('10.73.212.5', 172610565),
-                         ('010.73.212.05', 172610565),
-                         ('255.255.255.255', 4294967295),
-                         ('170.255.85.1', 2868860161),
-                         ('10.11.12.13', 168496141),
-                         ('010.11.12.13', 168496141),
-                         ('10.011.12.13', 168496141),
-                         ('10.011.12.13', 168496141),
-                         ('10.11.012.13', 168496141),
-                         ('10.11.12.013', 168496141),
-                         ('010.0011.00000012.000', 168496128)
+@pytest.mark.parametrize('zeros, no_zeros', [
+                         ('0.0.0.0', '0.0.0.0'),
+                         ('0.0.0.3', '0.0.0.3'),
+                         ('128.0.0.0', '128.0.0.0'),
+                         ('0.127.0.0', '0.127.0.0'),
+                         ('10.73.212.5', '10.73.212.5'),
+                         ('010.73.212.05', '10.73.212.5'),
+                         ('255.255.255.255', '255.255.255.255'),
+                         ('170.255.85.1', '170.255.85.1'),
+                         ('10.11.12.13', '10.11.12.13'),
+                         ('010.11.12.13', '10.11.12.13'),
+                         ('10.011.12.13', '10.11.12.13'),
+                         ('10.11.012.13', '10.11.12.13'),
+                         ('10.11.12.013', '10.11.12.13'),
+                         ('010.0011.00000012.000', '10.11.12.0'),
                          ])
-def test__ip_to_int(ip_addr, ip_int):
-    """Test ability to convert from IP address string to integer representation."""
-    assert(_ip_to_int(ip_addr) == ip_int)
+def test_v4_anonymizer_ignores_leading_zeros(zeros, no_zeros):
+    """Test that v4 IP address ignore leading zeros & don't interpret octal."""
+    assert(ipaddress.IPv4Address(no_zeros) == IpAnonymizer.make_addr(zeros))
 
 
-@pytest.mark.parametrize('possible_mask, is_mask_result', [
+@pytest.mark.parametrize('possible_mask, expected', [
                          (0b00000000000000000000000000000000, True),
                          (0b00000000000000000000000000000001, True),
                          (0b00000000000000000000000000001111, True),
@@ -243,8 +245,8 @@ def test__ip_to_int(ip_addr, ip_int):
                          (0b00010101001001000000000000000000, False),
                          (0b00000000000000000010000000000000, False),
                          (0b00000000000000000011111111111110, False),
-                         (0b00000000010000000100000000000000, False)
+                         (0b00000000010000000100000000000000, False),
                          ])
-def test__is_mask(possible_mask, is_mask_result):
+def test__is_mask(possible_mask, expected):
     """Test ability to detect masks vs IP addresses."""
-    assert(_is_mask(possible_mask) == is_mask_result)
+    assert(expected == _is_mask(possible_mask, 32))
