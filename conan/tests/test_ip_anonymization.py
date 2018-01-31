@@ -4,8 +4,7 @@ import ipaddress
 import pytest
 import regex
 
-from conan.ip_anonymization import tree_node, convert_ip_addr, _convert_to_anon_ip, \
-    _convert_to_unanon_ip, _ip_to_int, _is_mask
+from conan.ip_anonymization import IpAnonymizer, anonymize_ip_addr, _ip_to_int, _is_mask
 
 ip_list = [('10.11.12.13'),
            ('10.10.10.10'),
@@ -25,11 +24,15 @@ SALT = 'saltForTest'
 
 
 @pytest.fixture(scope='module')
-def ip_tree():
-    """Generate an IP tree once for all tests in this module."""
-    root = tree_node(None)
-    root.preserve_ipv4_class()
-    return root
+def anonymizer():
+    """All tests in this module use a single IPv4 anonymizer."""
+    return IpAnonymizer(SALT)
+
+
+@pytest.fixture(scope='module')
+def flip_anonymizer():
+    """Create an anonymizer that flips every bit."""
+    return IpAnonymizer(SALT, salter=lambda a, b: 1)
 
 
 @pytest.mark.parametrize('line, ip_addrs', [
@@ -45,13 +48,13 @@ def ip_tree():
                          ('1 permit tcp host {} host {} eq 2', ['11.20.3.4', '1.20.3.4']),
                          ('something host {} host {} host {}', ['1.2.3.4', '1.2.3.5', '1.2.3.45'])
                          ])
-def test_convert_ip_addr(ip_tree, line, ip_addrs):
+def test_anonymize_ip_addr(anonymizer, line, ip_addrs):
     """Test IP address removal config lines."""
     line_w_ip = line.format(*ip_addrs)
-    anon_line = convert_ip_addr(ip_tree, line_w_ip, SALT)
+    anon_line = anonymize_ip_addr(anonymizer, line_w_ip)
 
     # Now anonymize each IP address individually & build another anonymized line
-    anon_ip_addrs = [convert_ip_addr(ip_tree, ip_addr, SALT) for ip_addr in ip_addrs]
+    anon_ip_addrs = [anonymize_ip_addr(anonymizer, ip_addr) for ip_addr in ip_addrs]
     individually_anon_line = line.format(*anon_ip_addrs)
 
     # Make sure anonymizing each address individually is the same as
@@ -63,7 +66,7 @@ def test_convert_ip_addr(ip_tree, line, ip_addrs):
         assert(ip_addr not in anon_line)
 
 
-def check_ip_class(ip_int):
+def get_ip_class(ip_int):
     """Return the letter corresponding to the IP class the ip_int is in."""
     if ((ip_int & 0x80000000) == 0x00000000):
         return 'A'
@@ -77,24 +80,56 @@ def check_ip_class(ip_int):
         return 'E'
 
 
+def get_ip_class_mask(ip_int):
+    """Return a mask indicating bits preserved when preserving class."""
+    if (ip_int & 0xE0000000) == 0xE0000000:
+        return 0xF0000000
+    elif (ip_int & 0xC0000000) == 0xC0000000:
+        return 0xE0000000
+    elif (ip_int & 0x80000000) == 0x80000000:
+        return 0xC0000000
+    else:
+        return 0x80000000
+
+
+@pytest.mark.parametrize('ip_addr', [
+    '0.0.0.0', '127.255.255.255',  # Class A
+    '128.0.0.0', '191.255.255.255',  # Class B
+    '192.0.0.0', '223.255.255.255',  # Class C
+    '224.0.0.0', '239.255.255.255',  # Class D
+    '240.0.0.0', '247.255.255.255',  # Class E
+])
+def test_v4_class_preserved(flip_anonymizer, ip_addr):
+    """Test that IPv4 classes are preserved."""
+    ip_int = _ip_to_int(ip_addr)
+    ip_int_anon = flip_anonymizer.anonymize(ip_int)
+
+    # IP v4 class should match after anonymization
+    assert(get_ip_class(ip_int) == get_ip_class(ip_int_anon))
+
+    # Anonymized ip address should not match the original ip address
+    assert(ip_int != ip_int_anon)
+
+    # All bits that are not forced to be preserved are flipped
+    class_mask = get_ip_class_mask(ip_int)
+    assert(0xFFFFFFFF ^ class_mask == ip_int ^ ip_int_anon)
+
+
 @pytest.mark.parametrize('ip_addr', ip_list)
-def test__convert_to_anon_ip(ip_tree, ip_addr):
+def test_anonymize(anonymizer, ip_addr):
     """Test conversion from original to anonymized IP address."""
     ip_int = _ip_to_int(ip_addr)
-    ip_int_anon = _convert_to_anon_ip(ip_tree, ip_int, SALT)
+    ip_int_anon = anonymizer.anonymize(ip_int)
 
     # Anonymized ip address should not match the original address
     assert(ip_int != ip_int_anon)
-
-    # Anonymized ip address class should match the class of the original ip address
-    assert(check_ip_class(ip_int) == check_ip_class(ip_int_anon))
 
     # Confirm prefixes for similar addresses are preserved after anonymization
     for i in range(0, 32):
         # Flip the ith bit of the org address and use that as the similar address
         diff_mask = (1 << i)
         ip_int_similar = ip_int ^ diff_mask
-        ip_int_similar_anon = _convert_to_anon_ip(ip_tree, ip_int_similar, SALT)
+        ip_int_similar_anon = anonymizer.anonymize(ip_int_similar)
 
         # Using i + 1 since same_mask should mask off ith bit, not preserve it
         same_mask = 0xFFFFFFFF & (0xFFFFFFFF << (i + 1))
@@ -106,51 +141,46 @@ def test__convert_to_anon_ip(ip_tree, ip_addr):
         assert(ip_int_similar_anon & diff_mask != ip_int_anon & diff_mask)
 
 
-def test__convert_to_anon_ip_order_independent():
+def test_anonymize_ip_order_independent():
     """Test to make sure order does not affect anonymization of addresses."""
-    ip_tree_forward = tree_node(None)
-    ip_tree_forward.preserve_ipv4_class()
+    anonymizer_forward = IpAnonymizer(SALT)
     ip_lookup_forward = {}
     for ip_addr in ip_list:
         ip_int = _ip_to_int(ip_addr)
-        ip_int_anon = _convert_to_anon_ip(ip_tree_forward, ip_int, SALT)
+        ip_int_anon = anonymizer_forward.anonymize(ip_int)
         ip_lookup_forward[ip_int] = ip_int_anon
 
-    ip_tree_reverse = tree_node(None)
-    ip_tree_reverse.preserve_ipv4_class()
+    anonymizer_reverse = IpAnonymizer(SALT)
     for ip_addr in reversed(ip_list):
         ip_int_reverse = _ip_to_int(ip_addr)
-        ip_int_anon_reverse = _convert_to_anon_ip(ip_tree_reverse, ip_int_reverse, SALT)
-        # Confirm training the tree in reverse order does not affect
+        ip_int_anon_reverse = anonymizer_reverse.anonymize(ip_int_reverse)
+        # Confirm anonymizing in reverse order does not affect
         # anonymization results
         assert(ip_int_anon_reverse == ip_lookup_forward[ip_int_reverse])
 
-    ip_tree_extras = tree_node(None)
-    ip_tree_extras.preserve_ipv4_class()
+    anonymizer_extras = IpAnonymizer(SALT)
     for ip_addr in ip_list:
         ip_int_extras = _ip_to_int(ip_addr)
-        ip_int_anon_extras = _convert_to_anon_ip(ip_tree_extras, ip_int_extras, SALT)
+        ip_int_anon_extras = anonymizer_extras.anonymize(ip_int_extras)
         ip_int_inverted = ip_int_extras ^ 0xFFFFFFFF
-        _convert_to_anon_ip(ip_tree_extras, ip_int_inverted, SALT)
-        # Confirm training the tree with extra addresses in-between does not
+        anonymizer_extras.anonymize(ip_int_inverted)
+        # Confirm anonymizing with extra addresses in-between does not
         # affect anonymization results
         assert(ip_int_anon_extras == ip_lookup_forward[ip_int_extras])
 
 
 @pytest.mark.parametrize('ip_addr', ip_list)
-def test__convert_to_unanon_ip(ip_addr):
+def test_deanonymize_ip(anonymizer, ip_addr):
     """Test reversing IP anonymization."""
-    ip_tree = tree_node(None)
-    ip_tree.preserve_ipv4_class()
     ip_int = _ip_to_int(ip_addr)
-    ip_int_anon = _convert_to_anon_ip(ip_tree, ip_int, SALT)
-    ip_int_unanon = _convert_to_unanon_ip(ip_int_anon, SALT)
+    ip_int_anon = anonymizer.anonymize(ip_int)
+    ip_int_unanon = anonymizer.deanonymize(ip_int_anon)
 
     # Make sure unanonymizing an anonymized address produces the original address
     assert(ip_int == ip_int_unanon)
 
 
-def test_dump_iptree(tmpdir, ip_tree):
+def test_dump_iptree(tmpdir, anonymizer):
     """Test ability to accurately dump IP address anonymization mapping."""
     ip_mapping = {}
     ip_mapping_from_dump = {}
@@ -158,13 +188,13 @@ def test_dump_iptree(tmpdir, ip_tree):
     # Make sure all addresses to be checked are in ip_tree and generate reference mapping
     for ip_addr in ip_list:
         ip_int = _ip_to_int(ip_addr)
-        ip_int_anon = _convert_to_anon_ip(ip_tree, ip_int, SALT)
+        ip_int_anon = anonymizer.anonymize(ip_int)
         ip_addr_anon = str(ipaddress.IPv4Address(ip_int_anon))
         ip_mapping[ip_addr] = ip_addr_anon
 
     filename = str(tmpdir.mkdir("test").join("test_dump_iptree.txt"))
     with open(filename, 'w') as f_tmp:
-        ip_tree.dump_to_file(f_tmp)
+        anonymizer.dump_to_file(f_tmp)
 
     with open(filename, 'r') as f_tmp:
         # Build mapping dict from the output of the ip_tree dump
@@ -172,7 +202,6 @@ def test_dump_iptree(tmpdir, ip_tree):
             m = regex.match('\s*(\d+\.\d+.\d+.\d+)\s+(\d+\.\d+.\d+.\d+)\s*', line)
             ip_addr = m.group(1)
             ip_addr_anon = m.group(2)
-            print('{}\t{}'.format(ip_addr, ip_addr_anon))
             ip_mapping_from_dump[ip_addr] = ip_addr_anon
 
     for ip_addr in ip_mapping:

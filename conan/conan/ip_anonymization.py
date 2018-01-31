@@ -1,62 +1,101 @@
 """Identify and anonymize IP addresses."""
 
+from abc import ABCMeta, abstractmethod
+from bidict import bidict
 import ipaddress
 import logging
 import regex
 
 from hashlib import md5
-from six import u
+from six import add_metaclass, iteritems, u
 
 
-class tree_node():
-    """Simple binary tree with a value, left node, and right node.
-
-    This is used for holding a translation from original to anonymized IP
-    addresses.
-    """
-
-    def __init__(self, value):
-        """Initialize new node."""
-        self.left = None
-        self.right = None
-        self.value = value
-
-    def dump_to_file(self, file_out, depth=0, input_addr=0, output_addr=0):
-        """Recursively traverse tree and write translations to output file."""
-        # Root node value does not contribute to output_addr, so only update
-        # output_addr for nodes after root (depth > 0)
-        if depth > 0:
-            output_addr = (output_addr << 1) + self.value
-
-        # Only dump nodes at max depth (32) i.e. full 32bit anonymization
-        if depth == 32:
-            org_ip_str = str(ipaddress.IPv4Address(input_addr))
-            new_ip_str = str(ipaddress.IPv4Address(output_addr))
-            logging.debug('dumped {}\t{}'.format(org_ip_str, new_ip_str))
-            file_out.write('{}\t{}\n'.format(org_ip_str, new_ip_str))
-            return
-
-        depth += 1
-        if self.left is not None:
-            left_path = (input_addr << 1)
-            self.left.dump_to_file(file_out, depth, left_path, output_addr)
-        if self.right is not None:
-            right_path = (input_addr << 1) + 1
-            self.right.dump_to_file(file_out, depth, right_path, output_addr)
-
-    def preserve_ipv4_class(self):
-        """Initialize tree to preserve IPv4 classes (call only on root node)."""
-        node = self
-        # IP classes are defined by the number of leading 1's in the address up
-        # to the fourth 1, so setup the tree to preserve those
-        for i in range(0, 4):
-            node.left = tree_node(0)
-            node.right = tree_node(1)
-            node = node.right
+def _generate_bit_from_hash(salt, string):
+    """Return the last bit of the result from hashing the input string."""
+    last_hash_digit = md5((salt + string).encode()).hexdigest()[-1]
+    return int(last_hash_digit, 16) & 1
 
 
-def convert_ip_addr(my_ip_tree, line, salt, undo_ip_anon=False):
-    """Replace each IP address in the line with an (un)anonymized IP address.
+@add_metaclass(ABCMeta)
+class _BaseIpAnonymizer:
+    def __init__(self, salt, length, salter=_generate_bit_from_hash):
+        self.salt = salt
+        self.cache = bidict({'': ''})
+        self.length = length
+        self.fmt = '{{:0{length}b}}'.format(length=length)
+        self.salter = salter
+
+    def anonymize(self, ip_int):
+        bits = self.fmt.format(ip_int)
+        anon_bits = self._anonymize_bits(bits)
+        return int(anon_bits, 2)
+
+    def _anonymize_bits(self, bits):
+        ret = self.cache.get(bits)
+        if ret is not None:
+            return ret
+
+        head, last = bits[:-1], int(bits[-1])
+        flip_last = self.salter(self.salt, head)
+        ret = self._anonymize_bits(head) + str(flip_last ^ last)
+
+        # Cache before returning.
+        self.cache[bits] = ret
+        return ret
+
+    def deanonymize(self, ip_int):
+        bits = self.fmt.format(ip_int)
+        anon_bits = self._deanonymize_bits(bits)
+        return int(anon_bits, 2)
+
+    def _deanonymize_bits(self, bits):
+        ret = self.cache.inv.get(bits)
+        if ret is not None:
+            return ret
+
+        head, last = bits[:-1], int(bits[-1])
+        orig_head = self._deanonymize_bits(head)
+        flip_last = self.salter(self.salt, orig_head)
+        ret = orig_head + str(flip_last ^ last)
+
+        # Cache before returning.
+        self.cache.inv[bits] = ret
+        return ret
+
+    def dump_to_file(self, file_out):
+        ips = ((bits, anon_bits)
+               for bits, anon_bits in iteritems(self.cache)
+               if len(bits) == self.length)
+        for bits, anon_bits in ips:
+            ip = self._ip_to_str(bits)
+            anon = self._ip_to_str(anon_bits)
+            file_out.write('{}\t{}\n'.format(ip, anon))
+
+    @classmethod
+    @abstractmethod
+    def _ip_to_str(cls, bits):
+        raise NotImplementedError()
+
+
+class IpAnonymizer(_BaseIpAnonymizer):
+    """An anonymizer for IPv4 addresses."""
+
+    def __init__(self, salt, **kwargs):
+        """Create an anonymizer using the specified salt."""
+        super(IpAnonymizer, self).__init__(salt, 32, **kwargs)
+        # preserve IPv4 classes
+        for i in range(4):
+            bits = '1' * i
+            self.cache[bits + '1'] = bits + '1'
+            self.cache[bits + '0'] = bits + '0'
+
+    @classmethod
+    def _ip_to_str(cls, bits):
+        return str(ipaddress.IPv4Address(int(bits, 2)))
+
+
+def anonymize_ip_addr(anonymizer, line, undo_ip_anon=False):
+    """Replace each IP address in the line with an anonymized IP address.
 
     Quad-octets that look like masks will be left unchanged.  That is, any
     quad-octet that consists solely of an initial group of 1s followed by 0s
@@ -93,75 +132,14 @@ def convert_ip_addr(my_ip_tree, line, salt, undo_ip_anon=False):
             ip_addrs.append(ip_str)
         else:
             if undo_ip_anon:
-                new_ip = _convert_to_unanon_ip(ip_int, salt)
+                new_ip = anonymizer.deanonymize(ip_int)
             else:
-                new_ip = _convert_to_anon_ip(my_ip_tree, ip_int, salt)
+                new_ip = anonymizer.anonymize(ip_int)
             new_ip_str = str(ipaddress.IPv4Address(new_ip))
             ip_addrs.append(new_ip_str)
             logging.debug("Replaced {} with {}".format(ip_str, new_ip_str))
 
     return new_line.format(*ip_addrs)
-
-
-def _convert_to_anon_ip(node, ip_int, salt):
-    """Anonymize an IP address using an existing IP tree root node.
-
-    The bits of a given source IP address define a branch in the binary tree,
-    where each source bit selects an edge (1=right, 0=left) from the previous
-    node and the value at the next node is the anonymized bit.  This process
-    is repeated until all prefix bits are exhausted.  The values at each node
-    are pseudorandomly generated as needed and are the inverse of their sibling.
-    """
-    new_ip_int = 0
-
-    for i in range(31, -1, -1):
-        # msb is the next bit to anonymize
-        msb = (ip_int >> i) & 1
-        if node.left is None:
-            # Use a salted hash as a deterministic bit generator here so address
-            # anonymization is the same regardless of order/context
-
-            # This is a string of all source bits preceding the one to be anonymized
-            preceding_bits = '{:032b}'.format(ip_int)[:31 - i]
-            anon_bit = _generate_bit_from_hash(salt + preceding_bits)
-
-            # Go ahead and populate both left and right nodes, sacrificing
-            # space to simplify control flow
-            node.left = tree_node(anon_bit)
-            node.right = tree_node(1 - anon_bit)
-        if msb:
-            node = node.right
-        else:
-            node = node.left
-        new_ip_int |= node.value << i
-    return new_ip_int
-
-
-def _convert_to_unanon_ip(anon_ip_int, salt, preserve_ipv4_class=True):
-    """Reverse hash-based anonymization for the anonymized IP int and salt."""
-    unanon_ip_int = 0
-    preceding_bits = ''
-    for i in range(31, -1, -1):
-        anon_bit = (anon_ip_int >> i) & 1
-        if preserve_ipv4_class:
-            # Preserve number of leading ones (up to the 4th bit) to preserve class
-            unanon_bit = anon_bit
-            if not anon_bit or i < 29:
-                preserve_ipv4_class = False
-        else:
-            # This is the value of the anonymized bit if unanonymized bit was 0
-            zero_bit = _generate_bit_from_hash(salt + preceding_bits)
-            # So, if zero_bit = anon_bit, then unanon bit is 0
-            unanon_bit = zero_bit ^ anon_bit
-        preceding_bits += str(unanon_bit)
-        unanon_ip_int |= unanon_bit << i
-    return unanon_ip_int
-
-
-def _generate_bit_from_hash(hash_input):
-    """Return the last bit of the result from hashing the input string."""
-    last_hash_digit = md5((hash_input).encode()).hexdigest()[-1]
-    return int(last_hash_digit, 16) & 1
 
 
 def _ip_to_int(ip_str):
