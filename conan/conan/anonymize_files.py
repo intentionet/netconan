@@ -26,7 +26,8 @@ def anonymize_files_in_dir(input_dir_path, output_dir_path, anon_pwd, anon_ip,
     # The salt is only used for IP and sensitive word anonymization:
     if salt is None:
         salt = ''.join(random.choice(_CHAR_CHOICES) for _ in range(_DEFAULT_SALT_LENGTH))
-    logging.debug('Using random salt: "{}"'.format(salt))
+        logging.warning('No salt was provided; using randomly generated "{}"'.format(salt))
+    logging.debug('Using salt: "{}"'.format(salt))
     if anon_pwd:
         compiled_regexes = generate_default_sensitive_item_regexes()
         pwd_lookup = {}
