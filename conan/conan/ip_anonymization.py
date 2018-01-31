@@ -10,7 +10,7 @@ from hashlib import md5
 from six import iteritems, u
 
 
-class BaseIpAnonymizer(ABC):
+class _BaseIpAnonymizer(ABC):
     def __init__(self, salt, length):
         self.salt = salt
         self.cache = bidict({'': ''})
@@ -69,16 +69,17 @@ class BaseIpAnonymizer(ABC):
         raise NotImplementedError()
 
 
-class IpAnonymizer(BaseIpAnonymizer):
+class IpAnonymizer(_BaseIpAnonymizer):
     """An anonymizer for IPv4 addresses."""
 
     def __init__(self, salt):
         """Create an anonymizer using the specified salt."""
         super(IpAnonymizer, self).__init__(salt, 32)
         # preserve IPv4 classes
-        for i in range(16):
-            bits = '{:04b}'.format(i)
-            self.cache[bits] = bits
+        for i in range(4):
+            bits = '1' * i
+            self.cache[bits + '1'] = bits + '1'
+            self.cache[bits + '0'] = bits + '0'
 
     @classmethod
     def _ip_to_str(cls, bits):
