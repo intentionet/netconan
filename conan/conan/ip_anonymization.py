@@ -21,7 +21,7 @@ class _BaseIpAnonymizer(ABC):
         self.salt = salt
         self.cache = bidict({'': ''})
         self.length = length
-        self.fmt = '{:0lengthb}'.replace('length', str(length))
+        self.fmt = '{{:0{length}b}}'.format(length=length)
         self.salter = salter
 
     def anonymize(self, ip_int):
