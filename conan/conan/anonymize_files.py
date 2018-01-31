@@ -16,7 +16,8 @@ _CHAR_CHOICES = string.ascii_letters + string.digits
 
 
 def anonymize_files_in_dir(input_dir_path, output_dir_path, anon_pwd, anon_ip,
-                           dumpfile=None, salt=None, sensitive_words=None):
+                           salt=None, dumpfile=None, sensitive_words=None,
+                           undo_ip_anon=False):
     """Anonymize each file in input directory and save to output directory."""
     compiled_regexes = None
     anonymizer = None
@@ -29,7 +30,7 @@ def anonymize_files_in_dir(input_dir_path, output_dir_path, anon_pwd, anon_ip,
     if anon_pwd:
         compiled_regexes = generate_default_sensitive_item_regexes()
         pwd_lookup = {}
-    if anon_ip:
+    if anon_ip or undo_ip_anon:
         anonymizer = IpAnonymizer(salt)
     if sensitive_words is not None:
         sensitive_word_regexes = generate_sensitive_word_regexes(sensitive_words)
@@ -40,7 +41,7 @@ def anonymize_files_in_dir(input_dir_path, output_dir_path, anon_pwd, anon_ip,
         if os.path.isfile(input_file) and not file_name.startswith('.'):
             logging.info("Anonymizing {}".format(file_name))
             anonymize_file(input_file, output_file, salt, compiled_regexes,
-                           anonymizer, pwd_lookup, sensitive_word_regexes)
+                           anonymizer, pwd_lookup, sensitive_word_regexes, undo_ip_anon)
 
     if dumpfile is not None:
         with open(dumpfile, 'w') as f_out:
@@ -48,7 +49,7 @@ def anonymize_files_in_dir(input_dir_path, output_dir_path, anon_pwd, anon_ip,
 
 
 def anonymize_file(filename_in, filename_out, salt, compiled_regexes=None,
-                   anonymizer=None, pwd_lookup=None, sensitive_word_regexes=None):
+                   anonymizer=None, pwd_lookup=None, sensitive_word_regexes=None, undo_ip_anon=False):
     """Anonymize contents of input file and save to the output file.
 
     This only applies sensitive line removal if compiled_regexes and pwd_lookup
@@ -63,7 +64,8 @@ def anonymize_file(filename_in, filename_out, salt, compiled_regexes=None,
                 output_line = replace_matching_item(compiled_regexes,
                                                     output_line, pwd_lookup)
             if anonymizer is not None:
-                output_line = anonymize_ip_addr(anonymizer, output_line)
+                output_line = anonymize_ip_addr(anonymizer, output_line, undo_ip_anon)
+
             if sensitive_word_regexes is not None:
                 output_line = anonymize_sensitive_words(sensitive_word_regexes,
                                                         output_line, salt)

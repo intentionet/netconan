@@ -1,5 +1,6 @@
 """Identify and anonymize IP addresses."""
 
+from bidict import bidict
 import ipaddress
 import logging
 import regex
@@ -11,26 +12,45 @@ from six import iteritems, u
 class BaseIpAnonymizer():
     def __init__(self, salt, length):
         self.salt = salt
-        self.cache = {'': ''}
+        self.cache = bidict({'': ''})
         self.length = length
         self.fmt = '{:0lengthb}'.replace('length', str(length))
 
     def anonymize(self, ip_int):
         bits = self.fmt.format(ip_int)
-        anon_bits = self.anonymize_bits(bits)
+        anon_bits = self._anonymize_bits(bits)
         return int(anon_bits, 2)
 
-    def anonymize_bits(self, bits):
+    def _anonymize_bits(self, bits):
         ret = self.cache.get(bits)
         if ret is not None:
             return ret
 
         head, last = bits[:-1], int(bits[-1])
         flip_last = _generate_bit_from_hash(self.salt + head)
-        ret = self.anonymize_bits(head) + str(flip_last ^ last)
+        ret = self._anonymize_bits(head) + str(flip_last ^ last)
 
         # Cache before returning.
         self.cache[bits] = ret
+        return ret
+
+    def deanonymize(self, ip_int):
+        bits = self.fmt.format(ip_int)
+        anon_bits = self._deanonymize_bits(bits)
+        return int(anon_bits, 2)
+
+    def _deanonymize_bits(self, bits):
+        ret = self.cache.inv.get(bits)
+        if ret is not None:
+            return ret
+
+        head, last = bits[:-1], int(bits[-1])
+        orig_head = self._deanonymize_bits(head)
+        flip_last = _generate_bit_from_hash(self.salt + orig_head)
+        ret = orig_head + str(flip_last ^ last)
+
+        # Cache before returning.
+        self.cache.inv[bits] = ret
         return ret
 
     def dump_to_file(self, file_out):
@@ -38,11 +58,11 @@ class BaseIpAnonymizer():
                for bits, anon_bits in iteritems(self.cache)
                if len(bits) == self.length)
         for bits, anon_bits in ips:
-            ip = self.ip_to_str(bits)
-            anon = self.ip_to_str(anon_bits)
+            ip = self._ip_to_str(bits)
+            anon = self._ip_to_str(anon_bits)
             file_out.write('{}\t{}\n'.format(ip, anon))
 
-    def ip_to_str(self, bits):
+    def _ip_to_str(self, bits):
         raise NotImplementedError()
 
 
@@ -54,7 +74,7 @@ class IpAnonymizer(BaseIpAnonymizer):
             bits = '{:04b}'.format(i)
             self.cache[bits] = bits
 
-    def ip_to_str(self, bits):
+    def _ip_to_str(self, bits):
         return str(ipaddress.IPv4Address(int(bits, 2)))
 
 
@@ -62,16 +82,20 @@ class IpV6Anonymizer(BaseIpAnonymizer):
     def __init__(self, salt):
         super(IpV6Anonymizer, self).__init__(salt, 128)
 
-    def ip_to_str(self, bits):
+    def _ip_to_str(self, bits):
         return str(ipaddress.IPv6Address(int(bits, 2)))
 
 
-def anonymize_ip_addr(anonymizer, line):
+def anonymize_ip_addr(anonymizer, line, undo_ip_anon=False):
     """Replace each IP address in the line with an anonymized IP address.
 
     Quad-octets that look like masks will be left unchanged.  That is, any
     quad-octet that consists solely of an initial group of 1s followed by 0s
     or initial 0s followed by 1s will be unchanged.
+
+    If undo_ip_anon is True, then each IP address encountered will be
+    treated as an address already anonymized using the specified salt, and it
+    will be replaced with the unanonymized address.
     """
     pattern = '((\d{1,3})\.\d{1,3}\.\d{1,3}\.\d{1,3})(?=/(\d{1,3}))?'
     matches = regex.findall(pattern, line)
@@ -99,7 +123,10 @@ def anonymize_ip_addr(anonymizer, line):
                           .format(ip_str))
             ip_addrs.append(ip_str)
         else:
-            new_ip = anonymizer.anonymize(ip_int)
+            if undo_ip_anon:
+                new_ip = anonymizer.deanonymize(ip_int)
+            else:
+                new_ip = anonymizer.anonymize(ip_int)
             new_ip_str = str(ipaddress.IPv4Address(new_ip))
             ip_addrs.append(new_ip_str)
             logging.debug("Replaced {} with {}".format(ip_str, new_ip_str))
