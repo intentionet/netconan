@@ -1,13 +1,13 @@
 """Identify and anonymize IP addresses."""
 
-from abc import ABC, abstractmethod
+from abc import ABCMeta, abstractmethod
 from bidict import bidict
 import ipaddress
 import logging
 import regex
 
 from hashlib import md5
-from six import iteritems, u
+from six import add_metaclass, iteritems, u
 
 
 def _generate_bit_from_hash(salt, string):
@@ -16,7 +16,8 @@ def _generate_bit_from_hash(salt, string):
     return int(last_hash_digit, 16) & 1
 
 
-class _BaseIpAnonymizer(ABC):
+@add_metaclass(ABCMeta)
+class _BaseIpAnonymizer:
     def __init__(self, salt, length, salter=_generate_bit_from_hash):
         self.salt = salt
         self.cache = bidict({'': ''})
