@@ -9,7 +9,7 @@ from hashlib import md5
 from six import iteritems, u
 
 
-class _BaseIpAnonymizer():
+class _BaseIpAnonymizer(object):
     def __init__(self, salt, length):
         self.salt = salt
         self.cache = bidict({'': ''})
