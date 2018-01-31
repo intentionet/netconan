@@ -4,7 +4,8 @@ import ipaddress
 import pytest
 import regex
 
-from conan.ip_anonymization import tree_node, anonymize_ip_addr, _convert_to_anon_ip, _ip_to_int, _is_mask
+from conan.ip_anonymization import tree_node, convert_ip_addr, _convert_to_anon_ip, \
+    _convert_to_unanon_ip, _ip_to_int, _is_mask
 
 ip_list = [('10.11.12.13'),
            ('10.10.10.10'),
@@ -13,7 +14,12 @@ ip_list = [('10.11.12.13'),
            ('123.45.67.89'),
            ('92.210.0.255'),
            ('128.7.55.12'),
-           ('223.123.21.99')]
+           ('223.123.21.99'),
+           ('193.99.99.99'),
+           ('225.99.99.99'),
+           ('241.99.99.99'),
+           ('249.99.99.99'),
+           ('254.254.254.254')]
 
 SALT = 'saltForTest'
 
@@ -39,13 +45,13 @@ def ip_tree():
                          ('1 permit tcp host {} host {} eq 2', ['11.20.3.4', '1.20.3.4']),
                          ('something host {} host {} host {}', ['1.2.3.4', '1.2.3.5', '1.2.3.45'])
                          ])
-def test_anonymize_ip_addr(ip_tree, line, ip_addrs):
+def test_convert_ip_addr(ip_tree, line, ip_addrs):
     """Test IP address removal config lines."""
     line_w_ip = line.format(*ip_addrs)
-    anon_line = anonymize_ip_addr(ip_tree, line_w_ip, SALT)
+    anon_line = convert_ip_addr(ip_tree, line_w_ip, SALT)
 
     # Now anonymize each IP address individually & build another anonymized line
-    anon_ip_addrs = [anonymize_ip_addr(ip_tree, ip_addr, SALT) for ip_addr in ip_addrs]
+    anon_ip_addrs = [convert_ip_addr(ip_tree, ip_addr, SALT) for ip_addr in ip_addrs]
     individually_anon_line = line.format(*anon_ip_addrs)
 
     # Make sure anonymizing each address individually is the same as
@@ -129,6 +135,19 @@ def test__convert_to_anon_ip_order_independent():
         # Confirm training the tree with extra addresses in-between does not
         # affect anonymization results
         assert(ip_int_anon_extras == ip_lookup_forward[ip_int_extras])
+
+
+@pytest.mark.parametrize('ip_addr', ip_list)
+def test__convert_to_unanon_ip(ip_addr):
+    """Test reversing IP anonymization."""
+    ip_tree = tree_node(None)
+    ip_tree.preserve_ipv4_class()
+    ip_int = _ip_to_int(ip_addr)
+    ip_int_anon = _convert_to_anon_ip(ip_tree, ip_int, SALT)
+    ip_int_unanon = _convert_to_unanon_ip(ip_int_anon, SALT)
+
+    # Make sure unanonymizing an anonymized address produces the original address
+    assert(ip_int == ip_int_unanon)
 
 
 def test_dump_iptree(tmpdir, ip_tree):

@@ -55,12 +55,16 @@ class tree_node():
             node = node.right
 
 
-def anonymize_ip_addr(my_ip_tree, line, salt):
-    """Replace each IP address in the line with an anonymized IP address.
+def convert_ip_addr(my_ip_tree, line, salt, undo_ip_anon=False):
+    """Replace each IP address in the line with an (un)anonymized IP address.
 
     Quad-octets that look like masks will be left unchanged.  That is, any
     quad-octet that consists solely of an initial group of 1s followed by 0s
     or initial 0s followed by 1s will be unchanged.
+
+    If undo_ip_anon is True, then each IP address encountered will be
+    treated as an address already anonymized using the specified salt, and it
+    will be replaced with the unanonymized address.
     """
     pattern = '((\d{1,3})\.\d{1,3}\.\d{1,3}\.\d{1,3})(?=/(\d{1,3}))?'
     matches = regex.findall(pattern, line)
@@ -88,7 +92,10 @@ def anonymize_ip_addr(my_ip_tree, line, salt):
                           .format(ip_str))
             ip_addrs.append(ip_str)
         else:
-            new_ip = _convert_to_anon_ip(my_ip_tree, ip_int, salt)
+            if undo_ip_anon:
+                new_ip = _convert_to_unanon_ip(ip_int, salt)
+            else:
+                new_ip = _convert_to_anon_ip(my_ip_tree, ip_int, salt)
             new_ip_str = str(ipaddress.IPv4Address(new_ip))
             ip_addrs.append(new_ip_str)
             logging.debug("Replaced {} with {}".format(ip_str, new_ip_str))
@@ -128,6 +135,27 @@ def _convert_to_anon_ip(node, ip_int, salt):
             node = node.left
         new_ip_int |= node.value << i
     return new_ip_int
+
+
+def _convert_to_unanon_ip(anon_ip_int, salt, preserve_ipv4_class=True):
+    """Reverse hash-based anonymization for the anonymized IP int and salt."""
+    unanon_ip_int = 0
+    preceding_bits = ''
+    for i in range(31, -1, -1):
+        anon_bit = (anon_ip_int >> i) & 1
+        if preserve_ipv4_class:
+            # Preserve number of leading ones (up to the 4th bit) to preserve class
+            unanon_bit = anon_bit
+            if not anon_bit or i < 29:
+                preserve_ipv4_class = False
+        else:
+            # This is the value of the anonymized bit if unanonymized bit was 0
+            zero_bit = _generate_bit_from_hash(salt + preceding_bits)
+            # So, if zero_bit = anon_bit, then unanon bit is 0
+            unanon_bit = zero_bit ^ anon_bit
+        preceding_bits += str(unanon_bit)
+        unanon_ip_int |= unanon_bit << i
+    return unanon_ip_int
 
 
 def _generate_bit_from_hash(hash_input):
