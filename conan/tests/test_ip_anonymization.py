@@ -80,6 +80,18 @@ def get_ip_class(ip_int):
         return 'E'
 
 
+def get_ip_class_mask(ip_int):
+    """Returns a mask indicating bits preserved when preserving class."""
+    if (ip_int & 0xE0000000) == 0xE0000000:
+        return 0xF0000000
+    elif (ip_int & 0xC0000000) == 0xC0000000:
+        return 0xE0000000
+    elif (ip_int & 0x80000000) == 0x80000000:
+        return 0xC0000000
+    else:
+        return 0x80000000
+
+
 @pytest.mark.parametrize('ip_addr', [
     '0.0.0.0', '127.255.255.255',  # Class A
     '128.0.0.0', '191.255.255.255',  # Class B
@@ -97,6 +109,10 @@ def test_v4_class_preserved(flip_anonymizer, ip_addr):
 
     # Anonymized ip address should not match the original ip address
     assert(ip_int != ip_int_anon)
+
+    # All bits that are not forced to be preserved are flipped
+    class_mask = get_ip_class_mask(ip_int)
+    assert(0xFFFFFFFF ^ class_mask == ip_int ^ ip_int_anon)
 
 
 @pytest.mark.parametrize('ip_addr', ip_list)
