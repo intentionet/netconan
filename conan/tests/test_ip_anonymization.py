@@ -88,6 +88,7 @@ def get_ip_class(ip_int):
     '240.0.0.0', '247.255.255.255',  # Class E
 ])
 def test_v4_class_preserved(flip_anonymizer, ip_addr):
+    """Tests that IPv4 classes are preserved."""
     ip_int = _ip_to_int(ip_addr)
     ip_int_anon = flip_anonymizer.anonymize(ip_int)
 
