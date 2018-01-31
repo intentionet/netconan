@@ -1,5 +1,6 @@
 """Identify and anonymize IP addresses."""
 
+from abc import ABC, abstractmethod
 from bidict import bidict
 import ipaddress
 import logging
@@ -9,7 +10,7 @@ from hashlib import md5
 from six import iteritems, u
 
 
-class _BaseIpAnonymizer(object):
+class BaseIpAnonymizer(ABC):
     def __init__(self, salt, length):
         self.salt = salt
         self.cache = bidict({'': ''})
@@ -62,11 +63,13 @@ class _BaseIpAnonymizer(object):
             anon = self._ip_to_str(anon_bits)
             file_out.write('{}\t{}\n'.format(ip, anon))
 
-    def _ip_to_str(self, bits):
+    @classmethod
+    @abstractmethod
+    def _ip_to_str(cls, bits):
         raise NotImplementedError()
 
 
-class IpAnonymizer(_BaseIpAnonymizer):
+class IpAnonymizer(BaseIpAnonymizer):
     """An anonymizer for IPv4 addresses."""
 
     def __init__(self, salt):
@@ -77,7 +80,8 @@ class IpAnonymizer(_BaseIpAnonymizer):
             bits = '{:04b}'.format(i)
             self.cache[bits] = bits
 
-    def _ip_to_str(self, bits):
+    @classmethod
+    def _ip_to_str(cls, bits):
         return str(ipaddress.IPv4Address(int(bits, 2)))
 
 
