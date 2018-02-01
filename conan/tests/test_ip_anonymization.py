@@ -53,6 +53,19 @@ def anonymizer_v6():
 
 
 @pytest.fixture(scope='module')
+def anonymizer(request):
+    """Create a generic fixture for different types of anonymizers."""
+    if request.param == 'v4':
+        return IpAnonymizer(SALT)
+    elif request.param == 'v6':
+        return IpV6Anonymizer(SALT)
+    elif request.param == 'flipv4':
+        return IpAnonymizer(SALT, salter=lambda a, b: 1)
+    else:
+        raise ValueError('Invalid anonymizer type {}'.format(request.param))
+
+
+@pytest.fixture(scope='module')
 def flip_anonymizer_v4():
     """Create an anonymizer that flips every bit."""
     return IpAnonymizer(SALT, salter=lambda a, b: 1)
@@ -158,7 +171,11 @@ def test_v4_class_preserved(flip_anonymizer_v4, ip_addr):
     assert(0xFFFFFFFF ^ class_mask == ip_int ^ ip_int_anon)
 
 
-def anonymize_addr_general(anonymizer, ip_addr, ip_addr_bits):
+@pytest.mark.parametrize('anonymizer,ip_addr',
+                         [('v4', s) for s in ip_v4_list] +
+                         [('v6', s) for s in ip_v6_list],
+                         indirect=['anonymizer'])
+def test_anonymize_addr(anonymizer, ip_addr):
     """Test conversion from original to anonymized IP address."""
     ip_int = int(anonymizer.make_addr(ip_addr))
     ip_int_anon = anonymizer.anonymize(ip_int)
@@ -166,10 +183,10 @@ def anonymize_addr_general(anonymizer, ip_addr, ip_addr_bits):
     # Anonymized ip address should not match the original address
     assert(ip_int != ip_int_anon)
 
-    full_bit_mask = (1 << ip_addr_bits) - 1
+    full_bit_mask = (1 << anonymizer.length) - 1
 
     # Confirm prefixes for similar addresses are preserved after anonymization
-    for i in range(0, ip_addr_bits):
+    for i in range(0, anonymizer.length):
         # Flip the ith bit of the org address and use that as the similar address
         diff_mask = (1 << i)
         ip_int_similar = ip_int ^ diff_mask
@@ -183,18 +200,6 @@ def anonymize_addr_general(anonymizer, ip_addr, ip_addr_bits):
 
         # Confirm the bit that is different in the original addresses is different in the anonymized addresses
         assert(ip_int_similar_anon & diff_mask != ip_int_anon & diff_mask)
-
-
-@pytest.mark.parametrize('ip_addr', ip_v4_list)
-def test_v4_anonymize(anonymizer_v4, ip_addr):
-    """Test conversion from original to anon IPv4 address."""
-    anonymize_addr_general(anonymizer_v4, ip_addr, 32)
-
-
-@pytest.mark.parametrize('ip_addr', ip_v6_list)
-def test_v6_anonymize(anonymizer_v6, ip_addr):
-    """Test conversion from original to anon IPv6 address."""
-    anonymize_addr_general(anonymizer_v6, ip_addr, 128)
 
 
 def test_anonymize_ip_order_independent():
