@@ -160,22 +160,22 @@ def test_v4_class_preserved(flip_anonymizer_v4, ip_addr):
     assert(0xFFFFFFFF ^ class_mask == ip_int ^ ip_int_anon)
 
 
-@pytest.mark.parametrize('anonymizer,ip_addr,ip_addr_bits',
-                         [('v4', s, 32) for s in ip_v4_list] +
-                         [('v6', s, 128) for s in ip_v6_list],
+@pytest.mark.parametrize('anonymizer,ip_addr',
+                         [('v4', s) for s in ip_v4_list] +
+                         [('v6', s) for s in ip_v6_list],
                          indirect=['anonymizer'])
-def test_anonymize_addr(anonymizer, ip_addr, ip_addr_bits):
+def test_anonymize_addr(anonymizer, ip_addr):
     """Test conversion from original to anonymized IP address."""
     ip_int = int(anonymizer.make_addr(ip_addr))
     ip_int_anon = anonymizer.anonymize(ip_int)
 
     # Anonymized ip address should not match the original address
-    assert (ip_int != ip_int_anon)
+    assert(ip_int != ip_int_anon)
 
-    full_bit_mask = (1 << ip_addr_bits) - 1
+    full_bit_mask = (1 << anonymizer.length) - 1
 
     # Confirm prefixes for similar addresses are preserved after anonymization
-    for i in range(0, ip_addr_bits):
+    for i in range(0, anonymizer.length):
         # Flip the ith bit of the org address and use that as the similar address
         diff_mask = (1 << i)
         ip_int_similar = ip_int ^ diff_mask
