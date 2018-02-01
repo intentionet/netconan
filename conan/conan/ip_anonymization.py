@@ -13,7 +13,7 @@ from six import add_metaclass, iteritems
 
 # Deliberately catching more than valid IPs so we can remove 0s later.
 IPv4_PATTERN = regex.compile(
-    r'(?:^|\s)\K((\d{1,3})\.\d{1,3}\.\d{1,3}\.\d{1,3})(?=/(\d{1,3}))?(?=/|\s|$)', regex.IGNORECASE)
+    r'(?:^|\s)\K((\d{1,3})\.\d{1,3}\.\d{1,3}\.\d{1,3})(?=/(\d{1,3}))?(?=/|\s|$)')
 
 # Modified from https://stackoverflow.com/a/17871737/1715495
 IPv6_PATTERN = regex.compile(
