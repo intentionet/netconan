@@ -13,11 +13,11 @@ from six import add_metaclass, iteritems
 
 # Deliberately catching more than valid IPs so we can remove 0s later.
 IPv4_PATTERN = regex.compile(
-    r'(?:^|\s)\K((\d{1,3})\.\d{1,3}\.\d{1,3}\.\d{1,3})(?=/(\d{1,3}))?(?=/|\s|$)')
+    r'(?<=^|\s)((\d{1,3})\.\d{1,3}\.\d{1,3}\.\d{1,3})(?=/(\d{1,3}))?(?=/|\s|$)')
 
 # Modified from https://stackoverflow.com/a/17871737/1715495
 IPv6_PATTERN = regex.compile(
-    r'(?:^|\s)\K(([0-9a-f]{1,4}:){7,7}[0-9a-f]{1,4}'
+    r'(?<=^|\s)(([0-9a-f]{1,4}:){7,7}[0-9a-f]{1,4}'
     '|([0-9a-f]{1,4}:){1,7}:'
     '|([0-9a-f]{1,4}:){1,6}:[0-9a-f]{1,4}'
     '|([0-9a-f]{1,4}:){1,5}(:[0-9a-f]{1,4}){1,2}'
@@ -132,31 +132,18 @@ class IpAnonymizer(_BaseIpAnonymizer):
             self.cache[bits + '0'] = bits + '0'
 
     def _is_mask(self, possible_mask_int):
-        """Determine if the input int is a mask or not.
+        """Return True if the input int can be used as a 32-bit prefix mask.
 
-        If the binary representation starts with all 1s and ends with all 0s
-        (or starts with 0s and ends with 1s), then we assume it is a mask.
+        An IP address used as a prefix mask in IPv4 is either 1s followed by 0s,
+        or the reverse. For example, 128.0.0.0, 0.0.63.255, etc.
 
-        Counting the number of times consecutive bits do not match (transitions)
-        gives us a reasonable idea of whether or not something is a mask.  With 0
-        or 1 transitions, assume the value is a mask.
-        e.g. 1100 has only one place where consecutive bits don't match
-             0000 has zero
-             0110 has two
-             0101 has three
+        0.0.0.0 and 255.255.255.255 are considered masks.
         """
-        prev_bit = possible_mask_int & 1
-        flipped = False
-        for pos in range(1, self.length):
-            cur_bit = (possible_mask_int >> pos) & 1
-            if prev_bit != cur_bit:
-                if flipped:
-                    return False
-                else:
-                    flipped = True
-            prev_bit = cur_bit
-
-        return True
+        # Implemented by counting the transitions between 1 and 0. All masks
+        # will have at most one transition.
+        diff = (possible_mask_int ^ (possible_mask_int >> 1)) & 0x7FFFFFFF
+        # This code is a bit twiddle to determine if diff has at most 1 bit set.
+        return (diff & ((0xFFFFFFFF ^ diff) + 1)) == diff
 
     @classmethod
     def get_addr_pattern(cls):

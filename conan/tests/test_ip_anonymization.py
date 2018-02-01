@@ -83,7 +83,6 @@ def anonymize_line_general(anonymizer, line, ip_addrs):
     # Make sure anonymizing each address individually is the same as
     # anonymizing all at once
     assert(anon_line == individually_anon_line)
-    print(individually_anon_line)
 
     for ip_addr in ip_addrs:
         # Make sure the original ip address(es) are removed from the anonymized line
@@ -291,20 +290,20 @@ def test_v4_anonymizer_ignores_leading_zeros(anonymizer_v4, zeros, no_zeros):
     assert(ipaddress.IPv4Address(no_zeros) == anonymizer_v4.make_addr(zeros))
 
 
-@pytest.mark.parametrize('possible_mask, expected', [
-                         (0b00000000000000000000000000000000, True),
-                         (0b00000000000000000000000000000001, True),
-                         (0b00000000000000000000000000001111, True),
-                         (0b11110000000000000000000000000000, True),
-                         (0b10000000000000000000000000000000, True),
-                         (0b01111111111000000000000000000000, False),
-                         (0b00000011111000000000000000000000, False),
-                         (0b00000000000100000000000000000000, False),
-                         (0b00010101001001000000000000000000, False),
-                         (0b00000000000000000010000000000000, False),
-                         (0b00000000000000000011111111111110, False),
-                         (0b00000000010000000100000000000000, False),
+@pytest.mark.parametrize('ip_int, expected', [
+                         (0b00000000000000000000000000000000, False),
+                         (0b00000000000000000000000000000001, False),
+                         (0b00000000000000000000000000001111, False),
+                         (0b11110000000000000000000000000000, False),
+                         (0b10000000000000000000000000000000, False),
+                         (0b01111111111000000000000000000000, True),
+                         (0b00000011111000000000000000000000, True),
+                         (0b00000000000100000000000000000000, True),
+                         (0b00010101001001000000000000000000, True),
+                         (0b00000000000000000010000000000000, True),
+                         (0b00000000000000000011111111111110, True),
+                         (0b00000000010000000100000000000000, True),
                          ])
-def test__is_mask(anonymizer_v4, possible_mask, expected):
-    """Test ability to detect masks vs IP addresses."""
-    assert(expected == anonymizer_v4._is_mask(possible_mask))
+def test_v4_should_anonymize(anonymizer_v4, ip_int, expected):
+    """Test that the IpV4 anonymizer does not anonymize masks."""
+    assert(expected == anonymizer_v4.should_anonymize(ip_int))
