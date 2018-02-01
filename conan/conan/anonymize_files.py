@@ -20,8 +20,9 @@ def anonymize_files_in_dir(input_dir_path, output_dir_path, anon_pwd, anon_ip,
                            salt=None, dumpfile=None, sensitive_words=None,
                            undo_ip_anon=False):
     """Anonymize each file in input directory and save to output directory."""
+    anonymizer4 = None
+    anonymizer6 = None
     compiled_regexes = None
-    anonymizer = None
     pwd_lookup = None
     sensitive_word_regexes = None
     # The salt is only used for IP and sensitive word anonymization:
@@ -53,7 +54,8 @@ def anonymize_files_in_dir(input_dir_path, output_dir_path, anon_pwd, anon_ip,
 
     if dumpfile is not None:
         with open(dumpfile, 'w') as f_out:
-            anonymizer.dump_to_file(f_out)
+            anonymizer4.dump_to_file(f_out)
+            anonymizer6.dump_to_file(f_out)
 
 
 def anonymize_file(filename_in, filename_out, salt, compiled_regexes=None,

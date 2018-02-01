@@ -6,7 +6,7 @@ import pytest
 import regex
 
 from conan.ip_anonymization import IpAnonymizer, IpV6Anonymizer, \
-    anonymize_ip_addr, _is_mask
+    anonymize_ip_addr
 
 ip_v4_list = [
     ('10.11.12.13'),
@@ -28,8 +28,13 @@ ip_v6_list = [
     ('1234::5678'),
     ('::1'),
     ('1::'),
+    ('1::1'),
     ('2001:db8:85a3:7:8:8a2e:370:7334'),
     ('2001:db8:a0b:12f0::1'),
+    ('ffff:ffff::ffff:ffff'),
+    ('a:b:c:d:e:f:1:2'),
+    ('aAaA:bBbB:cCcC:dDdD:eEeE:fFfF:1010:2929'),
+    ('ffff:eeee:dddd:cccc:bbbb:AaAa:9999:8888'),
 ]
 
 SALT = 'saltForTest'
@@ -78,6 +83,7 @@ def anonymize_line_general(anonymizer, line, ip_addrs):
     # Make sure anonymizing each address individually is the same as
     # anonymizing all at once
     assert(anon_line == individually_anon_line)
+    print(individually_anon_line)
 
     for ip_addr in ip_addrs:
         # Make sure the original ip address(es) are removed from the anonymized line
@@ -105,6 +111,11 @@ def test_v4_anonymize_line(anonymizer_v4, line, ip_addrs):
 @pytest.mark.parametrize('line, ip_addrs', [
                          ('ip address {} something::something', ['1234::5678']),
                          ('ip address {} blah {}', ['1234::', '1234:5678::9abc:def0']),
+                         ('ip address {} blah {} blah', ['::1', '1234:5678:abcd:dcba::9abc:def0']),
+                         ('ip address {}/16 blah', ['::1']),
+                         ('ip address {}/16 blah', ['1::']),
+                         ('ip address {}/16 blah', ['1::1']),
+                         ('ip address {}/16 blah', ['ffff:ffff::ffff:ffff']),
                          ])
 def test_v6_anonymize_line(anonymizer_v6, line, ip_addrs):
     """Test IPv6 address removal from config lines."""
@@ -294,6 +305,6 @@ def test_v4_anonymizer_ignores_leading_zeros(anonymizer_v4, zeros, no_zeros):
                          (0b00000000000000000011111111111110, False),
                          (0b00000000010000000100000000000000, False),
                          ])
-def test__is_mask(possible_mask, expected):
+def test__is_mask(anonymizer_v4, possible_mask, expected):
     """Test ability to detect masks vs IP addresses."""
-    assert(expected == _is_mask(possible_mask, 32))
+    assert(expected == anonymizer_v4._is_mask(possible_mask))
