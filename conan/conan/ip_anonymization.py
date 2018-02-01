@@ -4,10 +4,32 @@ from abc import ABCMeta, abstractmethod
 from bidict import bidict
 import ipaddress
 import logging
+# Need regex instead of re for variable look behind
 import regex
 
 from hashlib import md5
-from six import add_metaclass, iteritems, u
+from six import add_metaclass, iteritems
+
+
+# Deliberately catching more than valid IPs so we can remove 0s later.
+IPv4_PATTERN = regex.compile(
+    r'(?<=^|\s)((\d{1,3})\.\d{1,3}\.\d{1,3}\.\d{1,3})(?=/(\d{1,3}))?(?=/|\s|$)')
+
+# Modified from https://stackoverflow.com/a/17871737/1715495
+IPv6_PATTERN = regex.compile(
+    r'(?<=^|\s)(([0-9a-f]{1,4}:){7,7}[0-9a-f]{1,4}'
+    '|([0-9a-f]{1,4}:){1,7}:'
+    '|([0-9a-f]{1,4}:){1,6}:[0-9a-f]{1,4}'
+    '|([0-9a-f]{1,4}:){1,5}(:[0-9a-f]{1,4}){1,2}'
+    '|([0-9a-f]{1,4}:){1,4}(:[0-9a-f]{1,4}){1,3}'
+    '|([0-9a-f]{1,4}:){1,3}(:[0-9a-f]{1,4}){1,4}'
+    '|([0-9a-f]{1,4}:){1,2}(:[0-9a-f]{1,4}){1,5}'
+    '|[0-9a-f]{1,4}:((:[0-9a-f]{1,4}){1,6})'
+    '|:((:[0-9a-f]{1,4}){1,7}|:)'
+    '|fe80:(:[0-9a-f]{0,4}){0,4}%[0-9a-z]{1,}'
+    '|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])'
+    '|([0-9a-f]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))(?=/|\s|$)',
+    regex.IGNORECASE)
 
 
 def _generate_bit_from_hash(salt, string):
@@ -72,13 +94,33 @@ class _BaseIpAnonymizer:
             file_out.write('{}\t{}\n'.format(ip, anon))
 
     @classmethod
-    @abstractmethod
     def _ip_to_str(cls, bits):
+        return str(cls.make_addr_from_int(int(bits, 2)))
+
+    @classmethod
+    @abstractmethod
+    def get_addr_pattern(cls):
+        raise NotImplementedError()
+
+    @classmethod
+    @abstractmethod
+    def make_addr(cls, addr_str):
+        raise NotImplementedError()
+
+    @classmethod
+    @abstractmethod
+    def make_addr_from_int(cls, ip_int):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def should_anonymize(self, ip_int):
         raise NotImplementedError()
 
 
 class IpAnonymizer(_BaseIpAnonymizer):
     """An anonymizer for IPv4 addresses."""
+
+    _DROP_ZEROS_PATTERN = regex.compile(r'0*(\d+)\.0*(\d+)\.0*(\d+)\.0*(\d+)')
 
     def __init__(self, salt, **kwargs):
         """Create an anonymizer using the specified salt."""
@@ -89,86 +131,109 @@ class IpAnonymizer(_BaseIpAnonymizer):
             self.cache[bits + '1'] = bits + '1'
             self.cache[bits + '0'] = bits + '0'
 
+    def _is_mask(self, possible_mask_int):
+        """Return True if the input int can be used as a 32-bit prefix mask.
+
+        An IP address used as a prefix mask in IPv4 is either 1s followed by 0s,
+        or the reverse. For example, 128.0.0.0, 0.0.63.255, etc.
+
+        0.0.0.0 and 255.255.255.255 are considered masks.
+        """
+        # Implemented by counting the transitions between 1 and 0. All masks
+        # will have at most one transition.
+        diff = (possible_mask_int ^ (possible_mask_int >> 1)) & 0x7FFFFFFF
+        # This code is a bit twiddle to determine if diff has at most 1 bit set.
+        return (diff & ((0xFFFFFFFF ^ diff) + 1)) == diff
+
     @classmethod
-    def _ip_to_str(cls, bits):
-        return str(ipaddress.IPv4Address(int(bits, 2)))
+    def get_addr_pattern(cls):
+        """Return a compiled regex pattern to recognize IPv4 addresses."""
+        return IPv4_PATTERN
+
+    @classmethod
+    def make_addr(cls, addr_str):
+        """
+        Return an IPv4 address from the given string.
+
+        If the octets in `addr_str` have leading zeros, such as in 1.2.3.040,
+        those zeros will be ignored (1.2.3.40) -- they will NOT be interpreted
+        as octal (1.2.3.32).
+        """
+        addr_str = IpAnonymizer._DROP_ZEROS_PATTERN.sub(r'\1.\2.\3.\4', addr_str)
+        return ipaddress.IPv4Address(addr_str)
+
+    @classmethod
+    def make_addr_from_int(cls, ip_int):
+        """Return an IPv4 address with the given int representation."""
+        return ipaddress.IPv4Address(ip_int)
+
+    def should_anonymize(self, ip_int):
+        """Check if a given address should be anonymized (e.g. is it a mask or address?)."""
+        return not self._is_mask(ip_int)
+
+
+class IpV6Anonymizer(_BaseIpAnonymizer):
+    """An anonymizer for IPv6 addresses."""
+
+    def __init__(self, salt, **kwargs):
+        """Create an anonymizer using the specified salt."""
+        super(IpV6Anonymizer, self).__init__(salt, 128, **kwargs)
+
+    @classmethod
+    def get_addr_pattern(cls):
+        """Return a compiled regex pattern to recognize IPv6 addresses."""
+        return IPv6_PATTERN
+
+    @classmethod
+    def make_addr(cls, addr_str):
+        """Return an IPv6 address from the given string."""
+        return ipaddress.IPv6Address(addr_str)
+
+    @classmethod
+    def make_addr_from_int(cls, ip_int):
+        """Return an IPv6 address with the given int representation."""
+        return ipaddress.IPv6Address(ip_int)
+
+    def should_anonymize(self, ip_int):
+        """Check if a given address should be anonymized."""
+        return True
 
 
 def anonymize_ip_addr(anonymizer, line, undo_ip_anon=False):
     """Replace each IP address in the line with an anonymized IP address.
 
-    Quad-octets that look like masks will be left unchanged.  That is, any
-    quad-octet that consists solely of an initial group of 1s followed by 0s
+    Masks will be unchanged. That is, any IP address that, when written in
+    binary, that consists solely of an initial group of 1s followed by 0s
     or initial 0s followed by 1s will be unchanged.
 
     If undo_ip_anon is True, then each IP address encountered will be
     treated as an address already anonymized using the specified salt, and it
     will be replaced with the unanonymized address.
     """
-    pattern = '((\d{1,3})\.\d{1,3}\.\d{1,3}\.\d{1,3})(?=/(\d{1,3}))?'
-    matches = regex.findall(pattern, line)
+    pattern = anonymizer.get_addr_pattern()
+    matches = pattern.findall(line)
     if matches is None:
         return line
 
-    # Escape existing curly braces since string.format will be used to insert
-    # anonymized IP addresses
-    new_line = line.replace('{', '{{')
-    new_line = new_line.replace('}', '}}')
-    new_line = regex.sub(pattern, '{}', new_line)
+    # Escape existing curly braces, then replace IPs to be substituted with {}.
+    # `string.format` will be used to replace them later.
+    new_line = line.replace('{', '{{').replace('}', '}}')
+    new_line = pattern.sub('{}', new_line)
 
     ip_addrs = []
     for match in matches:
-        ip_str = match[0]
-        first_octet = match[1]
-        ip_int = _ip_to_int(ip_str)
-        if _is_mask(ip_int):
-            logging.debug("Skipping mask {}".format(ip_str))
-            ip_addrs.append(ip_str)
-        elif int(first_octet) >= 224:
-            # TODO: consider just removing this and anonymizing (if preserving
-            # class), but skipping anything in IP class D and class E for now
-            logging.debug("Skipping addresses reserved for multicast and R&D {}"
-                          .format(ip_str))
-            ip_addrs.append(ip_str)
+        ip = anonymizer.make_addr(match[0])
+        ip_int = int(ip)
+        if not anonymizer.should_anonymize(ip_int):
+            logging.debug("Should not anonymize {}, skipping".format(ip))
+            ip_addrs.append(ip)
         else:
             if undo_ip_anon:
-                new_ip = anonymizer.deanonymize(ip_int)
+                new_ip_int = anonymizer.deanonymize(ip_int)
             else:
-                new_ip = anonymizer.anonymize(ip_int)
-            new_ip_str = str(ipaddress.IPv4Address(new_ip))
-            ip_addrs.append(new_ip_str)
-            logging.debug("Replaced {} with {}".format(ip_str, new_ip_str))
+                new_ip_int = anonymizer.anonymize(ip_int)
+            new_ip = anonymizer.make_addr_from_int(new_ip_int)
+            ip_addrs.append(new_ip)
+            logging.debug("Replacing {} with {}".format(ip, new_ip))
 
     return new_line.format(*ip_addrs)
-
-
-def _ip_to_int(ip_str):
-    """Convert an IP address string to integer representation."""
-    # Need to strip leading zeros so ipaddress does not assume octal notation
-    ip_str = regex.sub('0*(\d+)\.0*(\d+)\.0*(\d+)\.0*(\d+)',
-                       r'\1.\2.\3.\4', ip_str)
-    ip_int = int(ipaddress.IPv4Address(u(ip_str)))
-    return int(ip_int)
-
-
-def _is_mask(possible_mask_int):
-    """Determine if the input int is a mask or not.
-
-    If the binary representation starts with all 1s and ends with all 0s
-    (or starts with 0s and ends with 1s), then we assume it is a mask.
-
-    Counting the number of times consecutive bits do not match (transitions)
-    gives us a reasonable idea of whether or not something is a mask.  With 0
-    or 1 transitions, assume the value is a mask.
-    e.g. 1100 has only one place where consecutive bits don't match
-         0000 has zero
-         0110 has two
-         0101 has three
-    """
-    prev_bit = possible_mask_int & 1
-    delta_count = 0
-    for pos in range(1, 32):
-        cur_bit = (possible_mask_int >> pos) & 1
-        delta_count += (prev_bit ^ cur_bit)
-        prev_bit = cur_bit
-    return (delta_count < 2)
