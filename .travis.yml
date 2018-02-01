@@ -5,3 +5,4 @@ python:
   - 3.6
 
 script: ./.travis/build.sh
+cache: pip
