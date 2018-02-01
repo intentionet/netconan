@@ -26,6 +26,7 @@ ip_v4_list = [
 ip_v6_list = [
     ('1234::5678'),
     ('::1'),
+    ('1::'),
     ('2001:db8:85a3:7:8:8a2e:370:7334'),
     ('2001:db8:a0b:12f0::1'),
 ]
@@ -51,6 +52,24 @@ def flip_anonymizer_v4():
     return IpAnonymizer(SALT, salter=lambda a, b: 1)
 
 
+def anonymize_line_general(anonymizer, line, ip_addrs):
+    """Test IP address removal from config lines."""
+    line_w_ip = line.format(*ip_addrs)
+    anon_line = anonymize_ip_addr(anonymizer, line_w_ip)
+
+    # Now anonymize each IP address individually & build another anonymized line
+    anon_ip_addrs = [anonymize_ip_addr(anonymizer, ip_addr) for ip_addr in ip_addrs]
+    individually_anon_line = line.format(*anon_ip_addrs)
+
+    # Make sure anonymizing each address individually is the same as
+    # anonymizing all at once
+    assert(anon_line == individually_anon_line)
+
+    for ip_addr in ip_addrs:
+        # Make sure the original ip address(es) are removed from the anonymized line
+        assert(ip_addr not in anon_line)
+
+
 @pytest.mark.parametrize('line, ip_addrs', [
                          ('ip address {} 255.255.255.254', ['123.45.67.89']),
                          ('ip address {} 255.0.0.0', ['10.0.0.0']),
@@ -64,22 +83,18 @@ def flip_anonymizer_v4():
                          ('1 permit tcp host {} host {} eq 2', ['11.20.3.4', '1.20.3.4']),
                          ('something host {} host {} host {}', ['1.2.3.4', '1.2.3.5', '1.2.3.45']),
                          ])
-def test_anonymize_ip_addr(anonymizer_v4, line, ip_addrs):
-    """Test IP address removal config lines."""
-    line_w_ip = line.format(*ip_addrs)
-    anon_line = anonymize_ip_addr(anonymizer_v4, line_w_ip)
+def test_v4_anonymize_line(anonymizer_v4, line, ip_addrs):
+    """Test IPv4 address removal from config lines."""
+    anonymize_line_general(anonymizer_v4, line, ip_addrs)
 
-    # Now anonymize each IP address individually & build another anonymized line
-    anon_ip_addrs = [anonymize_ip_addr(anonymizer_v4, ip_addr) for ip_addr in ip_addrs]
-    individually_anon_line = line.format(*anon_ip_addrs)
 
-    # Make sure anonymizing each address individually is the same as
-    # anonymizing all at once
-    assert(anon_line == individually_anon_line)
-
-    for ip_addr in ip_addrs:
-        # Make sure the original ip address(es) are removed from the anonymized line
-        assert(ip_addr not in anon_line)
+@pytest.mark.parametrize('line, ip_addrs', [
+                         ('ip address {} something::something', ['1234::5678']),
+                         ('ip address {} blah {}', ['1234::', '1234:5678::9abc:def0']),
+                         ])
+def test_v6_anonymize_line(anonymizer_v6, line, ip_addrs):
+    """Test IPv6 address removal from config lines."""
+    anonymize_line_general(anonymizer_v6, line, ip_addrs)
 
 
 def get_ip_v4_class(ip_int):
@@ -131,7 +146,7 @@ def test_v4_class_preserved(flip_anonymizer_v4, ip_addr):
     assert(0xFFFFFFFF ^ class_mask == ip_int ^ ip_int_anon)
 
 
-def anonymize_general(anonymizer, ip_addr, ip_addr_bits):
+def anonymize_addr_general(anonymizer, ip_addr, ip_addr_bits):
     """Test conversion from original to anonymized IP address."""
     ip_int = int(anonymizer.make_addr(ip_addr))
     ip_int_anon = anonymizer.anonymize(ip_int)
@@ -161,13 +176,13 @@ def anonymize_general(anonymizer, ip_addr, ip_addr_bits):
 @pytest.mark.parametrize('ip_addr', ip_v4_list)
 def test_v4_anonymize(anonymizer_v4, ip_addr):
     """Test conversion from original to anon IPv4 address."""
-    anonymize_general(anonymizer_v4, ip_addr, 32)
+    anonymize_addr_general(anonymizer_v4, ip_addr, 32)
 
 
 @pytest.mark.parametrize('ip_addr', ip_v6_list)
 def test_v6_anonymize(anonymizer_v6, ip_addr):
     """Test conversion from original to anon IPv6 address."""
-    anonymize_general(anonymizer_v6, ip_addr, 128)
+    anonymize_addr_general(anonymizer_v6, ip_addr, 128)
 
 
 def test_anonymize_ip_order_independent():
