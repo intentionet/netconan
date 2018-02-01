@@ -247,7 +247,7 @@ def anonymize_ip_addr(anonymizer, line, undo_ip_anon=False):
         ip = anonymizer.make_addr(match[0])
         ip_int = int(ip)
         if not anonymizer.should_anonymize(ip_int):
-            logging.debug("Skipping mask {}".format(ip))
+            logging.debug("Should not anonymize {}, skipping".format(ip))
             ip_addrs.append(ip)
         else:
             if undo_ip_anon:
