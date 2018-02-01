@@ -4,30 +4,32 @@ from abc import ABCMeta, abstractmethod
 from bidict import bidict
 import ipaddress
 import logging
-import re
+# Need regex instead of re for variable look behind
+import regex
 
 from hashlib import md5
 from six import add_metaclass, iteritems
 
 
 # Deliberately catching more than valid IPs so we can remove 0s later.
-IPv4_PATTERN = re.compile(
-    r'((\d{1,3})\.\d{1,3}\.\d{1,3}\.\d{1,3})(?=/(\d{1,3}))?')
+IPv4_PATTERN = regex.compile(
+    r'(?:^|\s)\K((\d{1,3})\.\d{1,3}\.\d{1,3}\.\d{1,3})(?=/(\d{1,3}))?(?=/|\s|$)')
 
 # Modified from https://stackoverflow.com/a/17871737/1715495
-IPv6_PATTERN = re.compile(
-    r'[\s^](([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}'
-    '|([0-9a-fA-F]{1,4}:){1,7}:'
-    '|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}'
-    '|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}'
-    '|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}'
-    '|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}'
-    '|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}'
-    '|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})'
-    '|:((:[0-9a-fA-F]{1,4}){1,7}|:)'
-    '|[fF][eE]80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}'
-    '|::([fF][fF][fF][fF](:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])'
-    '|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))[\s$]')
+IPv6_PATTERN = regex.compile(
+    r'(?:^|\s)\K(([0-9a-f]{1,4}:){7,7}[0-9a-f]{1,4}'
+    '|([0-9a-f]{1,4}:){1,7}:'
+    '|([0-9a-f]{1,4}:){1,6}:[0-9a-f]{1,4}'
+    '|([0-9a-f]{1,4}:){1,5}(:[0-9a-f]{1,4}){1,2}'
+    '|([0-9a-f]{1,4}:){1,4}(:[0-9a-f]{1,4}){1,3}'
+    '|([0-9a-f]{1,4}:){1,3}(:[0-9a-f]{1,4}){1,4}'
+    '|([0-9a-f]{1,4}:){1,2}(:[0-9a-f]{1,4}){1,5}'
+    '|[0-9a-f]{1,4}:((:[0-9a-f]{1,4}){1,6})'
+    '|:((:[0-9a-f]{1,4}){1,7}|:)'
+    '|fe80:(:[0-9a-f]{0,4}){0,4}%[0-9a-z]{1,}'
+    '|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])'
+    '|([0-9a-f]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))(?=/|\s|$)',
+    regex.IGNORECASE)
 
 
 def _generate_bit_from_hash(salt, string):
@@ -92,9 +94,8 @@ class _BaseIpAnonymizer:
             file_out.write('{}\t{}\n'.format(ip, anon))
 
     @classmethod
-    @abstractmethod
     def _ip_to_str(cls, bits):
-        raise NotImplementedError()
+        return str(cls.make_addr_from_int(int(bits, 2)))
 
     @classmethod
     @abstractmethod
@@ -111,11 +112,15 @@ class _BaseIpAnonymizer:
     def make_addr_from_int(cls, ip_int):
         raise NotImplementedError()
 
+    @abstractmethod
+    def should_anonymize(self, ip_int):
+        raise NotImplementedError()
+
 
 class IpAnonymizer(_BaseIpAnonymizer):
     """An anonymizer for IPv4 addresses."""
 
-    _DROP_ZEROS_PATTERN = re.compile(r'0*(\d+)\.0*(\d+)\.0*(\d+)\.0*(\d+)')
+    _DROP_ZEROS_PATTERN = regex.compile(r'0*(\d+)\.0*(\d+)\.0*(\d+)\.0*(\d+)')
 
     def __init__(self, salt, **kwargs):
         """Create an anonymizer using the specified salt."""
@@ -126,9 +131,32 @@ class IpAnonymizer(_BaseIpAnonymizer):
             self.cache[bits + '1'] = bits + '1'
             self.cache[bits + '0'] = bits + '0'
 
-    @classmethod
-    def _ip_to_str(cls, bits):
-        return str(ipaddress.IPv4Address(int(bits, 2)))
+    def _is_mask(self, possible_mask_int):
+        """Determine if the input int is a mask or not.
+
+        If the binary representation starts with all 1s and ends with all 0s
+        (or starts with 0s and ends with 1s), then we assume it is a mask.
+
+        Counting the number of times consecutive bits do not match (transitions)
+        gives us a reasonable idea of whether or not something is a mask.  With 0
+        or 1 transitions, assume the value is a mask.
+        e.g. 1100 has only one place where consecutive bits don't match
+             0000 has zero
+             0110 has two
+             0101 has three
+        """
+        prev_bit = possible_mask_int & 1
+        flipped = False
+        for pos in range(1, self.length):
+            cur_bit = (possible_mask_int >> pos) & 1
+            if prev_bit != cur_bit:
+                if flipped:
+                    return False
+                else:
+                    flipped = True
+            prev_bit = cur_bit
+
+        return True
 
     @classmethod
     def get_addr_pattern(cls):
@@ -152,6 +180,10 @@ class IpAnonymizer(_BaseIpAnonymizer):
         """Return an IPv4 address with the given int representation."""
         return ipaddress.IPv4Address(ip_int)
 
+    def should_anonymize(self, ip_int):
+        """Check if a given address should be anonymized (e.g. is it a mask or address?)."""
+        return not self._is_mask(ip_int)
+
 
 class IpV6Anonymizer(_BaseIpAnonymizer):
     """An anonymizer for IPv6 addresses."""
@@ -159,10 +191,6 @@ class IpV6Anonymizer(_BaseIpAnonymizer):
     def __init__(self, salt, **kwargs):
         """Create an anonymizer using the specified salt."""
         super(IpV6Anonymizer, self).__init__(salt, 128, **kwargs)
-
-    @classmethod
-    def _ip_to_str(cls, bits):
-        return str(ipaddress.IPv6Address(int(bits, 2)))
 
     @classmethod
     def get_addr_pattern(cls):
@@ -178,6 +206,10 @@ class IpV6Anonymizer(_BaseIpAnonymizer):
     def make_addr_from_int(cls, ip_int):
         """Return an IPv6 address with the given int representation."""
         return ipaddress.IPv6Address(ip_int)
+
+    def should_anonymize(self, ip_int):
+        """Check if a given address should be anonymized."""
+        return True
 
 
 def anonymize_ip_addr(anonymizer, line, undo_ip_anon=False):
@@ -205,8 +237,8 @@ def anonymize_ip_addr(anonymizer, line, undo_ip_anon=False):
     for match in matches:
         ip = anonymizer.make_addr(match[0])
         ip_int = int(ip)
-        if _is_mask(ip_int, anonymizer.length):
-            logging.debug("Skipping mask {}".format(ip))
+        if not anonymizer.should_anonymize(ip_int):
+            logging.debug("Should not anonymize {}, skipping".format(ip))
             ip_addrs.append(ip)
         else:
             if undo_ip_anon:
@@ -218,31 +250,3 @@ def anonymize_ip_addr(anonymizer, line, undo_ip_anon=False):
             logging.debug("Replacing {} with {}".format(ip, new_ip))
 
     return new_line.format(*ip_addrs)
-
-
-def _is_mask(possible_mask_int, length):
-    """Determine if the input int is a mask or not.
-
-    If the binary representation starts with all 1s and ends with all 0s
-    (or starts with 0s and ends with 1s), then we assume it is a mask.
-
-    Counting the number of times consecutive bits do not match (transitions)
-    gives us a reasonable idea of whether or not something is a mask.  With 0
-    or 1 transitions, assume the value is a mask.
-    e.g. 1100 has only one place where consecutive bits don't match
-         0000 has zero
-         0110 has two
-         0101 has three
-    """
-    prev_bit = possible_mask_int & 1
-    flipped = False
-    for pos in range(1, length):
-        cur_bit = (possible_mask_int >> pos) & 1
-        if prev_bit != cur_bit:
-            if flipped:
-                return False
-            else:
-                flipped = True
-        prev_bit = cur_bit
-
-    return True

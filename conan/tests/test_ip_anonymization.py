@@ -5,9 +5,10 @@ import ipaddress
 import pytest
 import regex
 
-from conan.ip_anonymization import IpAnonymizer, anonymize_ip_addr, _is_mask
+from conan.ip_anonymization import (
+    IpAnonymizer, IpV6Anonymizer, anonymize_ip_addr)
 
-ip_list = [
+ip_v4_list = [
     ('10.11.12.13'),
     ('10.10.10.10'),
     ('10.1.1.17'),
@@ -23,19 +24,57 @@ ip_list = [
     ('254.254.254.254'),
 ]
 
+ip_v6_list = [
+    ('1234::5678'),
+    ('::1'),
+    ('1::'),
+    ('1::1'),
+    ('2001:db8:85a3:7:8:8a2e:370:7334'),
+    ('2001:db8:a0b:12f0::1'),
+    ('ffff:ffff::ffff:ffff'),
+    ('a:b:c:d:e:f:1:2'),
+    ('aAaA:bBbB:cCcC:dDdD:eEeE:fFfF:1010:2929'),
+    ('ffff:eeee:dddd:cccc:bbbb:AaAa:9999:8888'),
+]
+
 SALT = 'saltForTest'
 
 
 @pytest.fixture(scope='module')
-def anonymizer():
+def anonymizer_v4():
     """All tests in this module use a single IPv4 anonymizer."""
     return IpAnonymizer(SALT)
 
 
 @pytest.fixture(scope='module')
-def flip_anonymizer():
+def anonymizer_v6():
+    """All tests in this module use a single IPv6 anonymizer."""
+    return IpV6Anonymizer(SALT)
+
+
+@pytest.fixture(scope='module')
+def flip_anonymizer_v4():
     """Create an anonymizer that flips every bit."""
     return IpAnonymizer(SALT, salter=lambda a, b: 1)
+
+
+def anonymize_line_general(anonymizer, line, ip_addrs):
+    """Test IP address removal from config lines."""
+    line_w_ip = line.format(*ip_addrs)
+    anon_line = anonymize_ip_addr(anonymizer, line_w_ip)
+
+    # Now anonymize each IP address individually & build another anonymized line
+    anon_ip_addrs = [anonymize_ip_addr(anonymizer, ip_addr) for ip_addr in ip_addrs]
+    individually_anon_line = line.format(*anon_ip_addrs)
+
+    # Make sure anonymizing each address individually is the same as
+    # anonymizing all at once
+    assert(anon_line == individually_anon_line)
+    print(individually_anon_line)
+
+    for ip_addr in ip_addrs:
+        # Make sure the original ip address(es) are removed from the anonymized line
+        assert(ip_addr not in anon_line)
 
 
 @pytest.mark.parametrize('line, ip_addrs', [
@@ -51,25 +90,26 @@ def flip_anonymizer():
                          ('1 permit tcp host {} host {} eq 2', ['11.20.3.4', '1.20.3.4']),
                          ('something host {} host {} host {}', ['1.2.3.4', '1.2.3.5', '1.2.3.45']),
                          ])
-def test_anonymize_ip_addr(anonymizer, line, ip_addrs):
-    """Test IP address removal config lines."""
-    line_w_ip = line.format(*ip_addrs)
-    anon_line = anonymize_ip_addr(anonymizer, line_w_ip)
-
-    # Now anonymize each IP address individually & build another anonymized line
-    anon_ip_addrs = [anonymize_ip_addr(anonymizer, ip_addr) for ip_addr in ip_addrs]
-    individually_anon_line = line.format(*anon_ip_addrs)
-
-    # Make sure anonymizing each address individually is the same as
-    # anonymizing all at once
-    assert(anon_line == individually_anon_line)
-
-    for ip_addr in ip_addrs:
-        # Make sure the original ip address(es) are removed from the anonymized line
-        assert(ip_addr not in anon_line)
+def test_v4_anonymize_line(anonymizer_v4, line, ip_addrs):
+    """Test IPv4 address removal from config lines."""
+    anonymize_line_general(anonymizer_v4, line, ip_addrs)
 
 
-def get_ip_class(ip_int):
+@pytest.mark.parametrize('line, ip_addrs', [
+                         ('ip address {} something::something', ['1234::5678']),
+                         ('ip address {} blah {}', ['1234::', '1234:5678::9abc:def0']),
+                         ('ip address {} blah {} blah', ['::1', '1234:5678:abcd:dcba::9abc:def0']),
+                         ('ip address {}/16 blah', ['::1']),
+                         ('ip address {}/16 blah', ['1::']),
+                         ('ip address {}/16 blah', ['1::1']),
+                         ('ip address {}/16 blah', ['ffff:ffff::ffff:ffff']),
+                         ])
+def test_v6_anonymize_line(anonymizer_v6, line, ip_addrs):
+    """Test IPv6 address removal from config lines."""
+    anonymize_line_general(anonymizer_v6, line, ip_addrs)
+
+
+def get_ip_v4_class(ip_int):
     """Return the letter corresponding to the IP class the ip_int is in."""
     if ((ip_int & 0x80000000) == 0x00000000):
         return 'A'
@@ -83,7 +123,7 @@ def get_ip_class(ip_int):
         return 'E'
 
 
-def get_ip_class_mask(ip_int):
+def get_ip_v4_class_mask(ip_int):
     """Return a mask indicating bits preserved when preserving class."""
     if (ip_int & 0xE0000000) == 0xE0000000:
         return 0xF0000000
@@ -102,24 +142,23 @@ def get_ip_class_mask(ip_int):
     '224.0.0.0', '239.255.255.255',  # Class D
     '240.0.0.0', '247.255.255.255',  # Class E
 ])
-def test_v4_class_preserved(flip_anonymizer, ip_addr):
+def test_v4_class_preserved(flip_anonymizer_v4, ip_addr):
     """Test that IPv4 classes are preserved."""
-    ip_int = int(flip_anonymizer.make_addr(ip_addr))
-    ip_int_anon = flip_anonymizer.anonymize(ip_int)
+    ip_int = int(flip_anonymizer_v4.make_addr(ip_addr))
+    ip_int_anon = flip_anonymizer_v4.anonymize(ip_int)
 
     # IP v4 class should match after anonymization
-    assert(get_ip_class(ip_int) == get_ip_class(ip_int_anon))
+    assert(get_ip_v4_class(ip_int) == get_ip_v4_class(ip_int_anon))
 
     # Anonymized ip address should not match the original ip address
     assert(ip_int != ip_int_anon)
 
     # All bits that are not forced to be preserved are flipped
-    class_mask = get_ip_class_mask(ip_int)
+    class_mask = get_ip_v4_class_mask(ip_int)
     assert(0xFFFFFFFF ^ class_mask == ip_int ^ ip_int_anon)
 
 
-@pytest.mark.parametrize('ip_addr', ip_list)
-def test_anonymize(anonymizer, ip_addr):
+def anonymize_addr_general(anonymizer, ip_addr, ip_addr_bits):
     """Test conversion from original to anonymized IP address."""
     ip_int = int(anonymizer.make_addr(ip_addr))
     ip_int_anon = anonymizer.anonymize(ip_int)
@@ -127,15 +166,17 @@ def test_anonymize(anonymizer, ip_addr):
     # Anonymized ip address should not match the original address
     assert(ip_int != ip_int_anon)
 
+    full_bit_mask = (1 << ip_addr_bits) - 1
+
     # Confirm prefixes for similar addresses are preserved after anonymization
-    for i in range(0, 32):
+    for i in range(0, ip_addr_bits):
         # Flip the ith bit of the org address and use that as the similar address
         diff_mask = (1 << i)
         ip_int_similar = ip_int ^ diff_mask
         ip_int_similar_anon = anonymizer.anonymize(ip_int_similar)
 
         # Using i + 1 since same_mask should mask off ith bit, not preserve it
-        same_mask = 0xFFFFFFFF & (0xFFFFFFFF << (i + 1))
+        same_mask = full_bit_mask & (full_bit_mask << (i + 1))
 
         # Common prefix for addresses should match after anonymization
         assert(ip_int_similar_anon & same_mask == ip_int_anon & same_mask)
@@ -144,60 +185,72 @@ def test_anonymize(anonymizer, ip_addr):
         assert(ip_int_similar_anon & diff_mask != ip_int_anon & diff_mask)
 
 
+@pytest.mark.parametrize('ip_addr', ip_v4_list)
+def test_v4_anonymize(anonymizer_v4, ip_addr):
+    """Test conversion from original to anon IPv4 address."""
+    anonymize_addr_general(anonymizer_v4, ip_addr, 32)
+
+
+@pytest.mark.parametrize('ip_addr', ip_v6_list)
+def test_v6_anonymize(anonymizer_v6, ip_addr):
+    """Test conversion from original to anon IPv6 address."""
+    anonymize_addr_general(anonymizer_v6, ip_addr, 128)
+
+
 def test_anonymize_ip_order_independent():
     """Test to make sure order does not affect anonymization of addresses."""
-    anonymizer_forward = IpAnonymizer(SALT)
+    anonymizer_v4_forward = IpAnonymizer(SALT)
     ip_lookup_forward = {}
-    for ip_addr in ip_list:
-        ip_int = int(anonymizer_forward.make_addr(ip_addr))
-        ip_int_anon = anonymizer_forward.anonymize(ip_int)
+    for ip_addr in ip_v4_list:
+        ip_int = int(anonymizer_v4_forward.make_addr(ip_addr))
+        ip_int_anon = anonymizer_v4_forward.anonymize(ip_int)
         ip_lookup_forward[ip_int] = ip_int_anon
 
-    anonymizer_reverse = IpAnonymizer(SALT)
-    for ip_addr in reversed(ip_list):
-        ip_int_reverse = int(anonymizer_reverse.make_addr(ip_addr))
-        ip_int_anon_reverse = anonymizer_reverse.anonymize(ip_int_reverse)
+    anonymizer_v4_reverse = IpAnonymizer(SALT)
+    for ip_addr in reversed(ip_v4_list):
+        ip_int_reverse = int(anonymizer_v4_reverse.make_addr(ip_addr))
+        ip_int_anon_reverse = anonymizer_v4_reverse.anonymize(ip_int_reverse)
         # Confirm anonymizing in reverse order does not affect
         # anonymization results
         assert(ip_int_anon_reverse == ip_lookup_forward[ip_int_reverse])
 
-    anonymizer_extras = IpAnonymizer(SALT)
-    for ip_addr in ip_list:
-        ip_int_extras = int(anonymizer_extras.make_addr(ip_addr))
-        ip_int_anon_extras = anonymizer_extras.anonymize(ip_int_extras)
+    anonymizer_v4_extras = IpAnonymizer(SALT)
+    for ip_addr in ip_v4_list:
+        ip_int_extras = int(anonymizer_v4_extras.make_addr(ip_addr))
+        ip_int_anon_extras = anonymizer_v4_extras.anonymize(ip_int_extras)
         ip_int_inverted = ip_int_extras ^ 0xFFFFFFFF
-        anonymizer_extras.anonymize(ip_int_inverted)
+        anonymizer_v4_extras.anonymize(ip_int_inverted)
         # Confirm anonymizing with extra addresses in-between does not
         # affect anonymization results
         assert(ip_int_anon_extras == ip_lookup_forward[ip_int_extras])
 
 
-@pytest.mark.parametrize('ip_addr', ip_list)
-def test_deanonymize_ip(anonymizer, ip_addr):
+@pytest.mark.parametrize('ip_addr', ip_v4_list)
+def test_deanonymize_ip(anonymizer_v4, ip_addr):
     """Test reversing IP anonymization."""
-    ip_int = int(anonymizer.make_addr(ip_addr))
-    ip_int_anon = anonymizer.anonymize(ip_int)
-    ip_int_unanon = anonymizer.deanonymize(ip_int_anon)
+    ip_int = int(anonymizer_v4.make_addr(ip_addr))
+    ip_int_anon = anonymizer_v4.anonymize(ip_int)
+    ip_int_unanon = anonymizer_v4.deanonymize(ip_int_anon)
 
     # Make sure unanonymizing an anonymized address produces the original address
     assert(ip_int == ip_int_unanon)
 
 
-def test_dump_iptree(tmpdir, anonymizer):
+def test_dump_iptree(tmpdir, anonymizer_v4):
     """Test ability to accurately dump IP address anonymization mapping."""
     ip_mapping = {}
     ip_mapping_from_dump = {}
 
     # Make sure all addresses to be checked are in ip_tree and generate reference mapping
-    for ip_addr in ip_list:
-        ip_int = int(anonymizer.make_addr(ip_addr))
-        ip_int_anon = anonymizer.anonymize(ip_int)
+    for ip_addr in ip_v4_list:
+        ip_int = int(anonymizer_v4.make_addr(ip_addr))
+        ip_int_anon = anonymizer_v4.anonymize(ip_int)
         ip_addr_anon = str(ipaddress.IPv4Address(ip_int_anon))
         ip_mapping[ip_addr] = ip_addr_anon
 
     filename = str(tmpdir.mkdir("test").join("test_dump_iptree.txt"))
     with open(filename, 'w') as f_tmp:
-        anonymizer.dump_to_file(f_tmp)
+        anonymizer_v4.dump_to_file(f_tmp)
 
     with open(filename, 'r') as f_tmp:
         # Build mapping dict from the output of the ip_tree dump
@@ -228,9 +281,9 @@ def test_dump_iptree(tmpdir, anonymizer):
                          ('10.11.12.013', '10.11.12.13'),
                          ('010.0011.00000012.000', '10.11.12.0'),
                          ])
-def test_v4_anonymizer_ignores_leading_zeros(zeros, no_zeros):
+def test_v4_anonymizer_ignores_leading_zeros(anonymizer_v4, zeros, no_zeros):
     """Test that v4 IP address ignore leading zeros & don't interpret octal."""
-    assert(ipaddress.IPv4Address(no_zeros) == IpAnonymizer.make_addr(zeros))
+    assert(ipaddress.IPv4Address(no_zeros) == anonymizer_v4.make_addr(zeros))
 
 
 @pytest.mark.parametrize('possible_mask, expected', [
@@ -247,6 +300,6 @@ def test_v4_anonymizer_ignores_leading_zeros(zeros, no_zeros):
                          (0b00000000000000000011111111111110, False),
                          (0b00000000010000000100000000000000, False),
                          ])
-def test__is_mask(possible_mask, expected):
+def test__is_mask(anonymizer_v4, possible_mask, expected):
     """Test ability to detect masks vs IP addresses."""
-    assert(expected == _is_mask(possible_mask, 32))
+    assert(expected == anonymizer_v4._is_mask(possible_mask))
