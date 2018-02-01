@@ -8,7 +8,7 @@ import os
 from conan.anonymize_files import anonymize_files_in_dir
 
 
-def main():
+def main(args=None):
     """Conan tool entry point."""
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--inputdirectory',
@@ -38,7 +38,7 @@ def main():
     parser.add_argument('-l', '--loglevel',
                         help='Determines what level of logs to display',
                         choices=loglevel_choices, default='INFO')
-    options = parser.parse_args()
+    options = parser.parse_args(args)
     input_dir = options.inputdirectory
     output_dir = options.outputdirectory
 
