@@ -227,21 +227,22 @@ def replace_matching_item(compiled_regexes, input_line, pwd_lookup):
             if match is None:
                 continue
             match_found = True
-            logging.debug('Match found on ' + output_line.rstrip())
+            logging.debug('Match found on %s', output_line.rstrip())
 
             # If this regex cannot preserve text around sensitive info,
             # then just remove the whole line
             if sensitive_item_num is None:
-                logging.warning('Anonymizing sensitive info in lines like "{}"'
-                                ' is currently unsupported, so removing this '
-                                'line completely'.format(compiled_re.pattern))
+                logging.warning(
+                    'Anonymizing sensitive info in lines like "%s" is currently'
+                    ' unsupported, so removing this line completely',
+                    compiled_re.pattern)
                 return '! Sensitive line SCRUBBED by Conan\n'
 
             sensitive_val = match.group(sensitive_item_num)
             anon_val = _anonymize_value(sensitive_val, pwd_lookup)
             output_line = compiled_re.sub(anon_val, output_line)
-            logging.debug('Anonymized input "{}" to "{}"'
-                          .format(sensitive_val, anon_val))
+            logging.debug(
+                'Anonymized input "%s" to "%s"', sensitive_val, anon_val)
 
         # If any matches existed in this regex group, stop processing more regexes
         if match_found:

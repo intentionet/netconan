@@ -225,7 +225,7 @@ def anonymize_ip_addr(anonymizer, line, undo_ip_anon=False):
         ip = anonymizer.make_addr(match[0])
         ip_int = int(ip)
         if not anonymizer.should_anonymize(ip_int):
-            logging.debug("Should not anonymize {}, skipping".format(ip))
+            logging.debug("Should not anonymize %s, skipping", ip)
             ip_addrs.append(ip)
         else:
             if undo_ip_anon:
@@ -234,6 +234,6 @@ def anonymize_ip_addr(anonymizer, line, undo_ip_anon=False):
                 new_ip_int = anonymizer.anonymize(ip_int)
             new_ip = anonymizer.make_addr_from_int(new_ip_int)
             ip_addrs.append(new_ip)
-            logging.debug("Replacing {} with {}".format(ip, new_ip))
+            logging.debug("Replacing %s with %s", ip, new_ip)
 
     return new_line.format(*ip_addrs)
