@@ -49,7 +49,7 @@ def anonymizer_v6():
 
 @pytest.fixture(scope='module')
 def anonymizer(request):
-    """Generic fixture for representing different types of anonymizers."""
+    """Create a generic fixture for different types of anonymizers."""
     if request.param == 'v4':
         return IpAnonymizer(SALT)
     elif request.param == 'v6':
