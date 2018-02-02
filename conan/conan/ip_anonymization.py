@@ -199,6 +199,22 @@ class IpV6Anonymizer(_BaseIpAnonymizer):
         return True
 
 
+def _anonymize_match(anonymizer, match, undo_ip_anon):
+    ip = anonymizer.make_addr(match)
+    ip_int = int(ip)
+    if not anonymizer.should_anonymize(ip_int):
+        logging.debug("Should not anonymize %s, skipping", ip)
+        return match
+
+    if undo_ip_anon:
+        new_ip_int = anonymizer.deanonymize(ip_int)
+    else:
+        new_ip_int = anonymizer.anonymize(ip_int)
+    new_ip = anonymizer.make_addr_from_int(new_ip_int)
+    logging.debug("Replacing %s with %s", ip, new_ip)
+    return str(new_ip)
+
+
 def anonymize_ip_addr(anonymizer, line, undo_ip_anon=False):
     """Replace each IP address in the line with an anonymized IP address.
 
@@ -211,29 +227,4 @@ def anonymize_ip_addr(anonymizer, line, undo_ip_anon=False):
     will be replaced with the unanonymized address.
     """
     pattern = anonymizer.get_addr_pattern()
-    matches = pattern.findall(line)
-    if matches is None:
-        return line
-
-    # Escape existing curly braces, then replace IPs to be substituted with {}.
-    # `string.format` will be used to replace them later.
-    new_line = line.replace('{', '{{').replace('}', '}}')
-    new_line = pattern.sub('{}', new_line)
-
-    ip_addrs = []
-    for match in matches:
-        ip = anonymizer.make_addr(match[0])
-        ip_int = int(ip)
-        if not anonymizer.should_anonymize(ip_int):
-            logging.debug("Should not anonymize %s, skipping", ip)
-            ip_addrs.append(ip)
-        else:
-            if undo_ip_anon:
-                new_ip_int = anonymizer.deanonymize(ip_int)
-            else:
-                new_ip_int = anonymizer.anonymize(ip_int)
-            new_ip = anonymizer.make_addr_from_int(new_ip_int)
-            ip_addrs.append(new_ip)
-            logging.debug("Replacing %s with %s", ip, new_ip)
-
-    return new_line.format(*ip_addrs)
+    return pattern.sub(lambda match: _anonymize_match(anonymizer, match[0], undo_ip_anon), line)
