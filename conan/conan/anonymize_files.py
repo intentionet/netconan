@@ -78,7 +78,7 @@ def anonymize_file(filename_in, filename_out, salt, compiled_regexes=None,
             if anonymizer6 is not None:
                 output_line = anonymize_ip_addr(anonymizer6, output_line, undo_ip_anon)
             if anonymizer4 is not None:
-                    output_line = anonymize_ip_addr(anonymizer4, output_line, undo_ip_anon)
+                output_line = anonymize_ip_addr(anonymizer4, output_line, undo_ip_anon)
 
             if sensitive_word_regexes is not None:
                 output_line = anonymize_sensitive_words(sensitive_word_regexes,
