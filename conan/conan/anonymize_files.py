@@ -28,8 +28,8 @@ def anonymize_files_in_dir(input_dir_path, output_dir_path, anon_pwd, anon_ip,
     # The salt is only used for IP and sensitive word anonymization:
     if salt is None:
         salt = ''.join(random.choice(_CHAR_CHOICES) for _ in range(_DEFAULT_SALT_LENGTH))
-        logging.warning('No salt was provided; using randomly generated "{}"'.format(salt))
-    logging.debug('Using salt: "{}"'.format(salt))
+        logging.warning('No salt was provided; using randomly generated "%s"', salt)
+    logging.debug('Using salt: "%s"', salt)
     if anon_pwd:
         compiled_regexes = generate_default_sensitive_item_regexes()
         pwd_lookup = {}
@@ -43,7 +43,7 @@ def anonymize_files_in_dir(input_dir_path, output_dir_path, anon_pwd, anon_ip,
         input_file = os.path.join(input_dir_path, file_name)
         output_file = os.path.join(output_dir_path, file_name)
         if os.path.isfile(input_file) and not file_name.startswith('.'):
-            logging.info("Anonymizing {}".format(file_name))
+            logging.info("Anonymizing %s", file_name)
             anonymize_file(input_file, output_file, salt,
                            compiled_regexes=compiled_regexes,
                            pwd_lookup=pwd_lookup,
@@ -66,8 +66,8 @@ def anonymize_file(filename_in, filename_out, salt, compiled_regexes=None,
     This only applies sensitive line removal if compiled_regexes and pwd_lookup
     are not None.  This only applies ip anonymization if anonymizer is not None.
     """
-    logging.debug("File in  {}".format(filename_in))
-    logging.debug("File out {}".format(filename_out))
+    logging.debug("File in  %s", filename_in)
+    logging.debug("File out %s", filename_out)
     with open(filename_out, 'w') as f_out, open(filename_in, 'r') as f_in:
         for line in f_in:
             output_line = line
@@ -84,6 +84,6 @@ def anonymize_file(filename_in, filename_out, salt, compiled_regexes=None,
                 output_line = anonymize_sensitive_words(sensitive_word_regexes,
                                                         output_line, salt)
             if line != output_line:
-                logging.debug("Input line:  {}".format(line.rstrip()))
-                logging.debug("Output line: {}".format(output_line.rstrip()))
+                logging.debug("Input line:  %s", line.rstrip())
+                logging.debug("Output line: %s", output_line.rstrip())
             f_out.write(output_line)
