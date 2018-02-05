@@ -101,6 +101,13 @@ def anonymize_line_general(anonymizer, line, ip_addrs):
                          ('1 permit tcp host {} host {} eq 2', ['1.2.30.45', '1.2.30.4']),
                          ('1 permit tcp host {} host {} eq 2', ['11.20.3.4', '1.20.3.4']),
                          ('something host {} host {} host {}', ['1.2.3.4', '1.2.3.5', '1.2.3.45']),
+                         # These formats may occur in Batfish output
+                         ('"{}"', ['1.2.3.45']),
+                         ('# [IP addresses:{},{}]', ['1.2.3.45', '1.2.3.5']),
+                         ('flow:{}->{}', ['1.2.3.45', '1.2.3.5']),
+                         ('something={}', ['1.2.3.45']),
+                         ('something <{}>', ['1.2.3.45']),
+                         ('something \'{}\'', ['1.2.3.45']),
                          ])
 def test_v4_anonymize_line(anonymizer_v4, line, ip_addrs):
     """Test IPv4 address removal from config lines."""
@@ -267,6 +274,25 @@ def test_dump_iptree(tmpdir, anonymizer_v4):
     for ip_addr in ip_mapping:
         # Confirm anon addresses from ip_tree dump match anon addresses from _convert_to_anon_ip
         assert(ip_mapping[ip_addr] == ip_mapping_from_dump[ip_addr])
+
+
+@pytest.mark.parametrize('line', [
+                         '01:23:45:67:89:ab',
+                         '01:02:03:04:05:06:07:08:09',
+                         '1.2.3.4.example.net',
+                         'a.1.2.3.4',
+                         '1.2.3',
+                         '1.2.3.4.5',
+                         'something1::abc',
+                         '123::ABsomething',
+                         ])
+def test_false_positives(anonymizer_v4, anonymizer_v6, line):
+    """Test that text without a valid address is not anonymized."""
+    anon_line = anonymize_ip_addr(anonymizer_v4, line)
+    anon_line = anonymize_ip_addr(anonymizer_v6, anon_line)
+
+    # Confirm the anonymized line is unchanged
+    assert(line == anon_line)
 
 
 @pytest.mark.parametrize('zeros, no_zeros', [
