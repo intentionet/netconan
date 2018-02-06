@@ -103,7 +103,8 @@ def anonymize_line_general(anonymizer, line, ip_addrs):
                          ('something host {} host {} host {}', ['1.2.3.4', '1.2.3.5', '1.2.3.45']),
                          # These formats may occur in Batfish output
                          ('"{}"', ['1.2.3.45']),
-                         ('# [IP addresses:{},{}]', ['1.2.3.45', '1.2.3.5']),
+                         ('({})', ['1.2.3.45']),
+                         ('[IP addresses:{},{}]', ['1.2.3.45', '1.2.3.5']),
                          ('flow:{}->{}', ['1.2.3.45', '1.2.3.5']),
                          ('something={}', ['1.2.3.45']),
                          ('something <{}>', ['1.2.3.45']),
@@ -279,6 +280,7 @@ def test_dump_iptree(tmpdir, anonymizer_v4):
 @pytest.mark.parametrize('line', [
                          '01:23:45:67:89:ab',
                          '01:02:03:04:05:06:07:08:09',
+                         '01:02:03:04::05:06:07:08',
                          '1.2.3.4.example.net',
                          'a.1.2.3.4',
                          '1.2.3',
