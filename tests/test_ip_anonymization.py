@@ -5,7 +5,7 @@ import ipaddress
 import pytest
 import regex
 
-from conan.ip_anonymization import (
+from netconan.ip_anonymization import (
     IpAnonymizer, IpV6Anonymizer, anonymize_ip_addr)
 
 ip_v4_list = [

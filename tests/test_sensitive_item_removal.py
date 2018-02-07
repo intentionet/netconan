@@ -1,13 +1,13 @@
 """Test removal of passwords and snmp communities."""
 
-from conan.sensitive_item_removal import anonymize_sensitive_words, \
+from netconan.sensitive_item_removal import anonymize_sensitive_words, \
     replace_matching_item, generate_default_sensitive_item_regexes, \
     generate_sensitive_word_regexes, _sensitive_item_formats, \
     _anonymize_value, _check_sensitive_item_format
 import pytest
 
 # Tuple format is config_line, sensitive_text (should not be in output line)
-# TODO(https://github.com/intentionet/conan/issues/3):
+# TODO(https://github.com/intentionet/netconan/issues/3):
 # Add in additional test lines (these are just first pass from IOS)
 cisco_password_lines = [
     ('     password   0      \t{}', 'RemoveMe'),
@@ -82,7 +82,7 @@ cisco_snmp_community_lines = [
     ('snmp-server host 1.1.1.1 {} vrrp', 'RemoveMe')
 ]
 
-# TODO(https://github.com/intentionet/conan/issues/4):
+# TODO(https://github.com/intentionet/netconan/issues/4):
 # Add more Juniper config lines
 juniper_password_lines = [
     ('secret "{}"', '$9$Be4EhyVb2GDkevYo'),
@@ -98,7 +98,7 @@ juniper_password_lines = [
     ('set snmp trap-group {} otherstuff', 'SECRETTEXT')
 ]
 
-# TODO(https://github.com/intentionet/conan/issues/3):
+# TODO(https://github.com/intentionet/netconan/issues/3):
 # Add more Arista config lines
 arista_password_lines = [
     ('username noc secret sha512 {}', '$6$RMxgK5ALGIf.nWEC$tHuKCyfNtJMCY561P52dTzHUmYMmLxb/Mxik.j3vMUs8lMCPocM00/NAS.SN6GCWx7d/vQIgxnClyQLAb7n3x0')
@@ -235,7 +235,7 @@ def test__anonymize_value_unique():
                          ('$1$CNANTest$xAfu6Am1d5D/.6OVICuOu/', _sensitive_item_formats.md5),
                          ('$1$67Q0XA3z$YqiBW/xxKWr74oHPXEkIv1', _sensitive_item_formats.md5),
                          ('thisIsATest', _sensitive_item_formats.text),
-                         ('conan', _sensitive_item_formats.text),
+                         ('netconan', _sensitive_item_formats.text),
                          ('STRING', _sensitive_item_formats.text),
                          ('text_here', _sensitive_item_formats.text),
                          ('more-text-here0', _sensitive_item_formats.text),

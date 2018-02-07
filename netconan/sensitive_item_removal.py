@@ -51,7 +51,7 @@ default_pwd_line_regexes = [
     [('(set session-key (in|out)bound ah \d+) \K(\S+)(?= ?.*)', 3)],
     [('(set session-key (in|out)bound esp \d+ cipher?) \K(\S+)(?= ?.*)', 3),
      ('(set session-key (in|out)bound esp \d+(( cipher \S+)? authenticator)) \K(\S+)(?= ?.*)', 5)],
-    # TODO(https://github.com/intentionet/conan/issues/3):
+    # TODO(https://github.com/intentionet/netconan/issues/3):
     # Follow-up on these.  They were just copied from RANCID so currently:
     #   They are untested in general and need cases added for unit tests
     #   They do not specifically capture sensitive info
@@ -67,7 +67,7 @@ default_pwd_line_regexes = [
     [('(wlccp \S+ username (\S+)( .*)? password( \d)?) (\S+)(.*)', None)],
 
     # These are regexes for JUNOS
-    # TODO(https://github.com/intentionet/conan/issues/4):
+    # TODO(https://github.com/intentionet/netconan/issues/4):
     # Follow-up on these.  They were modified from RANCID's regexes and currently:
     #   They do not have capture groups for sensitive info
     #   They just identify lines where sensitive info exists
@@ -84,12 +84,12 @@ default_pwd_line_regexes = [
 # Taken from RANCID community scrubbing regexes
 default_com_line_regexes = [
     [('((snmp-server .*community)( [08])?) \K(\S+)(?=.*)', 4)],
-    # TODO(https://github.com/intentionet/conan/issues/5):
+    # TODO(https://github.com/intentionet/netconan/issues/5):
     # Confirm this catches all community possibilities for snmp-server
     [('(snmp-server host (\S+)( informs| traps| version '
      '(?:1|2c|3 \S+)| vrf \S+)*) \K(\S+)(?=.*)', 4)],
     # This is from JUNOS
-    # TODO(https://github.com/intentionet/conan/issues/4):
+    # TODO(https://github.com/intentionet/netconan/issues/4):
     # See if we need to make the snmp keyword optional for Juniper
     # Also, this needs to be tested against config lines generated on a JUNOS router
     #     (to make sure the regex handles different syntaxes allowed in the line)
@@ -142,7 +142,7 @@ def _anonymize_value(val, lookup):
     """
     item_format = _check_sensitive_item_format(val)
 
-    anon_val = 'ConanRemoved{}'.format(len(lookup))
+    anon_val = 'netconanRemoved{}'.format(len(lookup))
     if val in lookup:
         return lookup[val]
 
@@ -170,7 +170,7 @@ def _anonymize_value(val, lookup):
         anon_val = sha512_crypt.using(rounds=5000).hash(anon_val)
 
     if item_format == _sensitive_item_formats.juniper_type9:
-        # TODO(https://github.com/intentionet/conan/issues/16)
+        # TODO(https://github.com/intentionet/netconan/issues/16)
         # Encode base anon_val instead of just returning a constant here
         # This value corresponds to encoding: Conan812183
         anon_val = '$9$0000IRc-dsJGirewg4JDj9At0RhSreK8Xhc'
@@ -236,7 +236,7 @@ def replace_matching_item(compiled_regexes, input_line, pwd_lookup):
                     'Anonymizing sensitive info in lines like "%s" is currently'
                     ' unsupported, so removing this line completely',
                     compiled_re.pattern)
-                return '! Sensitive line SCRUBBED by Conan\n'
+                return '! Sensitive line SCRUBBED by netconan\n'
 
             sensitive_val = match.group(sensitive_item_num)
             anon_val = _anonymize_value(sensitive_val, pwd_lookup)

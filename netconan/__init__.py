@@ -1,0 +1,1 @@
+"""Anonymize router configuration files."""
