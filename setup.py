@@ -8,19 +8,22 @@ https://github.com/pypa/sampleproject
 # Always prefer setuptools over distutils
 from setuptools import setup, find_packages
 from os import path
-import netconan
 
 here = path.abspath(path.dirname(__file__))
 
+about = {}
+with open(path.join(here, 'netconan', '__version__.py'), 'r') as f:
+    exec(f.read(), about)
+
 setup(
-    name=netconan.__name__,
+    name=about['__name__'],
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version=netconan.__version__,
-    description=netconan.__desc__,
+    version=about['__version__'],
+    description=about['__desc__'],
     # The project's main homepage.
-    url=netconan.__url__,
+    url=about['__url__'],
     # Author details
     author='Intentionet',
     author_email='netconan-dev@intentionet.com',

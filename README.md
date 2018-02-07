@@ -7,7 +7,7 @@ In the directory with setup.py, run:
 `pip install .`
 
 ## Running netconan
-netconan processes all files not starting with `.` housed in the top level of the specified input directory and saves processed files in the specified output directory.  Use the help flag `-h` to learn more about accepted parameters.
+Netconan processes all files not starting with `.` housed in the top level of the specified input directory and saves processed files in the specified output directory.  Use the help flag `-h` to learn more about accepted parameters.
 
 ### Anonymizing sensitive items
 With the `anonymizepwdandcomm` flag (`-p`), netconan will anonymize any line matching its sensitive item regexes.  Where possible, any password, secret, or snmp community will be replaced by an arbitrary value of the same format (e.g. text, hexadecimal, ...).  In other situations, where netconan may identify a sensitive line but is not sure how to preserve all non-sensitive information, the entire line will be replaced with a generic comment indicating that line was scrubbed from the config file.
