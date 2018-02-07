@@ -172,7 +172,7 @@ def _anonymize_value(val, lookup):
     if item_format == _sensitive_item_formats.juniper_type9:
         # TODO(https://github.com/intentionet/netconan/issues/16)
         # Encode base anon_val instead of just returning a constant here
-        # This value corresponds to encoding: netconan812183
+        # This value corresponds to encoding: Conan812183
         anon_val = '$9$0000IRc-dsJGirewg4JDj9At0RhSreK8Xhc'
 
     lookup[val] = anon_val
