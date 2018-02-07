@@ -8,22 +8,22 @@ https://github.com/pypa/sampleproject
 # Always prefer setuptools over distutils
 from setuptools import setup, find_packages
 from os import path
-import conan
+import netconan
 
 here = path.abspath(path.dirname(__file__))
 
 setup(
-    name=conan.__name__,
+    name=netconan.__name__,
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version=conan.__version__,
-    description=conan.__desc__,
+    version=netconan.__version__,
+    description=netconan.__desc__,
     # The project's main homepage.
-    url=conan.__url__,
+    url=netconan.__url__,
     # Author details
     author='Intentionet',
-    author_email='conan-dev@intentionet.com',
+    author_email='netconan-dev@intentionet.com',
 
     # Choose your license
     license='Apache License 2.0',
@@ -76,7 +76,7 @@ setup(
     # pip to create the appropriate form of executable for the target platform.
     entry_points={
         'console_scripts': [
-            'conan = conan.conan:main',
+            'netconan = netconan.netconan:main',
         ],
     },
 )

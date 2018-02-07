@@ -1,15 +1,15 @@
-"""Handle invoking Conan from the command line."""
+"""Handle invoking netconan from the command line."""
 
 from __future__ import absolute_import
 import argparse
 import logging
 import os
 
-from conan.anonymize_files import anonymize_files_in_dir
+from netconan.anonymize_files import anonymize_files_in_dir
 
 
 def main(args=None):
-    """Conan tool entry point."""
+    """Netconan tool entry point."""
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--inputdirectory',
                         help='Directory containing configurtions to anonymize',
