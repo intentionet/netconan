@@ -22,11 +22,11 @@ setup(
     # The project's main homepage.
     url=conan.__url__,
     # Author details
-    author='Spencer Fraint',
+    author='Intentionet',
     author_email='conan-dev@intentionet.com',
 
     # Choose your license
-    license='Intentionet Proprietary License',
+    license='Apache License 2.0',
 
     # What does your project relate to?
     keywords='network configuration anonymizer',
