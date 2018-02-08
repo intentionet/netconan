@@ -7,7 +7,7 @@ if [ -n "$TRAVIS_BUILD_DIR" ]; then
 fi
 
 echo -e "\n  ..... Running flake8 on netconan to check style and docstrings"
-flake8 netconan --ignore=E501
+flake8 netconan --ignore=E501,E266
 
 echo -e "\n  ..... Running flake8 on tests to check style and docstrings"
 flake8 tests --ignore=E501
