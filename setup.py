@@ -31,9 +31,6 @@ about = {}
 with open(path.join(here, 'netconan', '__version__.py'), 'r') as f:
     exec(f.read(), about)
 
-with open(path.join(here, 'README.rst')) as f:
-    readme = f.read()
-
 setup(
     name=about['__name__'],
     # Versions should comply with PEP440.  For a discussion on single-sourcing
@@ -41,7 +38,6 @@ setup(
     # https://packaging.python.org/en/latest/single_source_version.html
     version=about['__version__'],
     description=about['__desc__'],
-    long_description=readme,
     # The project's main homepage.
     url=about['__url__'],
     # Author details
