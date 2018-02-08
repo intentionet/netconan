@@ -12,14 +12,11 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-#
-#   This product uses regexes modified from RANCID, which is available under a
-#   "3-clause BSD" license.  For details, see LICENSE.RANCID
 
-from netconan.sensitive_item_removal import anonymize_sensitive_words, \
-    replace_matching_item, generate_default_sensitive_item_regexes, \
-    generate_sensitive_word_regexes, _sensitive_item_formats, \
-    _anonymize_value, _check_sensitive_item_format
+from netconan.sensitive_item_removal import (
+    anonymize_sensitive_words, replace_matching_item, generate_default_sensitive_item_regexes,
+    generate_sensitive_word_regexes, _sensitive_item_formats,
+    _anonymize_value, _check_sensitive_item_format)
 import pytest
 
 # Tuple format is config_line, sensitive_text (should not be in output line)
