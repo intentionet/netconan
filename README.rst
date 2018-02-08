@@ -1,25 +1,39 @@
-# Netconan
+Netconan
+========
+
 Netconan (network configuration anonymizer) is used to anonymize sensitive network information (IP addresses, passwords, etc.) from files.
 
-## Installing netconan
-In the directory with setup.py, run:
+Installing netconan
+===================
 
-`pip install .`
+To install netconan, run:
 
-## Running netconan
+`pip install netconan`
+
+Running netconan
+================
+
 Netconan processes all files not starting with `.` housed in the top level of the specified input directory and saves processed files in the specified output directory.  Use the help flag `-h` to learn more about accepted parameters.
 
-### Anonymizing sensitive items
+Anonymizing sensitive items
+---------------------------
+
 With the `anonymizepwdandcomm` flag (`-p`), netconan will anonymize any line matching its sensitive item regexes.  Where possible, any password, secret, or snmp community will be replaced by an arbitrary value of the same format (e.g. text, hexadecimal, ...).  In other situations, where netconan may identify a sensitive line but is not sure how to preserve all non-sensitive information, the entire line will be replaced with a generic comment indicating that line was scrubbed from the config file.
 
-### Anonymizing sensitive words
+Anonymizing sensitive words
+---------------------------
+
 If the `sensitivewords` parameter is specified with a comma separated list of sensitive words, any occurrences of the sensitive words (case ignored) are replaced with anonymized hexadecimal strings.  If there are multiple occurrences of a sensitive word, the same anonymized value is used to replace all occurrences.
 
-### Anonymizing IP addresses
-With the `anonymizeipaddr` flag (`-a`), netconan will replace all IPv4 addresses that do not look like masks with an anonymized IPv4 address.  Any addresses that originally shared prefixes will share prefixes after anonymization, and IP classes are preserved.
+Anonymizing IP addresses
+------------------------
 
-### Example usage
-To anonymize sensitive lines and IP addresses on all configs in `~/config` and save the anonymized versions in `~/anon_configs`:
+With the `anonymizeipaddr` flag (`-a`), netconan will replace each IPv4 and IPv6 address with an anonymized address.  Any addresses that originally shared prefixes will share prefixes after anonymization, and IPv4 classes are preserved.
+
+Example usage
+-------------
+
+To anonymize sensitive lines and IP addresses on all files in `~/config` and save the anonymized versions in `~/anon_configs`:
 
 `netconan -p -a -i ~/configs -o ~/anon_configs`
 
