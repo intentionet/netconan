@@ -70,7 +70,7 @@ For more information about less commonly-used features, see the Netconan help (`
 
 .. code-block:: bash
 
-    usage: netconan [-h] [-i INPUT_DIR] [-o OUTPUT_DIR] [-p] [-a] [-s SALT]
+    usage: netconan [-h] -i INPUT_DIR -o OUTPUT_DIR [-p] [-a] [-s SALT]
                     [-d DUMP_IP_MAP] [-u] [-w SENSITIVE_WORDS]
                     [-l {DEBUG,INFO,WARNING,ERROR,CRITICAL}]
 
