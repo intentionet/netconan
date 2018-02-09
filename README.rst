@@ -15,12 +15,15 @@ With Netconan, a sensitive input file
     tacacs-server host 10.10.10.10 key pwd1234
     ip address 10.10.20.30/24
     ip address 2001:2002::9d3b:1
+    !
+    route-map sea-to-lax ...
+    route-map sea-to-atl ...
 
 can be anonymized
 
 .. code-block:: bash
 
-    $ netconan --sensitive-words intentionet --anonymize-passwords --anonymize-ips -i sensitive -o anonymized
+    $ netconan --sensitive-words intentionet,sea,lax,atl --anonymize-passwords --anonymize-ips -i sensitive -o anonymized
     WARNING No salt was provided; using randomly generated "WNo5pX28MJOrqxfv"
     INFO Anonymizing cisco.cfg
 
@@ -36,6 +39,9 @@ to produce an output file you can feel comfortable sharing.
     tacacs-server host 119.72.192.224 key netconanRemoved2
     ip address 119.72.218.183/24
     ip address cd7e:83e:1eaf:2ada:7535:591e:6d47:a4b8
+    !
+    route-map e69ceb-to-880ac2 ...
+    route-map e69ceb-to-5d37ad ...
 
 Installing Netconan
 ===================
