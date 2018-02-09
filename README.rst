@@ -10,14 +10,20 @@ With Netconan, a sensitive input file
     $ cat sensitive/cisco.cfg 
     ! This is intentionet's sensitive comment
     username admin password 7 122A001901
+    enable secret 5 $1$wtHI$0rN7R8PKwC30AsCGA77vy.
     !
     tacacs-server host 10.10.10.10 key pwd1234
+    ip address 10.10.20.30/24
+    ip address 2001:2002::9d3b:1
+    !
+    route-map sea-to-lax ...
+    route-map sea-to-atl ...
 
 can be anonymized
 
 .. code-block:: bash
 
-    $ netconan --sensitive-words intentionet --anonymize-passwords --anonymize-ips -i sensitive -o anonymized
+    $ netconan --sensitive-words intentionet,sea,lax,atl --anonymize-passwords --anonymize-ips -i sensitive -o anonymized
     WARNING No salt was provided; using randomly generated "WNo5pX28MJOrqxfv"
     INFO Anonymizing cisco.cfg
 
@@ -28,8 +34,14 @@ to produce an output file you can feel comfortable sharing.
     $ cat anonymized/cisco.cfg 
     ! This is db1792's sensitive comment
     username admin password 7 09424B1D1A0A1913053E012724322D3765
+    enable secret 5 $1$0000$EhfXcDfB7iiakW6mwMy1i.
     !
-    tacacs-server host 119.72.192.224 key netconanRemoved1
+    tacacs-server host 119.72.192.224 key netconanRemoved2
+    ip address 119.72.218.183/24
+    ip address cd7e:83e:1eaf:2ada:7535:591e:6d47:a4b8
+    !
+    route-map e69ceb-to-880ac2 ...
+    route-map e69ceb-to-5d37ad ...
 
 Installing Netconan
 ===================
@@ -70,24 +82,24 @@ For more information about less commonly-used features, see the Netconan help (`
 
 .. code-block:: bash
 
-usage: netconan [-h] -i INPUT -o OUTPUT [-p] [-a] [-s SALT] [-d DUMP_IP_MAP]
-                [-u] [-w SENSITIVE_WORDS]
-                [-l {DEBUG,INFO,WARNING,ERROR,CRITICAL}]
+    usage: netconan [-h] -i INPUT -o OUTPUT [-p] [-a] [-s SALT] [-d DUMP_IP_MAP]
+                    [-u] [-w SENSITIVE_WORDS]
+                    [-l {DEBUG,INFO,WARNING,ERROR,CRITICAL}]
 
-optional arguments:
-  -h, --help            show this help message and exit
-  -i INPUT, --input INPUT
-                        Directory containing files to anonymize
-  -o OUTPUT, --output OUTPUT
-                        Directory to place anonymized files
-  -p, --anonymize-passwords   Anonymize password and snmp community lines
-  -a, --anonymize-ips
-                        Anonymize IP addresses
-  -s SALT, --salt SALT  Salt for IP and sensitive keyword anonymization
-  -d DUMP_IP_MAP, --dump-ip-map DUMP_IP_MAP
-                        Dump IP address anonymization map to specified file
-  -u, --undo            Undo reversible anonymization (must specify salt)
-  -w SENSITIVE_WORDS, --sensitive-words SENSITIVE_WORDS
-                        Comma separated list of keywords to anonymize
-  -l {DEBUG,INFO,WARNING,ERROR,CRITICAL}, --log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}
-                        Determines what level of logs to display
+    optional arguments:
+      -h, --help            show this help message and exit
+      -i INPUT, --input INPUT
+                            Directory containing files to anonymize
+      -o OUTPUT, --output OUTPUT
+                            Directory to place anonymized files
+      -p, --anonymize-passwords   Anonymize password and snmp community lines
+      -a, --anonymize-ips
+                            Anonymize IP addresses
+      -s SALT, --salt SALT  Salt for IP and sensitive keyword anonymization
+      -d DUMP_IP_MAP, --dump-ip-map DUMP_IP_MAP
+                            Dump IP address anonymization map to specified file
+      -u, --undo            Undo reversible anonymization (must specify salt)
+      -w SENSITIVE_WORDS, --sensitive-words SENSITIVE_WORDS
+                            Comma separated list of keywords to anonymize
+      -l {DEBUG,INFO,WARNING,ERROR,CRITICAL}, --log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}
+                            Determines what level of logs to display
