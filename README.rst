@@ -23,7 +23,10 @@ can be anonymized
 
 .. code-block:: bash
 
-    $ netconan --sensitive-words intentionet,sea,lax,atl --anonymize-passwords --anonymize-ips -i sensitive -o anonymized
+    $ netconan -i sensitive -o anonymized \
+        --sensitive-words intentionet,sea,lax,atl \
+        --anonymize-passwords \
+        --anonymize-ips 
     WARNING No salt was provided; using randomly generated "WNo5pX28MJOrqxfv"
     INFO Anonymizing cisco.cfg
 
