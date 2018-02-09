@@ -1,50 +1,98 @@
 Netconan
 ========
 
-Netconan (network configuration anonymizer) is used to anonymize sensitive network information (IP addresses, passwords, etc.) from files.
+Netconan (network configuration anonymizer) anonymizes text files that contain sensitive network information.
 
-Installing netconan
+With Netconan, a sensitive input file
+
+.. code-block:: bash
+
+    $ cat sensitive/cisco.cfg 
+    ! This is intentionet's sensitive comment
+    username admin password 7 122A001901
+    !
+    tacacs-server host 10.10.10.10 key pwd1234
+
+can be anonymized
+
+.. code-block:: bash
+
+    $ netconan --sensitivewords intentionet --anonymizepwdandcomm --anonymizeipaddr -i sensitive -o anonymized
+    WARNING No salt was provided; using randomly generated "WNo5pX28MJOrqxfv"
+    INFO Anonymizing cisco.cfg
+
+to produce an output file you can feel comfortable sharing.
+
+.. code-block:: bash
+
+    $ cat anonymized/cisco.cfg 
+    ! This is db1792's sensitive comment
+    username admin password 7 09424B1D1A0A1913053E012724322D3765
+    !
+    tacacs-server host 119.72.192.224 key netconanRemoved1
+
+Installing Netconan
 ===================
 
-To install netconan, run:
+Install Netconan using ``pip``:
 
-``pip install netconan``
+.. code-block:: bash
+
+    $ pip install netconan
+
+Features
+========
+
+Netconan can anonymize *many types of sensitive information*:
+
+* Sensitive strings like passwords or SNMP community strings (``--anonymizepwdandcomm``, ``-p``), for many common network vendors.
+* IPv4 and IPv6 addresses (``--anonymizeipaddr``, ``-a``).
+* User-specified sensitive words (``--sensitivewords``).
+
+Netconan attempts to *preserve useful structure*. For example,
+
+* Netconan preserves prefixes when anonymizing IPv4 and IPv6 addresses: IP addresses with a common prefix before anonymization will share the same prefix length after anonymization. For more information, see J. Xu et al., *On the Design and Performance of Prefix-Preserving IP Traffic Trace Anonymization*, ACM SIGCOMM Workshop on Internet Measurement, 2001 [`link <https://smartech.gatech.edu/bitstream/handle/1853/6573/GIT-CC-01-22.pdf>`_].
+
+* IPv4 classes are preserved.
+
+* Standard password and hash formats (salted md5, Cisco Type 7, Juniper Type 9) are recognized and substituted with format-compliant replacements.
+
+Netconan is *deterministic* when provided the same user-controllable salt (``--salt``, ``-s``). Files processed using the same salt are compatible (e.g., IP addresses anonymized the same way) whether anonymized together or separately.
+
+For *reversible operations* (specifically, IP address anonymization), Netconan can produce a de-anonymized file (``--undoanonymizeipaddr``, ``-u``) when provided with the same salt used in anonymization (``--salt``, ``-s``).
 
 Running netconan
 ================
 
-Netconan processes all files not starting with ``.`` housed in the top level of the specified input directory and saves processed files in the specified output directory.  Use the help flag ``-h`` to learn more about accepted parameters.
+Netconan processes all files not starting with ``.`` housed in the top level of the specified input directory and saves processed files in the specified output directory.
 
-Anonymizing sensitive items
----------------------------
+For more information about less commonly-used features, see the Netconan help (``-h``).
 
-With the ``anonymizepwdandcomm`` flag (``-p``), netconan will anonymize any line matching its sensitive item regexes.  Where possible, any password, secret, or snmp community will be replaced by an arbitrary value of the same format (e.g. text, hexadecimal, ...).  In other situations, where netconan may identify a sensitive line but is not sure how to preserve all non-sensitive information, the entire line will be replaced with a generic comment indicating that line was scrubbed from the config file.
+.. code-block:: bash
 
-Anonymizing sensitive words
----------------------------
+    usage: netconan [-h] [-i INPUTDIRECTORY] [-o OUTPUTDIRECTORY] [-p] [-a]
+                    [-s SALT] [-d DUMPIPADDRMAP] [-u]
+                    [--sensitivewords SENSITIVEWORDS]
+                    [-l {DEBUG,INFO,WARNING,ERROR,CRITICAL}]
+    
+    optional arguments:
+      -h, --help            show this help message and exit
+      -i INPUTDIRECTORY, --inputdirectory INPUTDIRECTORY
+                            Directory containing configurtions to anonymize
+      -o OUTPUTDIRECTORY, --outputdirectory OUTPUTDIRECTORY
+                            Directory to place anonymized configs
+      -p, --anonymizepwdandcomm
+                            Remove password and snmp community lines
+      -a, --anonymizeipaddr
+                            Anonymize IP addresses
+      -s SALT, --salt SALT  Salt for IP and sensitive keyword anonymization
+      -d DUMPIPADDRMAP, --dumpipaddrmap DUMPIPADDRMAP
+                            Dump IP address anonymization map to specified file
+      -u, --undoanonymizeipaddr
+                            Undo IP address anonymization (must specify salt)
+      --sensitivewords SENSITIVEWORDS
+                            Comma separated list of keywords to anonymize
+      -l {DEBUG,INFO,WARNING,ERROR,CRITICAL}, --loglevel {DEBUG,INFO,WARNING,ERROR,CRITICAL}
+                            Determines what level of logs to display
 
-If the ``sensitivewords`` parameter is specified with a comma separated list of sensitive words, any occurrences of the sensitive words (case ignored) are replaced with anonymized hexadecimal strings.  If there are multiple occurrences of a sensitive word, the same anonymized value is used to replace all occurrences.
 
-Anonymizing IP addresses
-------------------------
-
-With the ``anonymizeipaddr`` flag (``-a``), netconan will replace each IPv4 and IPv6 address with an anonymized address.  Any addresses that originally shared prefixes will share prefixes after anonymization, and IPv4 classes are preserved.
-
-Example usage
--------------
-
-To anonymize sensitive lines and IP addresses on all files in ``~/config`` and save the anonymized versions in ``~/anon_configs``:
-
-``netconan -p -a -i ~/configs -o ~/anon_configs``
-
-To anonymize sensitive lines, IP addresses, and any occurrences of ``netconanSecret`` and ``SensitiveText``:
-
-``netconan -p -a --sensitivewords=netconanSecret,SensitiveText -i ~/configs -o ~/anon_configs``
-
-For development/debugging purposes, ``loglevel DEBUG``, ``salt ######`` (specify salt string for consistent IP and sensitive word anonymization outputs), and ``dumpipaddrmap`` (to save original-to-anonymized IP mapping) may be set:
-
-``netconan -p -a --sensitivewords=netconanSecret,SensitiveText -i ~/configs -o ~/anon_configs -l DEBUG -s netconanSalt1234 -d ~/ip_mapping.txt``
-
-For development/debugging purposes, IP anonymization can be undone if the original salt value is saved.  To unanonymize IP addresses in files in the ``~/anon_configs`` directory that were anonymized with salt ``netconanSalt1234`` and save to the output directory ``~/unanon_configs``:
-
-``netconan -i ~/anon_configs -o ~/unanon_configs -s netconanSalt1234 -u``
