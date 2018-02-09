@@ -17,7 +17,7 @@ can be anonymized
 
 .. code-block:: bash
 
-    $ netconan --sensitivewords intentionet --anonymizepwdandcomm --anonymizeipaddr -i sensitive -o anonymized
+    $ netconan --sensitive-words intentionet --anonymize-pwd --anonymize-ip-addr -i sensitive -o anonymized
     WARNING No salt was provided; using randomly generated "WNo5pX28MJOrqxfv"
     INFO Anonymizing cisco.cfg
 
@@ -45,9 +45,9 @@ Features
 
 Netconan can anonymize *many types of sensitive information*:
 
-* Sensitive strings like passwords or SNMP community strings (``--anonymizepwdandcomm``, ``-p``), for many common network vendors.
-* IPv4 and IPv6 addresses (``--anonymizeipaddr``, ``-a``).
-* User-specified sensitive words (``--sensitivewords``).
+* Sensitive strings like passwords or SNMP community strings (``--anonymize-pwd``, ``-p``), for many common network vendors.
+* IPv4 and IPv6 addresses (``--anonymize-ip-addr``, ``-a``).
+* User-specified sensitive words (``--sensitive-words``, ``-w``).
 
 Netconan attempts to *preserve useful structure*. For example,
 
@@ -59,7 +59,7 @@ Netconan attempts to *preserve useful structure*. For example,
 
 Netconan is *deterministic* when provided the same user-controllable salt (``--salt``, ``-s``). Files processed using the same salt are compatible (e.g., IP addresses anonymized the same way) whether anonymized together or separately.
 
-For *reversible operations* (specifically, IP address anonymization), Netconan can produce a de-anonymized file (``--undoanonymizeipaddr``, ``-u``) when provided with the same salt used in anonymization (``--salt``, ``-s``).
+For *reversible operations* (specifically, IP address anonymization), Netconan can produce a de-anonymized file (``--undo``, ``-u``) when provided with the same salt used in anonymization (``--salt``, ``-s``).
 
 Running netconan
 ================
@@ -70,29 +70,24 @@ For more information about less commonly-used features, see the Netconan help (`
 
 .. code-block:: bash
 
-    usage: netconan [-h] [-i INPUTDIRECTORY] [-o OUTPUTDIRECTORY] [-p] [-a]
-                    [-s SALT] [-d DUMPIPADDRMAP] [-u]
-                    [--sensitivewords SENSITIVEWORDS]
+    usage: netconan [-h] [-i INPUT_DIR] [-o OUTPUT_DIR] [-p] [-a] [-s SALT]
+                    [-d DUMP_IP_MAP] [-u] [-w SENSITIVE_WORDS]
                     [-l {DEBUG,INFO,WARNING,ERROR,CRITICAL}]
-    
+
     optional arguments:
       -h, --help            show this help message and exit
-      -i INPUTDIRECTORY, --inputdirectory INPUTDIRECTORY
-                            Directory containing configurtions to anonymize
-      -o OUTPUTDIRECTORY, --outputdirectory OUTPUTDIRECTORY
-                            Directory to place anonymized configs
-      -p, --anonymizepwdandcomm
-                            Remove password and snmp community lines
-      -a, --anonymizeipaddr
+      -i INPUT_DIR, --input-dir INPUT_DIR
+                            Directory containing files to anonymize
+      -o OUTPUT_DIR, --output-dir OUTPUT_DIR
+                            Directory to place anonymized files
+      -p, --anonymize-pwd   Anonymize password and snmp community lines
+      -a, --anonymize-ip-addr
                             Anonymize IP addresses
       -s SALT, --salt SALT  Salt for IP and sensitive keyword anonymization
-      -d DUMPIPADDRMAP, --dumpipaddrmap DUMPIPADDRMAP
+      -d DUMP_IP_MAP, --dump-ip-map DUMP_IP_MAP
                             Dump IP address anonymization map to specified file
-      -u, --undoanonymizeipaddr
-                            Undo IP address anonymization (must specify salt)
-      --sensitivewords SENSITIVEWORDS
+      -u, --undo            Undo reversible anonymization (must specify salt)
+      -w SENSITIVE_WORDS, --sensitive-words SENSITIVE_WORDS
                             Comma separated list of keywords to anonymize
-      -l {DEBUG,INFO,WARNING,ERROR,CRITICAL}, --loglevel {DEBUG,INFO,WARNING,ERROR,CRITICAL}
+      -l {DEBUG,INFO,WARNING,ERROR,CRITICAL}, --log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}
                             Determines what level of logs to display
-
-
