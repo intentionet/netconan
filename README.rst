@@ -48,22 +48,3 @@ For development/debugging purposes, ``loglevel DEBUG``, ``salt ######`` (specify
 For development/debugging purposes, IP anonymization can be undone if the original salt value is saved.  To unanonymize IP addresses in files in the ``~/anon_configs`` directory that were anonymized with salt ``netconanSalt1234`` and save to the output directory ``~/unanon_configs``:
 
 ``netconan -i ~/anon_configs -o ~/unanon_configs -s netconanSalt1234 -u``
-
-Updating netconan on Python Package Index
-=========================================
-
-Prerequisites
--------------
-
-#. Make an account on `pypi <https://pypi.python.org>`_ if you do not already have one
-#. Ask an existing netconan developer for maintaner access to the project on pypi
-#. Install twine if you do not already have it: ``pip install twine``
-
-Building and Uploading
-----------------------
-
-#. Make sure the version number in ``__version__.py`` is updated
-#. Navigate to the root directory of the project
-#. Remove previously built distributions: ``rm dist/*``
-#. To build the source and wheel distributions, run: ``python setup.py sdist bdist_wheel``
-#. Upload the newly generated ``.tar.gz`` and ``.whl`` files from the ``dist/`` folder: ``twine upload dist/*``
