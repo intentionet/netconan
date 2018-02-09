@@ -19,9 +19,9 @@ import os
 import random
 import string
 
-from netconan.ip_anonymization import (
+from .ip_anonymization import (
     IpAnonymizer, IpV6Anonymizer, anonymize_ip_addr)
-from netconan.sensitive_item_removal import (
+from .sensitive_item_removal import (
     anonymize_sensitive_words, replace_matching_item,
     generate_default_sensitive_item_regexes, generate_sensitive_word_regexes)
 

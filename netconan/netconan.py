@@ -18,7 +18,7 @@ import argparse
 import logging
 import os
 
-from netconan.anonymize_files import anonymize_files_in_dir
+from .anonymize_files import anonymize_files_in_dir
 
 
 def main(args=None):
