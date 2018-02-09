@@ -28,10 +28,10 @@ def main(args=None):
                         help='Directory containing files to anonymize')
     parser.add_argument('-o', '--output', required=True,
                         help='Directory to place anonymized files')
-    parser.add_argument('-p', '--anonymize-pwd',
+    parser.add_argument('-p', '--anonymize-passwords',
                         help='Anonymize password and snmp community lines',
                         action='store_true', default=False)
-    parser.add_argument('-a', '--anonymize-ip-addr',
+    parser.add_argument('-a', '--anonymize-ips',
                         help='Anonymize IP addresses',
                         action='store_true', default=False)
     parser.add_argument('-s', '--salt',
@@ -64,7 +64,7 @@ def main(args=None):
         sensitive_words = options.sensitive_words.split(',')
 
     if options.undo:
-        if options.anonymize_ip_addr:
+        if options.anonymize_ips:
             raise ValueError('Cannot anonymize and undo anonymization, select '
                              'only one.')
         if options.salt is None:
@@ -72,12 +72,12 @@ def main(args=None):
                              'order to undo anonymization.')
 
     if options.dump_ip_map is not None:
-        if not options.anonymize_ip_addr:
+        if not options.anonymize_ips:
             raise ValueError('Can only dump IP address map when anonymizing IP '
                              'addresses.')
 
-    anonymize_files_in_dir(input_dir, output_dir, options.anonymize_pwd,
-                           options.anonymize_ip_addr, options.salt,
+    anonymize_files_in_dir(input_dir, output_dir, options.anonymize_passwords,
+                           options.anonymize_ips, options.salt,
                            options.dump_ip_map, sensitive_words,
                            options.undo)
 

@@ -17,7 +17,7 @@ can be anonymized
 
 .. code-block:: bash
 
-    $ netconan --sensitive-words intentionet --anonymize-pwd --anonymize-ip-addr -i sensitive -o anonymized
+    $ netconan --sensitive-words intentionet --anonymize-passwords --anonymize-ips -i sensitive -o anonymized
     WARNING No salt was provided; using randomly generated "WNo5pX28MJOrqxfv"
     INFO Anonymizing cisco.cfg
 
@@ -45,8 +45,8 @@ Features
 
 Netconan can anonymize *many types of sensitive information*:
 
-* Sensitive strings like passwords or SNMP community strings (``--anonymize-pwd``, ``-p``), for many common network vendors.
-* IPv4 and IPv6 addresses (``--anonymize-ip-addr``, ``-a``).
+* Sensitive strings like passwords or SNMP community strings (``--anonymize-passwords``, ``-p``), for many common network vendors.
+* IPv4 and IPv6 addresses (``--anonymize-ips``, ``-a``).
 * User-specified sensitive words (``--sensitive-words``, ``-w``).
 
 Netconan attempts to *preserve useful structure*. For example,
@@ -80,8 +80,8 @@ optional arguments:
                         Directory containing files to anonymize
   -o OUTPUT, --output OUTPUT
                         Directory to place anonymized files
-  -p, --anonymize-pwd   Anonymize password and snmp community lines
-  -a, --anonymize-ip-addr
+  -p, --anonymize-passwords   Anonymize password and snmp community lines
+  -a, --anonymize-ips
                         Anonymize IP addresses
   -s SALT, --salt SALT  Salt for IP and sensitive keyword anonymization
   -d DUMP_IP_MAP, --dump-ip-map DUMP_IP_MAP
