@@ -24,9 +24,9 @@ from .anonymize_files import anonymize_files_in_dir
 def main(args=None):
     """Netconan tool entry point."""
     parser = argparse.ArgumentParser()
-    parser.add_argument('-i', '--input-dir', required=True,
+    parser.add_argument('-i', '--input', required=True,
                         help='Directory containing files to anonymize')
-    parser.add_argument('-o', '--output-dir', required=True,
+    parser.add_argument('-o', '--output', required=True,
                         help='Directory to place anonymized files')
     parser.add_argument('-p', '--anonymize-pwd',
                         help='Anonymize password and snmp community lines',
@@ -50,8 +50,8 @@ def main(args=None):
                         help='Determines what level of logs to display',
                         choices=loglevel_choices, default='INFO')
     options = parser.parse_args(args)
-    input_dir = options.input_dir
-    output_dir = options.output_dir
+    input_dir = options.input
+    output_dir = options.output
 
     loglevel = logging.getLevelName(options.log_level)
     logging.basicConfig(format='%(levelname)s %(message)s', level=loglevel)

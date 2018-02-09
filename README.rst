@@ -70,24 +70,24 @@ For more information about less commonly-used features, see the Netconan help (`
 
 .. code-block:: bash
 
-    usage: netconan [-h] -i INPUT_DIR -o OUTPUT_DIR [-p] [-a] [-s SALT]
-                    [-d DUMP_IP_MAP] [-u] [-w SENSITIVE_WORDS]
-                    [-l {DEBUG,INFO,WARNING,ERROR,CRITICAL}]
+usage: netconan [-h] -i INPUT -o OUTPUT [-p] [-a] [-s SALT] [-d DUMP_IP_MAP]
+                [-u] [-w SENSITIVE_WORDS]
+                [-l {DEBUG,INFO,WARNING,ERROR,CRITICAL}]
 
-    optional arguments:
-      -h, --help            show this help message and exit
-      -i INPUT_DIR, --input-dir INPUT_DIR
-                            Directory containing files to anonymize
-      -o OUTPUT_DIR, --output-dir OUTPUT_DIR
-                            Directory to place anonymized files
-      -p, --anonymize-pwd   Anonymize password and snmp community lines
-      -a, --anonymize-ip-addr
-                            Anonymize IP addresses
-      -s SALT, --salt SALT  Salt for IP and sensitive keyword anonymization
-      -d DUMP_IP_MAP, --dump-ip-map DUMP_IP_MAP
-                            Dump IP address anonymization map to specified file
-      -u, --undo            Undo reversible anonymization (must specify salt)
-      -w SENSITIVE_WORDS, --sensitive-words SENSITIVE_WORDS
-                            Comma separated list of keywords to anonymize
-      -l {DEBUG,INFO,WARNING,ERROR,CRITICAL}, --log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}
-                            Determines what level of logs to display
+optional arguments:
+  -h, --help            show this help message and exit
+  -i INPUT, --input INPUT
+                        Directory containing files to anonymize
+  -o OUTPUT, --output OUTPUT
+                        Directory to place anonymized files
+  -p, --anonymize-pwd   Anonymize password and snmp community lines
+  -a, --anonymize-ip-addr
+                        Anonymize IP addresses
+  -s SALT, --salt SALT  Salt for IP and sensitive keyword anonymization
+  -d DUMP_IP_MAP, --dump-ip-map DUMP_IP_MAP
+                        Dump IP address anonymization map to specified file
+  -u, --undo            Undo reversible anonymization (must specify salt)
+  -w SENSITIVE_WORDS, --sensitive-words SENSITIVE_WORDS
+                        Comma separated list of keywords to anonymize
+  -l {DEBUG,INFO,WARNING,ERROR,CRITICAL}, --log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}
+                        Determines what level of logs to display
