@@ -17,6 +17,8 @@ from __future__ import absolute_import
 import argparse
 import logging
 import os
+import yaml
+from attrdict import AttrDict
 
 from .anonymize_files import anonymize_files_in_dir
 
@@ -24,44 +26,48 @@ from .anonymize_files import anonymize_files_in_dir
 def main(args=None):
     """Netconan tool entry point."""
     parser = argparse.ArgumentParser()
-    parser.add_argument('-i', '--input', required=True,
-                        help='Directory containing files to anonymize')
-    parser.add_argument('-o', '--output', required=True,
-                        help='Directory to place anonymized files')
-    parser.add_argument('-p', '--anonymize-passwords',
-                        help='Anonymize password and snmp community lines',
-                        action='store_true', default=False)
-    parser.add_argument('-a', '--anonymize-ips',
-                        help='Anonymize IP addresses',
-                        action='store_true', default=False)
-    parser.add_argument('-s', '--salt',
-                        help='Salt for IP and sensitive keyword anonymization',
-                        default=None)
-    parser.add_argument('-d', '--dump-ip-map',
-                        help='Dump IP address anonymization map to specified file',
-                        default=None)
-    parser.add_argument('-u', '--undo',
-                        help='Undo reversible anonymization (must specify salt)',
-                        action='store_true', default=False)
-    parser.add_argument('-w', '--sensitive-words', help='Comma separated list of '
-                        'keywords to anonymize', default=None)
+#    parser.add_argument('-i', '--input', required=True,
+#                        help='Directory containing files to anonymize')
+#    parser.add_argument('-o', '--output', required=True,
+#                        help='Directory to place anonymized files')
+#    parser.add_argument('-p', '--anonymize-passwords',
+#                        help='Anonymize password and snmp community lines',
+#                        action='store_true', default=False)
+#    parser.add_argument('-a', '--anonymize-ips',
+#                        help='Anonymize IP addresses',
+#                        action='store_true', default=False)
+#    parser.add_argument('-s', '--salt',
+#                        help='Salt for IP and sensitive keyword anonymization',
+#                        default=None)
+#    parser.add_argument('-d', '--dump-ip-map',
+#                        help='Dump IP address anonymization map to specified file',
+#                        default=None)
+#    parser.add_argument('-u', '--undo',
+#                        help='Undo reversible anonymization (must specify salt)',
+#                        action='store_true', default=False)
+#    parser.add_argument('-w', '--sensitive-words', help='Comma separated list of '
+#                        'keywords to anonymize', default=None)
+    parser.add_argument('-c', '--config-file', help='YAML formatted configuration file', default=None, required=True)
     loglevel_choices = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
     parser.add_argument('-l', '--log-level',
                         help='Determines what level of logs to display',
                         choices=loglevel_choices, default='INFO')
-    options = parser.parse_args(args)
-    input_dir = options.input
-    output_dir = options.output
+    input_args = parser.parse_args(args)
 
-    loglevel = logging.getLevelName(options.log_level)
+    with open(input_args.config_file, 'r') as stream:
+        try:
+            options = AttrDict((yaml.load(stream)))
+        except yaml.YAMLError as exc:
+            print(exc)
+
+    input_dir = options.input_dir
+    output_dir = options.output_dir
+
+    loglevel = logging.getLevelName(input_args.log_level)
     logging.basicConfig(format='%(levelname)s %(message)s', level=loglevel)
 
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-
-    sensitive_words = None
-    if options.sensitive_words is not None:
-        sensitive_words = options.sensitive_words.split(',')
 
     if options.undo:
         if options.anonymize_ips:
@@ -78,7 +84,7 @@ def main(args=None):
 
     anonymize_files_in_dir(input_dir, output_dir, options.anonymize_passwords,
                            options.anonymize_ips, options.salt,
-                           options.dump_ip_map, sensitive_words,
+                           options.dump_ip_map, options.sensitive_words,
                            options.undo)
 
 
