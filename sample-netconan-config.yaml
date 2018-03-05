@@ -2,9 +2,8 @@ input_dir: ./in
 output_dir: ./out
 anonymize_ips: True
 anonymize_passwords: True
-anonymize_pub_bgp_as: False
 salt: BLAHBLAHBLAH
-dump_ip_map: ip-map-file
+dump_ip_map: ./ip-map-file
 sensitive_words:
     - TEST1
     - TEST2
