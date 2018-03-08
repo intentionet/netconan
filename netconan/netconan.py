@@ -23,32 +23,28 @@ import sys
 from .anonymize_files import anonymize_files_in_dir
 
 
-def str2bool(v):
-    if v.lower() in ('true'):
+def _parse_bool(v):
+    if v.lower() in ('true',):
         return True
-    elif v.lower() in ('false'):
+    elif v.lower() in ('false',):
         return False
     else:
         raise argparse.ArgumentTypeError('Boolean value expected.')
 
 
-def main(argv=None):
-    """Netconan tool entry point."""
-    if argv is None:
-        argv = sys.argv
+def _parse_args(argv):
+    """Parse arguments from the given list."""
 
-    # Parse any conf_file specification
-    # We make this parser with add_help=False so that it doesn't parse -h and print help.
     conf_parser = argparse.ArgumentParser(
         description=__doc__,  # printed with -h/--help
         # Don't mess with format of description
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        # Turn off help, so we print all options in response to -h
+        # Turn off help, so that the parser below prints help for all options.
         add_help=False
     )
-    conf_parser.add_argument("-c", "--conf_file",
+    conf_parser.add_argument("-c", "--conf_file", type=argparse.FileType('r'),
                              help="Specify config file", metavar="FILE")
-    args, remaining_argv = conf_parser.parse_known_args()
+    args, remaining_argv = conf_parser.parse_known_args(argv)
 
     defaults = {"anonymize_passwords": False,
                 "anonymize_ips": False,
@@ -61,10 +57,8 @@ def main(argv=None):
                 "undo": False}
 
     if args.conf_file:
-        if not os.path.exists(args.conf_file):
-            raise ValueError("Config file does not exist")
         config = configparser.ConfigParser()
-        config.read([args.conf_file])
+        config.read_file(args.conf_file)
         defaults.update(dict(config.items("Defaults")))
 
     # Parse rest of arguments
@@ -74,7 +68,7 @@ def main(argv=None):
         parents=[conf_parser]
     )
     parser.set_defaults(**defaults)
-    parser.add_argument('-a', '--anonymize-ips', type=str2bool,
+    parser.add_argument('-a', '--anonymize-ips', type=_parse_bool,
                         help='Anonymize IP addresses')
     parser.add_argument('-d', '--dump-ip-map',
                         help='Dump IP address anonymization map to specified file')
@@ -85,26 +79,32 @@ def main(argv=None):
                         choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'])
     parser.add_argument('-o', '--output',
                         help='Directory to place anonymized files')
-    parser.add_argument('-p', '--anonymize-passwords', type=str2bool,
+    parser.add_argument('-p', '--anonymize-passwords', type=_parse_bool,
                         help='Anonymize password and snmp community lines')
     parser.add_argument('-s', '--salt',
                         help='Salt for IP and sensitive keyword anonymization')
-    parser.add_argument('-u', '--undo', type=str2bool,
+    parser.add_argument('-u', '--undo', type=_parse_bool,
                         help='Undo reversible anonymization (must specify salt)')
     parser.add_argument('-w', '--sensitive-words', nargs="+",
                         help='One or more keywords to anonymize')
-    args = parser.parse_args(remaining_argv)
 
-    print(args)
+    return parser.parse_args(remaining_argv)
 
-    loglevel = logging.getLevelName(args.log_level)
-    logging.basicConfig(format='%(levelname)s %(message)s', level=loglevel)
+
+def main(argv=sys.argv):
+    """Netconan tool entry point."""
+
+    # Parse any conf_file specification
+    args = _parse_args(argv[1:])
 
     if not args.input:
         raise ValueError("Input directory must be specified")
 
     if not os.path.exists(args.input):
         raise ValueError("Input directory does not exist")
+
+    log_level = logging.getLevelName(args.log_level)
+    logging.basicConfig(format='%(levelname)s %(message)s', level=log_level)
 
     if len(os.listdir(args.input)) == 0:
         raise ValueError("Input directory is empty")
