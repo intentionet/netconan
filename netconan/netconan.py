@@ -15,71 +15,121 @@
 
 from __future__ import absolute_import
 import argparse
+import configparser
 import logging
 import os
+import sys
 
 from .anonymize_files import anonymize_files_in_dir
 
 
-def main(args=None):
-    """Netconan tool entry point."""
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-i', '--input', required=True,
-                        help='Directory containing files to anonymize')
-    parser.add_argument('-o', '--output', required=True,
-                        help='Directory to place anonymized files')
-    parser.add_argument('-p', '--anonymize-passwords',
-                        help='Anonymize password and snmp community lines',
-                        action='store_true', default=False)
-    parser.add_argument('-a', '--anonymize-ips',
-                        help='Anonymize IP addresses',
-                        action='store_true', default=False)
-    parser.add_argument('-s', '--salt',
-                        help='Salt for IP and sensitive keyword anonymization',
-                        default=None)
+def _parse_bool(v):
+    if v.lower() in ('true',):
+        return True
+    elif v.lower() in ('false',):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
+
+def _parse_args(argv):
+    """Parse arguments from the given list."""
+
+    conf_parser = argparse.ArgumentParser(
+        description=__doc__,  # printed with -h/--help
+        # Don't mess with format of description
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        # Turn off help, so that the parser below prints help for all options.
+        add_help=False
+    )
+    conf_parser.add_argument("-c", "--conf_file", type=argparse.FileType('r'),
+                             help="Specify config file", metavar="FILE")
+    args, remaining_argv = conf_parser.parse_known_args(argv)
+
+    defaults = {"anonymize_passwords": False,
+                "anonymize_ips": False,
+                "dump_ip_map": None,
+                "input": None,
+                "log_level": 'INFO',
+                "output": None,
+                "salt": None,
+                "sensitive_words": None,
+                "undo": False}
+
+    if args.conf_file:
+        config = configparser.ConfigParser()
+        config.read_file(args.conf_file)
+        defaults.update(dict(config.items("Defaults")))
+
+    # Parse rest of arguments
+    # Don't suppress add_help here so it will handle -h
+    parser = argparse.ArgumentParser(
+        # Inherit options from config_parser
+        parents=[conf_parser]
+    )
+    parser.set_defaults(**defaults)
+    parser.add_argument('-a', '--anonymize-ips', type=_parse_bool,
+                        help='Anonymize IP addresses')
     parser.add_argument('-d', '--dump-ip-map',
-                        help='Dump IP address anonymization map to specified file',
-                        default=None)
-    parser.add_argument('-u', '--undo',
-                        help='Undo reversible anonymization (must specify salt)',
-                        action='store_true', default=False)
-    parser.add_argument('-w', '--sensitive-words', help='Comma separated list of '
-                        'keywords to anonymize', default=None)
-    loglevel_choices = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
+                        help='Dump IP address anonymization map to specified file')
+    parser.add_argument('-i', '--input',
+                        help='Directory containing files to anonymize')
     parser.add_argument('-l', '--log-level',
                         help='Determines what level of logs to display',
-                        choices=loglevel_choices, default='INFO')
-    options = parser.parse_args(args)
-    input_dir = options.input
-    output_dir = options.output
+                        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'])
+    parser.add_argument('-o', '--output',
+                        help='Directory to place anonymized files')
+    parser.add_argument('-p', '--anonymize-passwords', type=_parse_bool,
+                        help='Anonymize password and snmp community lines')
+    parser.add_argument('-s', '--salt',
+                        help='Salt for IP and sensitive keyword anonymization')
+    parser.add_argument('-u', '--undo', type=_parse_bool,
+                        help='Undo reversible anonymization (must specify salt)')
+    parser.add_argument('-w', '--sensitive-words', nargs="+",
+                        help='One or more keywords to anonymize')
 
-    loglevel = logging.getLevelName(options.log_level)
-    logging.basicConfig(format='%(levelname)s %(message)s', level=loglevel)
+    return parser.parse_args(remaining_argv)
 
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
 
-    sensitive_words = None
-    if options.sensitive_words is not None:
-        sensitive_words = options.sensitive_words.split(',')
+def main(argv=sys.argv):
+    """Netconan tool entry point."""
 
-    if options.undo:
-        if options.anonymize_ips:
+    # Parse any conf_file specification
+    args = _parse_args(argv[1:])
+
+    if not args.input:
+        raise ValueError("Input directory must be specified")
+
+    if not os.path.exists(args.input):
+        raise ValueError("Input directory does not exist")
+
+    log_level = logging.getLevelName(args.log_level)
+    logging.basicConfig(format='%(levelname)s %(message)s', level=log_level)
+
+    if len(os.listdir(args.input)) == 0:
+        raise ValueError("Input directory is empty")
+
+    if not args.output:
+        raise ValueError("Output directory must be specified")
+
+    if not os.path.exists(args.output):
+        os.makedirs(args["output"])
+
+    if args.undo:
+        if args.anonymize_ips:
             raise ValueError('Cannot anonymize and undo anonymization, select '
                              'only one.')
-        if options.salt is None:
+        if args.salt is None:
             raise ValueError('Salt used for anonymization must be specified in '
                              'order to undo anonymization.')
 
-    if options.dump_ip_map is not None:
-        if not options.anonymize_ips:
+    if args.dump_ip_map is not None:
+        if not args.anonymize_ips:
             raise ValueError('Can only dump IP address map when anonymizing IP '
                              'addresses.')
 
-    anonymize_files_in_dir(input_dir, output_dir, options.anonymize_passwords,
-                           options.anonymize_ips, options.salt,
-                           options.dump_ip_map, sensitive_words,
-                           options.undo)
+    anonymize_files_in_dir(args.input, args.output, args.anonymize_passwords, args.anonymize_ips, args.salt,
+                           args.dump_ip_map, args.sensitive_words, args.undo)
 
 
 if __name__ == '__main__':
