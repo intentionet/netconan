@@ -15,31 +15,67 @@
 
 from __future__ import absolute_import
 import argparse
+import configparser
 import logging
 import os
-import yaml
+import sys
 
 from .anonymize_files import anonymize_files_in_dir
 
-DEFAULT_ARGS = {}
-DEFAULT_ARGS["anonymize_passwords"] = False
-DEFAULT_ARGS["anonymize_ips"] = False
-DEFAULT_ARGS["dump_ip_map"] = None
-DEFAULT_ARGS["input"] = None
-DEFAULT_ARGS["log_level"] = 'INFO'
-DEFAULT_ARGS["output"] = None
-DEFAULT_ARGS["salt"] = None
-DEFAULT_ARGS["sensitive_words"] = None
-DEFAULT_ARGS["undo"] = False
+
+def str2bool(v):
+    if v.lower() in ('true'):
+        return True
+    elif v.lower() in ('false'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
 
 
-def main(args=None):
+def main(argv=None):
     """Netconan tool entry point."""
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-a', '--anonymize-ips',
+    if argv is None:
+        argv = sys.argv
+
+    # Parse any conf_file specification
+    # We make this parser with add_help=False so that it doesn't parse -h and print help.
+    conf_parser = argparse.ArgumentParser(
+        description=__doc__,  # printed with -h/--help
+        # Don't mess with format of description
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        # Turn off help, so we print all options in response to -h
+        add_help=False
+    )
+    conf_parser.add_argument("-c", "--conf_file",
+                             help="Specify config file", metavar="FILE")
+    args, remaining_argv = conf_parser.parse_known_args()
+
+    defaults = {"anonymize_passwords": False,
+                "anonymize_ips": False,
+                "dump_ip_map": None,
+                "input": None,
+                "log_level": 'INFO',
+                "output": None,
+                "salt": None,
+                "sensitive_words": None,
+                "undo": False}
+
+    if args.conf_file:
+        if not os.path.exists(args.conf_file):
+            raise ValueError("Config file does not exist")
+        config = configparser.ConfigParser()
+        config.read([args.conf_file])
+        defaults.update(dict(config.items("Defaults")))
+
+    # Parse rest of arguments
+    # Don't suppress add_help here so it will handle -h
+    parser = argparse.ArgumentParser(
+        # Inherit options from config_parser
+        parents=[conf_parser]
+    )
+    parser.set_defaults(**defaults)
+    parser.add_argument('-a', '--anonymize-ips', type=str2bool,
                         help='Anonymize IP addresses')
-    parser.add_argument('-c', '--config-file',
-                        help='YAML formatted configuration file')
     parser.add_argument('-d', '--dump-ip-map',
                         help='Dump IP address anonymization map to specified file')
     parser.add_argument('-i', '--input',
@@ -49,67 +85,51 @@ def main(args=None):
                         choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'])
     parser.add_argument('-o', '--output',
                         help='Directory to place anonymized files')
-    parser.add_argument('-p', '--anonymize-passwords',
+    parser.add_argument('-p', '--anonymize-passwords', type=str2bool,
                         help='Anonymize password and snmp community lines')
     parser.add_argument('-s', '--salt',
                         help='Salt for IP and sensitive keyword anonymization')
-    parser.add_argument('-u', '--undo',
+    parser.add_argument('-u', '--undo', type=str2bool,
                         help='Undo reversible anonymization (must specify salt)')
     parser.add_argument('-w', '--sensitive-words', nargs="+",
                         help='One or more keywords to anonymize')
-    cmd_args = vars(parser.parse_args(args))
+    args = parser.parse_args(remaining_argv)
 
-    config_args = {}
-    if cmd_args.get("config_file"):
-        with open(cmd_args.get("config_file"), 'r') as stream:
-            try:
-                config_args = yaml.load(stream)
-            except yaml.YAMLError as exc:
-                print(exc)
+    print(args)
 
-    final_args = {}
-    for arg in cmd_args:
-        try:
-            final_args[arg] = next(
-                val for val in [cmd_args.get(arg), config_args.get(arg), DEFAULT_ARGS.get(arg)] if val is not None)
-        except StopIteration as e:
-            final_args[arg] = None
-
-    loglevel = logging.getLevelName(final_args.get("log_level"))
+    loglevel = logging.getLevelName(args.log_level)
     logging.basicConfig(format='%(levelname)s %(message)s', level=loglevel)
 
-    if not final_args.get("input"):
+    if not args.input:
         raise ValueError("Input directory must be specified")
 
-    if not os.path.exists(final_args.get("input")):
+    if not os.path.exists(args.input):
         raise ValueError("Input directory does not exist")
 
-    if len(os.listdir(final_args.get("input"))) == 0:
+    if len(os.listdir(args.input)) == 0:
         raise ValueError("Input directory is empty")
 
-    if not final_args.get("output"):
+    if not args.output:
         raise ValueError("Output directory must be specified")
 
-    if not os.path.exists(final_args.get("output")):
-        os.makedirs(final_args["output"])
+    if not os.path.exists(args.output):
+        os.makedirs(args["output"])
 
-    if final_args.get("undo"):
-        if final_args.get("anonymize_ips"):
+    if args.undo:
+        if args.anonymize_ips:
             raise ValueError('Cannot anonymize and undo anonymization, select '
                              'only one.')
-        if final_args.get("salt") is None:
+        if args.salt is None:
             raise ValueError('Salt used for anonymization must be specified in '
                              'order to undo anonymization.')
 
-    if final_args.get("dump_ip_map") is not None:
-        if not final_args.get("anonymize_ips"):
+    if args.dump_ip_map is not None:
+        if not args.anonymize_ips:
             raise ValueError('Can only dump IP address map when anonymizing IP '
                              'addresses.')
 
-    anonymize_files_in_dir(final_args.get("input"), final_args.get("output"),
-                           final_args.get("anonymize_passwords"), final_args.get("anonymize_ips"),
-                           final_args.get("salt"), final_args.get("dump_ip_map"), final_args.get("sensitive_words"),
-                           final_args.get("undo"))
+    anonymize_files_in_dir(args.input, args.output, args.anonymize_passwords, args.anonymize_ips, args.salt,
+                           args.dump_ip_map, args.sensitive_words, args.undo)
 
 
 if __name__ == '__main__':
