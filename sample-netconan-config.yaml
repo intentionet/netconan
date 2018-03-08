@@ -1,5 +1,6 @@
-input_dir: ./in
-output_dir: ./out
+input: ./in
+output: ./out
+log_level: INFO
 anonymize_ips: True
 anonymize_passwords: True
 salt: BLAHBLAHBLAH
