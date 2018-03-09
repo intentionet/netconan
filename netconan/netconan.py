@@ -52,7 +52,6 @@ def _parse_args(argv):
 
 def main(argv=sys.argv[1:]):
     """Netconan tool entry point."""
-    # Parse any conf_file specification
     args = _parse_args(argv)
     print(args)
 
