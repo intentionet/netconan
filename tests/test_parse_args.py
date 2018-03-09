@@ -59,7 +59,7 @@ def test_no_config_file():
 
 def test_config_file(tmpdir):
     """Test config file args are parsed."""
-    cfg_file = tmpdir.mkdir('config_file').join('config.cfg')
+    cfg_file = str(tmpdir.mkdir('config_file').join('config.cfg'))
     with open(cfg_file, 'w') as f:
         f.write("""[Defaults]
         input=in
@@ -80,7 +80,7 @@ def test_config_file(tmpdir):
 
 def test_config_file_and_override(tmpdir):
     """Test command line args override config file args."""
-    cfg_file = tmpdir.mkdir('config_file').join('config.cfg')
+    cfg_file = str(tmpdir.mkdir('config_file').join('config.cfg'))
     with open(cfg_file, 'w') as f:
         f.write("""[Defaults]
         input=in
