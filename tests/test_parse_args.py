@@ -35,12 +35,12 @@ def test_no_config_file():
     args = _parse_args([
         "--input=in",
         "--output=out",
-        "--anonymize-passwords=True",
-        "--anonymize-ips=true",
+        "--anonymize-passwords",
+        "--anonymize-ips",
         "--dump-ip-map=dump",
         "--log-level=CRITICAL",
         "--salt=salty",
-        "--undo=true",
+        "--undo",
         "--sensitive-words=secret,password",
     ])
 
@@ -52,7 +52,7 @@ def test_no_config_file():
     assert "CRITICAL" == args.log_level
     assert "salty" == args.salt
     assert args.undo
-    assert ["secret,password"] == args.sensitive_words
+    assert "secret,password" == args.sensitive_words
 
 
 def test_config_file(tmpdir):
@@ -61,7 +61,7 @@ def test_config_file(tmpdir):
         f.write("""[Defaults]
         input=in
         output=out
-        log_level=CRITICAL""")
+        log-level=CRITICAL""")
     args = _parse_args(["-c={}".format(cfg_file)])
 
     assert "in" == args.input
@@ -81,7 +81,7 @@ def test_config_file_and_override(tmpdir):
         f.write("""[Defaults]
         input=in
         output=out
-        log_level=CRITICAL""")
+        log-level=CRITICAL""")
     args = _parse_args(["-c={}".format(cfg_file), "--input=override"])
 
     assert "override" == args.input
