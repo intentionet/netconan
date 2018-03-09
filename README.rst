@@ -81,28 +81,36 @@ Running netconan
 
 Netconan processes all files not starting with ``.`` housed in the top level of the specified input directory and saves processed files in the specified output directory.
 
-For more information about less commonly-used features, see the Netconan help (``-h``).
+For more information about less commonly-used features, see the Netconan help (``-h``).  For more information on config file syntax, see `here <https://goo.gl/R74nmi>`_.
 
 .. code-block:: bash
 
-    usage: netconan [-h] -i INPUT -o OUTPUT [-p] [-a] [-s SALT] [-d DUMP_IP_MAP]
-                    [-u] [-w SENSITIVE_WORDS]
-                    [-l {DEBUG,INFO,WARNING,ERROR,CRITICAL}]
+    usage: netconan [-h] [-a] [-c CONFIG] [-d DUMP_IP_MAP] -i INPUT
+                    [-l {DEBUG,INFO,WARNING,ERROR,CRITICAL}] -o OUTPUT [-p]
+                    [-s SALT] [-u] [-w SENSITIVE_WORDS]
+
+    Args that can start with '--' can also be set in a config file (specified via
+    -c). If an arg is specified in more than one place, then command line values
+    override config file values which override defaults. Config file syntax
+    allows: key=value, flag=true, stuff=[a,b,c] (for more details, see here
+    https://goo.gl/R74nmi).
 
     optional arguments:
       -h, --help            show this help message and exit
-      -i INPUT, --input INPUT
-                            Directory containing files to anonymize
-      -o OUTPUT, --output OUTPUT
-                            Directory to place anonymized files
-      -p, --anonymize-passwords   Anonymize password and snmp community lines
-      -a, --anonymize-ips
-                            Anonymize IP addresses
-      -s SALT, --salt SALT  Salt for IP and sensitive keyword anonymization
+      -a, --anonymize-ips   Anonymize IP addresses
+      -c CONFIG, --config CONFIG
+                            Config file specifying params
       -d DUMP_IP_MAP, --dump-ip-map DUMP_IP_MAP
                             Dump IP address anonymization map to specified file
-      -u, --undo            Undo reversible anonymization (must specify salt)
-      -w SENSITIVE_WORDS, --sensitive-words SENSITIVE_WORDS
-                            Comma separated list of keywords to anonymize
+      -i INPUT, --input INPUT
+                            Directory containing files to anonymize
       -l {DEBUG,INFO,WARNING,ERROR,CRITICAL}, --log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}
                             Determines what level of logs to display
+      -o OUTPUT, --output OUTPUT
+                            Directory to place anonymized files
+      -p, --anonymize-passwords
+                            Anonymize password and snmp community lines
+      -s SALT, --salt SALT  Salt for IP and sensitive keyword anonymization
+      -u, --undo            Undo reversible anonymization (must specify salt)
+      -w SENSITIVE_WORDS, --sensitive-words SENSITIVE_WORDS
+                            List of comma separated keywords to anonymize
