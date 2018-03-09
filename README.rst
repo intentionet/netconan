@@ -81,7 +81,7 @@ Running netconan
 
 Netconan processes all files not starting with ``.`` housed in the top level of the specified input directory and saves processed files in the specified output directory.
 
-For more information about less commonly-used features, see the Netconan help (``-h``).
+For more information about less commonly-used features, see the Netconan help (``-h``).  For more information on config file syntax, see `here <https://goo.gl/R74nmi>`_.
 
 .. code-block:: bash
 
@@ -89,11 +89,11 @@ For more information about less commonly-used features, see the Netconan help (`
                     [-l {DEBUG,INFO,WARNING,ERROR,CRITICAL}] -o OUTPUT [-p]
                     [-s SALT] [-u] [-w SENSITIVE_WORDS]
 
-    Args that start with '--' (eg. -a) can also be set in a config file (specified
-    via -c). Config file syntax allows: key=value, flag=true, stuff=[a,b,c] (for
-    details, see syntax at https://goo.gl/R74nmi). If an arg is specified in more
-    than one place, then commandline values override config file values which
-    override defaults.
+    Args that can start with '--' can also be set in a config file (specified via
+    -c). If an arg is specified in more than one place, then command line values
+    override config file values which override defaults. Config file syntax
+    allows: key=value, flag=true, stuff=[a,b,c] (for more details, see here
+    https://goo.gl/R74nmi).
 
     optional arguments:
       -h, --help            show this help message and exit

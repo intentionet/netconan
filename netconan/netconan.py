@@ -24,7 +24,18 @@ from .anonymize_files import anonymize_files_in_dir
 
 def _parse_args(argv):
     """Parse arguments from the given list."""
-    parser = configargparse.ArgParser()
+    parser = configargparse.ArgParser(
+        # Replace the default config file help with custom message
+        # To fix some syntax issues
+        add_config_file_help=False,
+        description="""
+        Args that can start with '--' can also be set in a config file (specified 
+        via -c). If an arg is specified in more than one place, then command line
+        values override config file values which override defaults. Config file
+        syntax allows: key=value, flag=true, stuff=[a,b,c] (for more details, see
+        here https://goo.gl/R74nmi).
+        """
+    )
 
     parser.add_argument('-a', '--anonymize-ips', action='store_true', default=False,
                         help='Anonymize IP addresses')
