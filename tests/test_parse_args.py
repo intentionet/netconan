@@ -19,6 +19,7 @@ from netconan.netconan import _parse_args
 
 
 def test_defaults():
+    """Test default parameters."""
     args = _parse_args(["--input=in", "--output=out"])
     assert "in" == args.input
     assert "out" == args.output
@@ -32,6 +33,7 @@ def test_defaults():
 
 
 def test_no_config_file():
+    """Test command line args are parsed."""
     args = _parse_args([
         "--input=in",
         "--output=out",
@@ -56,6 +58,7 @@ def test_no_config_file():
 
 
 def test_config_file(tmpdir):
+    """Test config file args are parsed."""
     cfg_file = tmpdir.mkdir('config_file').join('config.cfg')
     with open(cfg_file, 'w') as f:
         f.write("""[Defaults]
@@ -76,6 +79,7 @@ def test_config_file(tmpdir):
 
 
 def test_config_file_and_override(tmpdir):
+    """Test command line args override config file args."""
     cfg_file = tmpdir.mkdir('config_file').join('config.cfg')
     with open(cfg_file, 'w') as f:
         f.write("""[Defaults]
