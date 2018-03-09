@@ -53,7 +53,6 @@ def _parse_args(argv):
 def main(argv=sys.argv[1:]):
     """Netconan tool entry point."""
     args = _parse_args(argv)
-    print(args)
 
     if not args.input:
         raise ValueError("Input directory must be specified")
