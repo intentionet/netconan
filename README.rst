@@ -63,6 +63,7 @@ Netconan can anonymize *many types of sensitive information*:
 * Sensitive strings like passwords or SNMP community strings (``--anonymize-passwords``, ``-p``), for many common network vendors.
 * IPv4 and IPv6 addresses (``--anonymize-ips``, ``-a``).
 * User-specified sensitive words (``--sensitive-words``, ``-w``).
+* User-specified AS numbers (``--as-numbers``, ``-n``).
 
 Netconan attempts to *preserve useful structure*. For example,
 
@@ -86,8 +87,8 @@ For more information about less commonly-used features, see the Netconan help (`
 .. code-block:: bash
 
     usage: netconan [-h] [-a] [-c CONFIG] [-d DUMP_IP_MAP] -i INPUT
-                    [-l {DEBUG,INFO,WARNING,ERROR,CRITICAL}] -o OUTPUT [-p]
-                    [-s SALT] [-u] [-w SENSITIVE_WORDS]
+                    [-l {DEBUG,INFO,WARNING,ERROR,CRITICAL}] [-n AS_NUMBERS] -o
+                    OUTPUT [-p] [-s SALT] [-u] [-w SENSITIVE_WORDS]
 
     Args that can start with '--' can also be set in a config file (specified via
     -c). If an arg is specified in more than one place, then command line values
@@ -106,6 +107,8 @@ For more information about less commonly-used features, see the Netconan help (`
                             Directory containing files to anonymize
       -l {DEBUG,INFO,WARNING,ERROR,CRITICAL}, --log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}
                             Determines what level of logs to display
+      -n AS_NUMBERS, --as-numbers AS_NUMBERS
+                            List of comma separated AS numbers to anonymize
       -o OUTPUT, --output OUTPUT
                             Directory to place anonymized files
       -p, --anonymize-passwords

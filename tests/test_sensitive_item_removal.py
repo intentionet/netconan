@@ -14,9 +14,10 @@
 #   limitations under the License.
 
 from netconan.sensitive_item_removal import (
-    anonymize_sensitive_words, replace_matching_item, generate_default_sensitive_item_regexes,
-    generate_sensitive_word_regexes, _sensitive_item_formats,
-    _anonymize_value, _check_sensitive_item_format)
+    anonymize_as_numbers, anonymize_sensitive_words, replace_matching_item,
+    generate_default_sensitive_item_regexes, generate_sensitive_word_regexes,
+    _sensitive_item_formats, _anonymize_as_num, _anonymize_value,
+    _check_sensitive_item_format, _AS_NUM_BOUNDARIES)
 import pytest
 
 # Tuple format is config_line, sensitive_text (should not be in output line)
@@ -148,14 +149,83 @@ def regexes():
     return generate_default_sensitive_item_regexes()
 
 
+@pytest.mark.parametrize('raw_line, sensitive_as_numbers', [
+    ('something {} something', ['123']),
+    ('123{}890', ['65530']),
+    ('123{0}890 and {0} again', ['65530']),
+    ('anonymize {} and {}.', ['4567', '1234567'])
+])
+def test_anonymize_as_numbers(raw_line, sensitive_as_numbers):
+    """Test anonymization of lines with AS numbers."""
+    line = raw_line.format(*sensitive_as_numbers)
+    anon_line = anonymize_as_numbers(sensitive_as_numbers, line, SALT)
+
+    # Now anonymize each AS number individually & build another anon line
+    anon_numbers = [anonymize_as_numbers(sensitive_as_numbers, number, SALT) for number in sensitive_as_numbers]
+    individually_anon_line = raw_line.format(*anon_numbers)
+
+    # Make sure anonymizing each number individually gives the same result as anonymizing all at once
+    assert(anon_line == individually_anon_line)
+
+    for as_number in sensitive_as_numbers:
+        # Make sure all AS numbers are removed from the line
+        assert(as_number not in anon_line)
+
+
+@pytest.mark.parametrize('as_number', [
+    0,
+    1234,
+    65534,
+    65535,
+    70000,
+    123456789,
+    4199999999,
+    4230000000,
+    4294967294
+])
+def test__anonymize_as_num(as_number):
+    """Test anonymization of AS numbers."""
+    assert(_anonymize_as_num(as_number, SALT) != as_number)
+
+
+def get_as_block_number(as_number):
+    """Determine which block a given AS number is in."""
+    block = 0
+    for upper_bound in _AS_NUM_BOUNDARIES:
+        if as_number <= upper_bound:
+            return block
+        block += 1
+
+
+@pytest.mark.parametrize('as_number', [
+    0, 64511,               # Original public block
+    64512, 65534,           # Original private block
+    65535, 4199999999,      # Expanded public block
+    4200000000, 4294967294  # Expanded private block
+])
+def test_preserve_as_block(as_number):
+    """Test that original AS number block is preserved after anonymization."""
+    new_as_number = _anonymize_as_num(as_number, SALT)
+    assert(get_as_block_number(new_as_number) == get_as_block_number(as_number))
+
+
+@pytest.mark.parametrize('invalid_as_number', [
+    -1, 4294967295
+])
+def test_as_number_invalid(invalid_as_number):
+    """Test that exception is thrown with invalid AS number."""
+    with pytest.raises(Exception):
+        _anonymize_as_num(invalid_as_number, SALT)
+
+
 @pytest.mark.parametrize('raw_line, sensitive_words', [
-                         ('something {} something', ['secret']),
-                         ('something{}something', ['secret']),
-                         ('{}', ['secret']),
-                         ('a{0}b{0}c{0}d', ['secret']),
-                         ('testing {} and {}.', ['SECRET', 'blah']),
-                         ('testing {}{}.', ['secret', 'blah'])
-                         ])
+    ('something {} something', ['secret']),
+    ('something{}something', ['secret']),
+    ('{}', ['secret']),
+    ('a{0}b{0}c{0}d', ['secret']),
+    ('testing {} and {}.', ['SECRET', 'blah']),
+    ('testing {}{}.', ['secret', 'blah'])
+])
 def test_anonymize_sensitive_words(raw_line, sensitive_words):
     """Test anonymization of specified sensitive words."""
     sens_word_regexes = generate_sensitive_word_regexes(sensitive_words)
@@ -223,40 +293,40 @@ def test__anonymize_value_unique():
 
 
 @pytest.mark.parametrize('val, format_', [
-                         ('094F4107180B', _sensitive_item_formats.cisco_type7),
-                         ('00071C080555', _sensitive_item_formats.cisco_type7),
-                         ('1608030A2B25', _sensitive_item_formats.cisco_type7),
-                         ('070C2E424F072E04043A0E1E01', _sensitive_item_formats.cisco_type7),
-                         ('01999999', _sensitive_item_formats.numeric),
-                         ('987654321', _sensitive_item_formats.numeric),
-                         ('0000000000000000', _sensitive_item_formats.numeric),
-                         ('1234567890', _sensitive_item_formats.numeric),
-                         ('7', _sensitive_item_formats.numeric),
-                         ('A', _sensitive_item_formats.hexadecimal),
-                         ('0FFFFFFFFF', _sensitive_item_formats.hexadecimal),
-                         ('ABCDEF', _sensitive_item_formats.hexadecimal),
-                         ('7ab34c2fe31', _sensitive_item_formats.hexadecimal),
-                         ('deadBEEF', _sensitive_item_formats.hexadecimal),
-                         ('27a', _sensitive_item_formats.hexadecimal),
-                         ('$1$SALT$mutX1.3APXbr8JdR/Xi6t.', _sensitive_item_formats.md5),
-                         ('$1$SALT$X8i6w2OOpAaEMNBGfSoZC0', _sensitive_item_formats.md5),
-                         ('$1$SALT$ddio24/QfJatZkSKGuB4Z/', _sensitive_item_formats.md5),
-                         ('$1$salt$rwny14pmwbMjy1WTfxf4h/', _sensitive_item_formats.md5),
-                         ('$1$salt$BFdHEr6MVYydPmpY3FPXV/', _sensitive_item_formats.md5),
-                         ('$1$salt$jp6JinwkFEV.2OCDaXrmO1', _sensitive_item_formats.md5),
-                         ('$1$./4k$OVkG7VKh5GKt1/XjSO78.0', _sensitive_item_formats.md5),
-                         ('$1$CNANTest$xAfu6Am1d5D/.6OVICuOu/', _sensitive_item_formats.md5),
-                         ('$1$67Q0XA3z$YqiBW/xxKWr74oHPXEkIv1', _sensitive_item_formats.md5),
-                         ('thisIsATest', _sensitive_item_formats.text),
-                         ('netconan', _sensitive_item_formats.text),
-                         ('STRING', _sensitive_item_formats.text),
-                         ('text_here', _sensitive_item_formats.text),
-                         ('more-text-here0', _sensitive_item_formats.text),
-                         ('ABCDEFG', _sensitive_item_formats.text),
-                         ('$9$HqfQ1IcrK8n/t0IcvM24aZGi6/t', _sensitive_item_formats.juniper_type9),
-                         ('$9$YVgoZk.5n6AHq9tORlegoJGDkPfQCtOP5Qn9pRE', _sensitive_item_formats.juniper_type9),
-                         ('$6$RMxgK5ALGIf.nWEC$tHuKCyfNtJMCY561P52dTzHUmYMmLxb/Mxik.j3vMUs8lMCPocM00/NAS.SN6GCWx7d/vQIgxnClyQLAb7n3x0', _sensitive_item_formats.sha512)
-                         ])
+    ('094F4107180B', _sensitive_item_formats.cisco_type7),
+    ('00071C080555', _sensitive_item_formats.cisco_type7),
+    ('1608030A2B25', _sensitive_item_formats.cisco_type7),
+    ('070C2E424F072E04043A0E1E01', _sensitive_item_formats.cisco_type7),
+    ('01999999', _sensitive_item_formats.numeric),
+    ('987654321', _sensitive_item_formats.numeric),
+    ('0000000000000000', _sensitive_item_formats.numeric),
+    ('1234567890', _sensitive_item_formats.numeric),
+    ('7', _sensitive_item_formats.numeric),
+    ('A', _sensitive_item_formats.hexadecimal),
+    ('0FFFFFFFFF', _sensitive_item_formats.hexadecimal),
+    ('ABCDEF', _sensitive_item_formats.hexadecimal),
+    ('7ab34c2fe31', _sensitive_item_formats.hexadecimal),
+    ('deadBEEF', _sensitive_item_formats.hexadecimal),
+    ('27a', _sensitive_item_formats.hexadecimal),
+    ('$1$SALT$mutX1.3APXbr8JdR/Xi6t.', _sensitive_item_formats.md5),
+    ('$1$SALT$X8i6w2OOpAaEMNBGfSoZC0', _sensitive_item_formats.md5),
+    ('$1$SALT$ddio24/QfJatZkSKGuB4Z/', _sensitive_item_formats.md5),
+    ('$1$salt$rwny14pmwbMjy1WTfxf4h/', _sensitive_item_formats.md5),
+    ('$1$salt$BFdHEr6MVYydPmpY3FPXV/', _sensitive_item_formats.md5),
+    ('$1$salt$jp6JinwkFEV.2OCDaXrmO1', _sensitive_item_formats.md5),
+    ('$1$./4k$OVkG7VKh5GKt1/XjSO78.0', _sensitive_item_formats.md5),
+    ('$1$CNANTest$xAfu6Am1d5D/.6OVICuOu/', _sensitive_item_formats.md5),
+    ('$1$67Q0XA3z$YqiBW/xxKWr74oHPXEkIv1', _sensitive_item_formats.md5),
+    ('thisIsATest', _sensitive_item_formats.text),
+    ('netconan', _sensitive_item_formats.text),
+    ('STRING', _sensitive_item_formats.text),
+    ('text_here', _sensitive_item_formats.text),
+    ('more-text-here0', _sensitive_item_formats.text),
+    ('ABCDEFG', _sensitive_item_formats.text),
+    ('$9$HqfQ1IcrK8n/t0IcvM24aZGi6/t', _sensitive_item_formats.juniper_type9),
+    ('$9$YVgoZk.5n6AHq9tORlegoJGDkPfQCtOP5Qn9pRE', _sensitive_item_formats.juniper_type9),
+    ('$6$RMxgK5ALGIf.nWEC$tHuKCyfNtJMCY561P52dTzHUmYMmLxb/Mxik.j3vMUs8lMCPocM00/NAS.SN6GCWx7d/vQIgxnClyQLAb7n3x0', _sensitive_item_formats.sha512)
+])
 def test__check_sensitive_item_format(val, format_):
     """Test sensitive item format detection."""
     assert(_check_sensitive_item_format(val) == format_)
@@ -273,10 +343,10 @@ def test_pwd_and_com_removal(regexes, config_line, sensitive_text):
 
 
 @pytest.mark.parametrize('config_line', [
-                         'nothing in this string should be replaced',
-                         '      interface GigabitEthernet0/0',
-                         'ip address 1.2.3.4 255.255.255.0'
-                         ])
+    'nothing in this string should be replaced',
+    '      interface GigabitEthernet0/0',
+    'ip address 1.2.3.4 255.255.255.0'
+])
 def test_pwd_and_com_removal_insensitive_lines(regexes, config_line):
     """Make sure benign lines are not affected by sensitive_item_removal."""
     pwd_lookup = {}

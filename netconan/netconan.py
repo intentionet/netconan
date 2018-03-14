@@ -48,6 +48,8 @@ def _parse_args(argv):
     parser.add_argument('-l', '--log-level', default='INFO',
                         choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
                         help='Determines what level of logs to display')
+    parser.add_argument('-n', '--as-numbers', default=None,
+                        help='List of comma separated AS numbers to anonymize')
     parser.add_argument('-o', '--output', required=True,
                         help='Directory to place anonymized files')
     parser.add_argument('-p', '--anonymize-passwords', action='store_true', default=False,
@@ -100,8 +102,12 @@ def main(argv=sys.argv[1:]):
     if args.sensitive_words is not None:
         sensitive_words = args.sensitive_words.split(',')
 
+    as_numbers = None
+    if args.as_numbers is not None:
+        as_numbers = args.as_numbers.split(',')
+
     anonymize_files_in_dir(args.input, args.output, args.anonymize_passwords, args.anonymize_ips, args.salt,
-                           args.dump_ip_map, sensitive_words, args.undo)
+                           args.dump_ip_map, sensitive_words, args.undo, as_numbers)
 
 
 if __name__ == '__main__':

@@ -38,6 +38,10 @@ default_catch_all_regexes = [
 # Number of digits to extract from hash for sensitive keyword replacement
 _ANON_SENSITIVE_WORD_LEN = 6
 
+# AS number block boundaries
+# Each number corresponds to the last number of a block/category
+_AS_NUM_BOUNDARIES = [64511, 65535, 4199999999, 4294967294]
+
 
 class _sensitive_item_formats(Enum):
     """Enum for recognized sensitive item formats (e.g. type7, md5, text)."""
@@ -49,6 +53,27 @@ class _sensitive_item_formats(Enum):
     text = 5
     sha512 = 6
     juniper_type9 = 7
+
+
+def anonymize_as_numbers(as_numbers, line, salt):
+    """Anonymize AS numbers from specified AS number list in the input line."""
+    for original in as_numbers:
+        if original in line:
+            replacement = str(_anonymize_as_num(int(original), salt))
+            line = line.replace(original, replacement)
+    return line
+
+
+def _anonymize_as_num(as_num, salt):
+    """Generate a replacement AS number for the given AS number and salt."""
+    hash_val = int(md5((salt + str(as_num)).encode()).hexdigest(), 16)
+    lower_bound = 0
+    if as_num < 0 or as_num > max(_AS_NUM_BOUNDARIES):
+        raise ValueError('AS number provided was outside accepted range (0-{})'.format(max(_AS_NUM_BOUNDARIES)))
+    for next_block in _AS_NUM_BOUNDARIES:
+        if as_num <= next_block:
+            return hash_val % (next_block - lower_bound) + lower_bound
+        lower_bound = next_block
 
 
 def anonymize_sensitive_words(sensitive_word_regexes, line, salt):
