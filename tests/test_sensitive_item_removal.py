@@ -173,44 +173,45 @@ def test_anonymize_as_numbers(raw_line, sensitive_as_numbers):
 
 
 @pytest.mark.parametrize('as_number', [
-    0,
-    1234,
-    65534,
-    65535,
-    70000,
-    123456789,
-    4199999999,
-    4230000000,
-    4294967294
+    '0',
+    '1234',
+    '65534',
+    '65535',
+    '70000',
+    '123456789',
+    '4199999999',
+    '4230000000',
+    '4294967295'
 ])
 def test__anonymize_as_num(as_number):
     """Test anonymization of AS numbers."""
     assert(_anonymize_as_num(as_number, SALT) != as_number)
 
 
-def get_as_block_number(as_number):
+def get_as_number_block(as_number):
     """Determine which block a given AS number is in."""
     block = 0
+    as_number = int(as_number)
     for upper_bound in _AS_NUM_BOUNDARIES:
-        if as_number <= upper_bound:
+        if as_number < upper_bound:
             return block
         block += 1
 
 
 @pytest.mark.parametrize('as_number', [
-    0, 64511,               # Original public block
-    64512, 65534,           # Original private block
-    65535, 4199999999,      # Expanded public block
-    4200000000, 4294967294  # Expanded private block
+    '0', '64511',               # Original public block
+    '64512', '65534',           # Original private block
+    '65535', '4199999999',      # Expanded public block
+    '4200000000', '4294967295'  # Expanded private block
 ])
 def test_preserve_as_block(as_number):
     """Test that original AS number block is preserved after anonymization."""
     new_as_number = _anonymize_as_num(as_number, SALT)
-    assert(get_as_block_number(new_as_number) == get_as_block_number(as_number))
+    assert(get_as_number_block(new_as_number) == get_as_number_block(as_number))
 
 
 @pytest.mark.parametrize('invalid_as_number', [
-    -1, 4294967295
+    '-1', '4294967296'
 ])
 def test_as_number_invalid(invalid_as_number):
     """Test that exception is thrown with invalid AS number."""

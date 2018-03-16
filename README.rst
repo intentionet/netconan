@@ -65,7 +65,7 @@ Netconan can anonymize *many types of sensitive information*:
 * User-specified sensitive words (``--sensitive-words``, ``-w``).
 * User-specified AS numbers (``--as-numbers``, ``-n``).
 
-*Note that any occurrence of a specified sensitive word or AS number will be replaced, even it is a subset of a larger string or number.*
+*Note that any occurrence of a specified sensitive word or AS number will be replaced regardless of context, even if it is part of a larger string or number.*
 
 
 Netconan attempts to *preserve useful structure*. For example,
@@ -73,6 +73,8 @@ Netconan attempts to *preserve useful structure*. For example,
 * Netconan preserves prefixes when anonymizing IPv4 and IPv6 addresses: IP addresses with a common prefix before anonymization will share the same prefix length after anonymization. For more information, see J. Xu et al., *On the Design and Performance of Prefix-Preserving IP Traffic Trace Anonymization*, ACM SIGCOMM Workshop on Internet Measurement, 2001 [`link <https://smartech.gatech.edu/bitstream/handle/1853/6573/GIT-CC-01-22.pdf>`_].
 
 * IPv4 classes are preserved.
+
+* AS number blocks are preserved (i.e. an anonymized public AS number will still be in the public AS number range after anonymization).
 
 * Standard password and hash formats (salted md5, Cisco Type 7, Juniper Type 9) are recognized and substituted with format-compliant replacements.
 
