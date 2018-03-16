@@ -200,8 +200,8 @@ def get_as_number_block(as_number):
 
 @pytest.mark.parametrize('as_number', [
     '0', '64511',               # Original public block
-    '64512', '65534',           # Original private block
-    '65535', '4199999999',      # Expanded public block
+    '64512', '65535',           # Original private block
+    '65536', '4199999999',      # Expanded public block
     '4200000000', '4294967295'  # Expanded private block
 ])
 def test_preserve_as_block(as_number):
