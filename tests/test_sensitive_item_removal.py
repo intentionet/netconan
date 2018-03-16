@@ -15,9 +15,9 @@
 
 from netconan.sensitive_item_removal import (
     anonymize_as_numbers, anonymize_sensitive_words, replace_matching_item,
-    generate_default_sensitive_item_regexes, generate_sensitive_word_regexes,
-    _sensitive_item_formats, _anonymize_as_num, _anonymize_value,
-    _check_sensitive_item_format, _AS_NUM_BOUNDARIES)
+    generate_as_number_replacement_map, generate_default_sensitive_item_regexes,
+    generate_sensitive_word_regexes, _sensitive_item_formats, _anonymize_as_num,
+    _anonymize_value, _check_sensitive_item_format, _AS_NUM_BOUNDARIES)
 import pytest
 
 # Tuple format is config_line, sensitive_text (should not be in output line)
@@ -157,11 +157,13 @@ def regexes():
 ])
 def test_anonymize_as_numbers(raw_line, sensitive_as_numbers):
     """Test anonymization of lines with AS numbers."""
+    as_number_map = generate_as_number_replacement_map(sensitive_as_numbers, SALT)
+
     line = raw_line.format(*sensitive_as_numbers)
-    anon_line = anonymize_as_numbers(sensitive_as_numbers, line, SALT)
+    anon_line = anonymize_as_numbers(as_number_map, line)
 
     # Now anonymize each AS number individually & build another anon line
-    anon_numbers = [anonymize_as_numbers(sensitive_as_numbers, number, SALT) for number in sensitive_as_numbers]
+    anon_numbers = [anonymize_as_numbers(as_number_map, number) for number in sensitive_as_numbers]
     individually_anon_line = raw_line.format(*anon_numbers)
 
     # Make sure anonymizing each number individually gives the same result as anonymizing all at once
@@ -215,7 +217,7 @@ def test_preserve_as_block(as_number):
 ])
 def test_as_number_invalid(invalid_as_number):
     """Test that exception is thrown with invalid AS number."""
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         _anonymize_as_num(invalid_as_number, SALT)
 
 
