@@ -38,8 +38,8 @@ default_catch_all_regexes = [
 # Number of digits to extract from hash for sensitive keyword replacement
 _ANON_SENSITIVE_WORD_LEN = 6
 
-# AS number block boundaries
-# Each number corresponds to one plus the end of the previous block
+# AS number block boundaries - each number corresponds to beginning of the next AS num block
+# Except the last, which just serves to indicate the end of the previous block
 _AS_NUM_BOUNDARIES = [0, 64512, 65536, 4200000000, 4294967296]
 
 
