@@ -38,6 +38,10 @@ default_catch_all_regexes = [
 # Number of digits to extract from hash for sensitive keyword replacement
 _ANON_SENSITIVE_WORD_LEN = 6
 
+# AS number block boundaries - each number corresponds to beginning of the next AS num block
+# Except the last, which just serves to indicate the end of the previous block
+_AS_NUM_BOUNDARIES = [0, 64512, 65536, 4200000000, 4294967296]
+
 
 class _sensitive_item_formats(Enum):
     """Enum for recognized sensitive item formats (e.g. type7, md5, text)."""
@@ -49,6 +53,28 @@ class _sensitive_item_formats(Enum):
     text = 5
     sha512 = 6
     juniper_type9 = 7
+
+
+def anonymize_as_numbers(as_number_map, line):
+    """Anonymize AS numbers from specified AS number list in the input line."""
+    for original in as_number_map:
+        if original in line:
+            line = line.replace(original, as_number_map[original])
+    return line
+
+
+def _anonymize_as_num(as_number, salt):
+    """Generate a replacement AS number for the given AS number and salt."""
+    hash_val = int(md5((salt + as_number).encode()).hexdigest(), 16)
+    as_number = int(as_number)
+    if as_number < 0 or as_number > 4294967295:
+        raise ValueError('AS number provided was outside accepted range (0-4294967295)')
+
+    block_begin = 0
+    for next_block_begin in _AS_NUM_BOUNDARIES:
+        if as_number < next_block_begin:
+            return str(hash_val % (next_block_begin - block_begin) + block_begin)
+        block_begin = next_block_begin
 
 
 def anonymize_sensitive_words(sensitive_word_regexes, line, salt):
@@ -127,6 +153,14 @@ def _check_sensitive_item_format(val):
     if regex.match(r'^\$9\$[\S]+$', val):
         return _sensitive_item_formats.juniper_type9
     return _sensitive_item_formats.text
+
+
+def generate_as_number_replacement_map(as_numbers, salt):
+    """Generate map of AS numbers and their replacements."""
+    as_number_map = {}
+    for as_number in as_numbers:
+        as_number_map[as_number] = _anonymize_as_num(as_number, salt)
+    return as_number_map
 
 
 def generate_default_sensitive_item_regexes():
