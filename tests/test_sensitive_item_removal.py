@@ -155,7 +155,9 @@ def regexes():
     ('123-{}abc', ['65530']),
     ('asdf{0}_asdf{0}asdf', ['65530']),
     ('anonymize.{} and {}?', ['4567', '1234567']),
-    ('{}', ['12345'])
+    ('{}', ['12345']),
+    ('{} and other text', ['4567']),
+    ('other text and {}', ['4567'])
 ])
 def test_anonymize_as_numbers(raw_line, sensitive_as_numbers):
     """Test anonymization of lines with AS numbers."""
