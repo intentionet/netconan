@@ -15,9 +15,10 @@
 
 from netconan.sensitive_item_removal import (
     anonymize_as_numbers, anonymize_sensitive_words, replace_matching_item,
-    generate_as_number_replacement_map, generate_default_sensitive_item_regexes,
-    generate_sensitive_word_regexes, _sensitive_item_formats, _anonymize_as_num,
-    _anonymize_value, _check_sensitive_item_format, _AS_NUM_BOUNDARIES)
+    generate_as_number_regex, generate_as_number_replacement_map,
+    generate_default_sensitive_item_regexes, generate_sensitive_word_regexes,
+    _sensitive_item_formats, _anonymize_as_num, _anonymize_value,
+    _check_sensitive_item_format, _AS_NUM_BOUNDARIES)
 import pytest
 
 # Tuple format is config_line, sensitive_text (should not be in output line)
@@ -151,19 +152,21 @@ def regexes():
 
 @pytest.mark.parametrize('raw_line, sensitive_as_numbers', [
     ('something {} something', ['123']),
-    ('123{}890', ['65530']),
-    ('123{0}890 and {0} again', ['65530']),
-    ('anonymize {} and {}.', ['4567', '1234567'])
+    ('123-{}abc', ['65530']),
+    ('asdf{0}_asdf{0}asdf', ['65530']),
+    ('anonymize.{} and {}?', ['4567', '1234567']),
+    ('{}', ['12345'])
 ])
 def test_anonymize_as_numbers(raw_line, sensitive_as_numbers):
     """Test anonymization of lines with AS numbers."""
+    as_number_regex = generate_as_number_regex(sensitive_as_numbers)
     as_number_map = generate_as_number_replacement_map(sensitive_as_numbers, SALT)
 
     line = raw_line.format(*sensitive_as_numbers)
-    anon_line = anonymize_as_numbers(as_number_map, line)
+    anon_line = anonymize_as_numbers(as_number_regex, as_number_map, line)
 
-    # Now anonymize each AS number individually & build another anon line
-    anon_numbers = [anonymize_as_numbers(as_number_map, number) for number in sensitive_as_numbers]
+    # Anonymize each AS number individually & build another anon line
+    anon_numbers = [anonymize_as_numbers(as_number_regex, as_number_map, number) for number in sensitive_as_numbers]
     individually_anon_line = raw_line.format(*anon_numbers)
 
     # Make sure anonymizing each number individually gives the same result as anonymizing all at once
@@ -172,6 +175,24 @@ def test_anonymize_as_numbers(raw_line, sensitive_as_numbers):
     for as_number in sensitive_as_numbers:
         # Make sure all AS numbers are removed from the line
         assert(as_number not in anon_line)
+
+
+@pytest.mark.parametrize('raw_line, sensitive_as_numbers', [
+    ('123{}890', ['65530']),
+    ('{}{}', ['1234', '5678']),
+    ('{}000', ['1234']),
+    ('000{}', ['1234'])
+])
+def test_dont_anonymize_as_numbers(raw_line, sensitive_as_numbers):
+    """Test that matching 'AS numbers' within other numbers are not replaced."""
+    as_number_regex = generate_as_number_regex(sensitive_as_numbers)
+    as_number_map = generate_as_number_replacement_map(sensitive_as_numbers, SALT)
+
+    line = raw_line.format(*sensitive_as_numbers)
+    anon_line = anonymize_as_numbers(as_number_regex, as_number_map, line)
+
+    # Make sure substrings of other numbers are not affected
+    assert(anon_line == line)
 
 
 @pytest.mark.parametrize('as_number', [

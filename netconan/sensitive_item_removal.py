@@ -55,12 +55,10 @@ class _sensitive_item_formats(Enum):
     juniper_type9 = 7
 
 
-def anonymize_as_numbers(as_number_map, line):
+def anonymize_as_numbers(as_number_regex, as_number_map, line):
     """Anonymize AS numbers from specified AS number list in the input line."""
-    for original in as_number_map:
-        if original in line:
-            line = line.replace(original, as_number_map[original])
-    return line
+    # Need to add group 1 and 3 to the replacement string to preserve the characters before and after the AS number
+    return as_number_regex.sub(lambda match: match.group(1) + as_number_map[match.group(2)] + match.group(3), line)
 
 
 def _anonymize_as_num(as_number, salt):
@@ -153,6 +151,12 @@ def _check_sensitive_item_format(val):
     if regex.match(r'^\$9\$[\S]+$', val):
         return _sensitive_item_formats.juniper_type9
     return _sensitive_item_formats.text
+
+
+def generate_as_number_regex(as_numbers):
+    """Generate regex for finding AS number."""
+    # Match a non-digit, any of the AS numbers and another non-digit
+    return regex.compile('(\D|^)(' + '|'.join(as_numbers) + ')(\D|$)')
 
 
 def generate_as_number_replacement_map(as_numbers, salt):

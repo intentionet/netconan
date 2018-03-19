@@ -23,8 +23,8 @@ from .ip_anonymization import (
     IpAnonymizer, IpV6Anonymizer, anonymize_ip_addr)
 from .sensitive_item_removal import (
     anonymize_as_numbers, anonymize_sensitive_words, replace_matching_item,
-    generate_as_number_replacement_map, generate_default_sensitive_item_regexes,
-    generate_sensitive_word_regexes)
+    generate_as_number_regex, generate_as_number_replacement_map,
+    generate_default_sensitive_item_regexes, generate_sensitive_word_regexes)
 
 _DEFAULT_SALT_LENGTH = 16
 _CHAR_CHOICES = string.ascii_letters + string.digits
@@ -54,6 +54,7 @@ def anonymize_files_in_dir(input_dir_path, output_dir_path, anon_pwd, anon_ip,
         anonymizer4 = IpAnonymizer(salt)
         anonymizer6 = IpV6Anonymizer(salt)
     if as_numbers is not None:
+        as_number_regex = generate_as_number_regex(as_numbers)
         as_number_map = generate_as_number_replacement_map(as_numbers, salt)
 
     for file_name in os.listdir(input_dir_path):
@@ -66,6 +67,7 @@ def anonymize_files_in_dir(input_dir_path, output_dir_path, anon_pwd, anon_ip,
                            pwd_lookup=pwd_lookup,
                            sensitive_word_regexes=sensitive_word_regexes,
                            as_number_map=as_number_map,
+                           as_number_regex=as_number_regex,
                            undo_ip_anon=undo_ip_anon,
                            anonymizer4=anonymizer4,
                            anonymizer6=anonymizer6)
@@ -78,7 +80,8 @@ def anonymize_files_in_dir(input_dir_path, output_dir_path, anon_pwd, anon_ip,
 
 def anonymize_file(filename_in, filename_out, salt, compiled_regexes=None,
                    anonymizer4=None, anonymizer6=None, pwd_lookup=None,
-                   sensitive_word_regexes=None, as_number_map=None, undo_ip_anon=False):
+                   sensitive_word_regexes=None, as_number_map=None,
+                   as_number_regex=None, undo_ip_anon=False):
     """Anonymize contents of input file and save to the output file.
 
     This only applies sensitive line removal if compiled_regexes and pwd_lookup
@@ -102,8 +105,8 @@ def anonymize_file(filename_in, filename_out, salt, compiled_regexes=None,
                 output_line = anonymize_sensitive_words(sensitive_word_regexes,
                                                         output_line, salt)
 
-            if as_number_map is not None:
-                output_line = anonymize_as_numbers(as_number_map, output_line)
+            if as_number_map is not None and as_number_regex is not None:
+                output_line = anonymize_as_numbers(as_number_regex, as_number_map, output_line)
 
             if line != output_line:
                 logging.debug("Input line:  %s", line.rstrip())

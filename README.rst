@@ -62,10 +62,8 @@ Netconan can anonymize *many types of sensitive information*:
 
 * Sensitive strings like passwords or SNMP community strings (``--anonymize-passwords``, ``-p``), for many common network vendors.
 * IPv4 and IPv6 addresses (``--anonymize-ips``, ``-a``).
-* User-specified sensitive words (``--sensitive-words``, ``-w``).
-* User-specified AS numbers (``--as-numbers``, ``-n``).
-
-*Note that any occurrence of a specified sensitive word or AS number will be replaced regardless of context, even if it is part of a larger string or number.*
+* User-specified sensitive words (``--sensitive-words``, ``-w``).  *Note that any occurrence of a specified sensitive word will be replaced regardless of context, even if it is part of a larger string.*
+* User-specified AS numbers (``--as-numbers``, ``-n``).  *Note that any number matching a specified AS number will be anonymized.*
 
 
 Netconan attempts to *preserve useful structure*. For example,
