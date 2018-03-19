@@ -58,7 +58,7 @@ class _sensitive_item_formats(Enum):
 def anonymize_as_numbers(as_number_regex, as_number_map, line):
     """Anonymize AS numbers from specified AS number list in the input line."""
     # Need to add group 1 and 3 to the replacement string to preserve the characters before and after the AS number
-    return as_number_regex.sub(lambda match: match.group(1) + as_number_map[match.group(2)] + match.group(3), line)
+    return as_number_regex.sub(lambda match: as_number_map[match.group(0)], line)
 
 
 def _anonymize_as_num(as_number, salt):
@@ -156,7 +156,7 @@ def _check_sensitive_item_format(val):
 def generate_as_number_regex(as_numbers):
     """Generate regex for finding AS number."""
     # Match a non-digit, any of the AS numbers and another non-digit
-    return regex.compile('(\D|^)(' + '|'.join(as_numbers) + ')(\D|$)')
+    return regex.compile('(?<=\D|^)(' + '|'.join(as_numbers) + ')(?=\D|$)')
 
 
 def generate_as_number_replacement_map(as_numbers, salt):
