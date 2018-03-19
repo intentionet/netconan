@@ -183,7 +183,7 @@ def test_anonymize_as_numbers(raw_line, sensitive_as_numbers):
     ('{}000', ['1234']),
     ('000{}', ['1234'])
 ])
-def test_dont_anonymize_as_numbers(raw_line, sensitive_as_numbers):
+def test_anonymize_as_numbers_ignore_sub_numbers(raw_line, sensitive_as_numbers):
     """Test that matching 'AS numbers' within other numbers are not replaced."""
     as_number_regex = generate_as_number_regex(sensitive_as_numbers)
     as_number_map = generate_as_number_replacement_map(sensitive_as_numbers, SALT)
