@@ -50,7 +50,7 @@ class ASNumberAnonymizer:
         """Create an anonymizer for the specified list of AS numbers (strings) and salt."""
         self.salt = salt
         self._generate_as_number_regex(as_numbers)
-        self._generate_as_number_replacement_map(as_numbers, salt)
+        self._generate_as_number_replacement_map(as_numbers)
 
     def anonymize(self, as_number):
         """Anonymize the specified AS number (string)."""
@@ -75,7 +75,7 @@ class ASNumberAnonymizer:
         # Using lookahead and lookbehind to match on context but not include that context in the match
         self.as_num_regex = regex.compile('(\D|^)\K(' + '|'.join(as_numbers) + ')(?=\D|$)')
 
-    def _generate_as_number_replacement_map(self, as_numbers, salt):
+    def _generate_as_number_replacement_map(self, as_numbers):
         """Generate map of AS numbers and their replacements."""
         self.as_num_map = {as_num: self._generate_as_number_replacement(as_num) for as_num in as_numbers}
 
