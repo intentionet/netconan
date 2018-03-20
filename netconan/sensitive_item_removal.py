@@ -39,7 +39,7 @@ default_catch_all_regexes = [
 _ANON_SENSITIVE_WORD_LEN = 6
 
 
-class ASNumberAnonymizer:
+class AsNumberAnonymizer:
     """An anonymizer for AS numbers."""
 
     # AS number block boundaries - each number corresponds to beginning of the next AS num block
