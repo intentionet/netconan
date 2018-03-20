@@ -38,9 +38,50 @@ default_catch_all_regexes = [
 # Number of digits to extract from hash for sensitive keyword replacement
 _ANON_SENSITIVE_WORD_LEN = 6
 
-# AS number block boundaries - each number corresponds to beginning of the next AS num block
-# Except the last, which just serves to indicate the end of the previous block
-_AS_NUM_BOUNDARIES = [0, 64512, 65536, 4200000000, 4294967296]
+
+class ASNumberAnonymizer:
+    """An anonymizer for AS numbers."""
+
+    # AS number block boundaries - each number corresponds to beginning of the next AS num block
+    # Except the last, which just serves to indicate the end of the previous block
+    _AS_NUM_BOUNDARIES = [0, 64512, 65536, 4200000000, 4294967296]
+
+    def __init__(self, as_numbers, salt):
+        """Create an anonymizer for the specified list of AS numbers (strings) and salt."""
+        self.salt = salt
+        self._generate_as_number_regex(as_numbers)
+        self._generate_as_number_replacement_map(as_numbers, salt)
+
+    def anonymize(self, as_number):
+        """Anonymize the specified AS number (string)."""
+        return self.as_num_map[as_number]
+
+    def _generate_as_number_replacement(self, as_number):
+        """Generate a replacement AS number for the given AS number and salt."""
+        hash_val = int(md5((self.salt + as_number).encode()).hexdigest(), 16)
+        as_number = int(as_number)
+        if as_number < 0 or as_number > 4294967295:
+            raise ValueError('AS number provided was outside accepted range (0-4294967295)')
+
+        block_begin = 0
+        for next_block_begin in self._AS_NUM_BOUNDARIES:
+            if as_number < next_block_begin:
+                return str(hash_val % (next_block_begin - block_begin) + block_begin)
+            block_begin = next_block_begin
+
+    def _generate_as_number_regex(self, as_numbers):
+        """Generate regex for finding AS number."""
+        # Match a non-digit, any of the AS numbers and another non-digit
+        # Using lookahead and lookbehind to match on context but not include that context in the match
+        self.as_num_regex = regex.compile('(\D|^)\K(' + '|'.join(as_numbers) + ')(?=\D|$)')
+
+    def _generate_as_number_replacement_map(self, as_numbers, salt):
+        """Generate map of AS numbers and their replacements."""
+        self.as_num_map = {as_num: self._generate_as_number_replacement(as_num) for as_num in as_numbers}
+
+    def get_as_number_pattern(self):
+        """Return the compiled regex to find AS numbers."""
+        return self.as_num_regex
 
 
 class _sensitive_item_formats(Enum):
@@ -55,24 +96,10 @@ class _sensitive_item_formats(Enum):
     juniper_type9 = 7
 
 
-def anonymize_as_numbers(as_number_regex, as_number_map, line):
-    """Anonymize AS numbers from specified AS number list in the input line."""
-    # Need to add group 1 and 3 to the replacement string to preserve the characters before and after the AS number
-    return as_number_regex.sub(lambda match: as_number_map[match.group(0)], line)
-
-
-def _anonymize_as_num(as_number, salt):
-    """Generate a replacement AS number for the given AS number and salt."""
-    hash_val = int(md5((salt + as_number).encode()).hexdigest(), 16)
-    as_number = int(as_number)
-    if as_number < 0 or as_number > 4294967295:
-        raise ValueError('AS number provided was outside accepted range (0-4294967295)')
-
-    block_begin = 0
-    for next_block_begin in _AS_NUM_BOUNDARIES:
-        if as_number < next_block_begin:
-            return str(hash_val % (next_block_begin - block_begin) + block_begin)
-        block_begin = next_block_begin
+def anonymize_as_numbers(anonymizer, line):
+    """Anonymize AS numbers in the input line."""
+    as_number_regex = anonymizer.get_as_number_pattern()
+    return as_number_regex.sub(lambda match: anonymizer.anonymize(match.group(0)), line)
 
 
 def anonymize_sensitive_words(sensitive_word_regexes, line, salt):
@@ -151,20 +178,6 @@ def _check_sensitive_item_format(val):
     if regex.match(r'^\$9\$[\S]+$', val):
         return _sensitive_item_formats.juniper_type9
     return _sensitive_item_formats.text
-
-
-def generate_as_number_regex(as_numbers):
-    """Generate regex for finding AS number."""
-    # Match a non-digit, any of the AS numbers and another non-digit
-    return regex.compile('(?<=\D|^)(' + '|'.join(as_numbers) + ')(?=\D|$)')
-
-
-def generate_as_number_replacement_map(as_numbers, salt):
-    """Generate map of AS numbers and their replacements."""
-    as_number_map = {}
-    for as_number in as_numbers:
-        as_number_map[as_number] = _anonymize_as_num(as_number, salt)
-    return as_number_map
 
 
 def generate_default_sensitive_item_regexes():

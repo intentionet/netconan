@@ -14,11 +14,10 @@
 #   limitations under the License.
 
 from netconan.sensitive_item_removal import (
-    anonymize_as_numbers, anonymize_sensitive_words, replace_matching_item,
-    generate_as_number_regex, generate_as_number_replacement_map,
-    generate_default_sensitive_item_regexes, generate_sensitive_word_regexes,
-    _sensitive_item_formats, _anonymize_as_num, _anonymize_value,
-    _check_sensitive_item_format, _AS_NUM_BOUNDARIES)
+    anonymize_as_numbers, anonymize_sensitive_words, ASNumberAnonymizer,
+    replace_matching_item, generate_default_sensitive_item_regexes,
+    generate_sensitive_word_regexes, _sensitive_item_formats,
+    _anonymize_value, _check_sensitive_item_format)
 import pytest
 
 # Tuple format is config_line, sensitive_text (should not be in output line)
@@ -161,14 +160,13 @@ def regexes():
 ])
 def test_anonymize_as_numbers(raw_line, sensitive_as_numbers):
     """Test anonymization of lines with AS numbers."""
-    as_number_regex = generate_as_number_regex(sensitive_as_numbers)
-    as_number_map = generate_as_number_replacement_map(sensitive_as_numbers, SALT)
+    anonymizer_as_number = ASNumberAnonymizer(sensitive_as_numbers, SALT)
 
     line = raw_line.format(*sensitive_as_numbers)
-    anon_line = anonymize_as_numbers(as_number_regex, as_number_map, line)
+    anon_line = anonymize_as_numbers(anonymizer_as_number, line)
 
     # Anonymize each AS number individually & build another anon line
-    anon_numbers = [anonymize_as_numbers(as_number_regex, as_number_map, number) for number in sensitive_as_numbers]
+    anon_numbers = [anonymize_as_numbers(anonymizer_as_number, number) for number in sensitive_as_numbers]
     individually_anon_line = raw_line.format(*anon_numbers)
 
     # Make sure anonymizing each number individually gives the same result as anonymizing all at once
@@ -187,11 +185,10 @@ def test_anonymize_as_numbers(raw_line, sensitive_as_numbers):
 ])
 def test_anonymize_as_numbers_ignore_sub_numbers(raw_line, sensitive_as_numbers):
     """Test that matching 'AS numbers' within other numbers are not replaced."""
-    as_number_regex = generate_as_number_regex(sensitive_as_numbers)
-    as_number_map = generate_as_number_replacement_map(sensitive_as_numbers, SALT)
+    anonymizer_as_number = ASNumberAnonymizer(sensitive_as_numbers, SALT)
 
     line = raw_line.format(*sensitive_as_numbers)
-    anon_line = anonymize_as_numbers(as_number_regex, as_number_map, line)
+    anon_line = anonymize_as_numbers(anonymizer_as_number, line)
 
     # Make sure substrings of other numbers are not affected
     assert(anon_line == line)
@@ -208,16 +205,17 @@ def test_anonymize_as_numbers_ignore_sub_numbers(raw_line, sensitive_as_numbers)
     '4230000000',
     '4294967295'
 ])
-def test__anonymize_as_num(as_number):
+def test_anonymize_as_num(as_number):
     """Test anonymization of AS numbers."""
-    assert(_anonymize_as_num(as_number, SALT) != as_number)
+    anonymizer = ASNumberAnonymizer([as_number], SALT)
+    assert(anonymizer.anonymize(as_number) != as_number)
 
 
 def get_as_number_block(as_number):
     """Determine which block a given AS number is in."""
     block = 0
     as_number = int(as_number)
-    for upper_bound in _AS_NUM_BOUNDARIES:
+    for upper_bound in ASNumberAnonymizer._AS_NUM_BOUNDARIES:
         if as_number < upper_bound:
             return block
         block += 1
@@ -231,7 +229,8 @@ def get_as_number_block(as_number):
 ])
 def test_preserve_as_block(as_number):
     """Test that original AS number block is preserved after anonymization."""
-    new_as_number = _anonymize_as_num(as_number, SALT)
+    anonymizer = ASNumberAnonymizer([as_number], SALT)
+    new_as_number = anonymizer.anonymize(as_number)
     assert(get_as_number_block(new_as_number) == get_as_number_block(as_number))
 
 
@@ -241,7 +240,7 @@ def test_preserve_as_block(as_number):
 def test_as_number_invalid(invalid_as_number):
     """Test that exception is thrown with invalid AS number."""
     with pytest.raises(ValueError):
-        _anonymize_as_num(invalid_as_number, SALT)
+        ASNumberAnonymizer([invalid_as_number], SALT)
 
 
 @pytest.mark.parametrize('raw_line, sensitive_words', [
