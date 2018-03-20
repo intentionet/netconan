@@ -14,7 +14,7 @@
 #   limitations under the License.
 
 from netconan.sensitive_item_removal import (
-    anonymize_as_numbers, anonymize_sensitive_words, ASNumberAnonymizer,
+    anonymize_as_numbers, anonymize_sensitive_words, AsNumberAnonymizer,
     replace_matching_item, generate_default_sensitive_item_regexes,
     generate_sensitive_word_regexes, _sensitive_item_formats,
     _anonymize_value, _check_sensitive_item_format)
@@ -160,7 +160,7 @@ def regexes():
 ])
 def test_anonymize_as_numbers(raw_line, sensitive_as_numbers):
     """Test anonymization of lines with AS numbers."""
-    anonymizer_as_number = ASNumberAnonymizer(sensitive_as_numbers, SALT)
+    anonymizer_as_number = AsNumberAnonymizer(sensitive_as_numbers, SALT)
 
     line = raw_line.format(*sensitive_as_numbers)
     anon_line = anonymize_as_numbers(anonymizer_as_number, line)
@@ -185,7 +185,7 @@ def test_anonymize_as_numbers(raw_line, sensitive_as_numbers):
 ])
 def test_anonymize_as_numbers_ignore_sub_numbers(raw_line, sensitive_as_numbers):
     """Test that matching 'AS numbers' within other numbers are not replaced."""
-    anonymizer_as_number = ASNumberAnonymizer(sensitive_as_numbers, SALT)
+    anonymizer_as_number = AsNumberAnonymizer(sensitive_as_numbers, SALT)
 
     line = raw_line.format(*sensitive_as_numbers)
     anon_line = anonymize_as_numbers(anonymizer_as_number, line)
@@ -207,7 +207,7 @@ def test_anonymize_as_numbers_ignore_sub_numbers(raw_line, sensitive_as_numbers)
 ])
 def test_anonymize_as_num(as_number):
     """Test anonymization of AS numbers."""
-    anonymizer = ASNumberAnonymizer([as_number], SALT)
+    anonymizer = AsNumberAnonymizer([as_number], SALT)
     assert(anonymizer.anonymize(as_number) != as_number)
 
 
@@ -215,7 +215,7 @@ def get_as_number_block(as_number):
     """Determine which block a given AS number is in."""
     block = 0
     as_number = int(as_number)
-    for upper_bound in ASNumberAnonymizer._AS_NUM_BOUNDARIES:
+    for upper_bound in AsNumberAnonymizer._AS_NUM_BOUNDARIES:
         if as_number < upper_bound:
             return block
         block += 1
@@ -229,7 +229,7 @@ def get_as_number_block(as_number):
 ])
 def test_preserve_as_block(as_number):
     """Test that original AS number block is preserved after anonymization."""
-    anonymizer = ASNumberAnonymizer([as_number], SALT)
+    anonymizer = AsNumberAnonymizer([as_number], SALT)
     new_as_number = anonymizer.anonymize(as_number)
     assert(get_as_number_block(new_as_number) == get_as_number_block(as_number))
 
@@ -240,7 +240,7 @@ def test_preserve_as_block(as_number):
 def test_as_number_invalid(invalid_as_number):
     """Test that exception is thrown with invalid AS number."""
     with pytest.raises(ValueError):
-        ASNumberAnonymizer([invalid_as_number], SALT)
+        AsNumberAnonymizer([invalid_as_number], SALT)
 
 
 @pytest.mark.parametrize('raw_line, sensitive_words', [

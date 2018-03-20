@@ -22,7 +22,7 @@ import string
 from .ip_anonymization import (
     IpAnonymizer, IpV6Anonymizer, anonymize_ip_addr)
 from .sensitive_item_removal import (
-    anonymize_as_numbers, anonymize_sensitive_words, ASNumberAnonymizer, replace_matching_item,
+    anonymize_as_numbers, anonymize_sensitive_words, AsNumberAnonymizer, replace_matching_item,
     generate_default_sensitive_item_regexes, generate_sensitive_word_regexes)
 
 _DEFAULT_SALT_LENGTH = 16
@@ -53,7 +53,7 @@ def anonymize_files_in_dir(input_dir_path, output_dir_path, anon_pwd, anon_ip,
         anonymizer4 = IpAnonymizer(salt)
         anonymizer6 = IpV6Anonymizer(salt)
     if as_numbers is not None:
-        anonymizer_as_num = ASNumberAnonymizer(as_numbers, salt)
+        anonymizer_as_num = AsNumberAnonymizer(as_numbers, salt)
 
     for file_name in os.listdir(input_dir_path):
         input_file = os.path.join(input_dir_path, file_name)
