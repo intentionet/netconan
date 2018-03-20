@@ -56,6 +56,12 @@ class ASNumberAnonymizer:
         """Anonymize the specified AS number (string)."""
         return self.as_num_map[as_number]
 
+    def _generate_as_number_regex(self, as_numbers):
+        """Generate regex for finding AS number."""
+        # Match a non-digit, any of the AS numbers and another non-digit
+        # Using lookahead and lookbehind to match on context but not include that context in the match
+        self.as_num_regex = regex.compile('(\D|^)\K(' + '|'.join(as_numbers) + ')(?=\D|$)')
+
     def _generate_as_number_replacement(self, as_number):
         """Generate a replacement AS number for the given AS number and salt."""
         hash_val = int(md5((self.salt + as_number).encode()).hexdigest(), 16)
@@ -68,12 +74,6 @@ class ASNumberAnonymizer:
             if as_number < next_block_begin:
                 return str(hash_val % (next_block_begin - block_begin) + block_begin)
             block_begin = next_block_begin
-
-    def _generate_as_number_regex(self, as_numbers):
-        """Generate regex for finding AS number."""
-        # Match a non-digit, any of the AS numbers and another non-digit
-        # Using lookahead and lookbehind to match on context but not include that context in the match
-        self.as_num_regex = regex.compile('(\D|^)\K(' + '|'.join(as_numbers) + ')(?=\D|$)')
 
     def _generate_as_number_replacement_map(self, as_numbers):
         """Generate map of AS numbers and their replacements."""
