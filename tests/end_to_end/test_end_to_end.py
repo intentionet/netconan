@@ -18,7 +18,9 @@ import filecmp
 from netconan.netconan import main
 from os import path
 
+
 def test_end_to_end(tmpdir):
+    """Test Netconan main with simulated input file and commandline args."""
     input_contents = """
 # Intentionet's sensitive test file
 ip address 192.168.2.1 255.255.255.255
@@ -43,7 +45,7 @@ AS num 8625 and 64818 should be changed
     output_dir = str(tmpdir.mkdir("output"))
     output_file = path.join(output_dir, filename)
 
-    ref_file = path.join(tmpdir, filename)
+    ref_file = path.join(str(tmpdir), filename)
     with open(ref_file, 'w') as f_tmp:
         f_tmp.write(ref_contents)
 
@@ -60,4 +62,3 @@ AS num 8625 and 64818 should be changed
 
     # Make sure output file matches the ref
     assert(filecmp.cmp(ref_file, output_file))
-
