@@ -10,7 +10,7 @@ echo -e "\n  ..... Running flake8 on netconan to check style and docstrings"
 # Configuration for flake8 is taken from setup.cfg
 flake8
 
-echo -e "\n  ..... Running unit tests with pytest"
+echo -e "\n  ..... Running tests with pytest"
 python setup.py test
 
 set +x

@@ -14,6 +14,7 @@
 #   limitations under the License.
 
 from abc import ABCMeta, abstractmethod
+
 from bidict import bidict
 import ipaddress
 import logging
@@ -21,7 +22,7 @@ import logging
 import regex
 
 from hashlib import md5
-from six import add_metaclass, iteritems
+from six import add_metaclass, iteritems, text_type, u
 
 
 # Deliberately catching more than valid IPs so we can remove 0s later.
@@ -174,6 +175,8 @@ class IpAnonymizer(_BaseIpAnonymizer):
         as octal (1.2.3.32).
         """
         addr_str = IpAnonymizer._DROP_ZEROS_PATTERN.sub(r'\1.\2.\3.\4', addr_str)
+        if not isinstance(addr_str, text_type):
+            addr_str = u(addr_str)
         return ipaddress.IPv4Address(addr_str)
 
     @classmethod
@@ -201,6 +204,8 @@ class IpV6Anonymizer(_BaseIpAnonymizer):
     @classmethod
     def make_addr(cls, addr_str):
         """Return an IPv6 address from the given string."""
+        if not isinstance(addr_str, text_type):
+            addr_str = u(addr_str)
         return ipaddress.IPv6Address(addr_str)
 
     @classmethod

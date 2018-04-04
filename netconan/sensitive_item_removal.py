@@ -29,8 +29,8 @@ from six import b
 # These are catch-all regexes to find lines that seem like they might contain
 # sensitive info
 default_catch_all_regexes = [
-    [('(\S* )*"?\K(\$9\$[^ ;"]+)(?="? ?.*)', 2)],
-    [('(\S* )*"?\K(\$1\$[^ ;"]+)(?="? ?.*)', 2)],
+    [('(\S* )*"?\K(\$9\$[^\s;"]+)(?="? ?.*)', 2)],
+    [('(\S* )*"?\K(\$1\$[^\s;"]+)(?="? ?.*)', 2)],
     [('(\S* )*encrypted-password \K(\S+)(?= ?.*)', None)],
     [('(\S* ?)*key "\K([^"]+)(?=".*)', 2)]
 ]
