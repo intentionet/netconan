@@ -14,6 +14,7 @@
 #   limitations under the License.
 
 from abc import ABCMeta, abstractmethod
+
 from bidict import bidict
 import ipaddress
 import logging
@@ -21,7 +22,7 @@ import logging
 import regex
 
 from hashlib import md5
-from six import add_metaclass, iteritems
+from six import add_metaclass, iteritems, text_type, u
 
 
 # Deliberately catching more than valid IPs so we can remove 0s later.
@@ -50,6 +51,12 @@ def _generate_bit_from_hash(salt, string):
     """Return the last bit of the result from hashing the input string."""
     last_hash_digit = md5((salt + string).encode()).hexdigest()[-1]
     return int(last_hash_digit, 16) & 1
+
+
+def _ensure_unicode(str):
+    if not isinstance(str, text_type):
+        str = u(str)
+    return str
 
 
 @add_metaclass(ABCMeta)
@@ -174,7 +181,7 @@ class IpAnonymizer(_BaseIpAnonymizer):
         as octal (1.2.3.32).
         """
         addr_str = IpAnonymizer._DROP_ZEROS_PATTERN.sub(r'\1.\2.\3.\4', addr_str)
-        return ipaddress.IPv4Address(addr_str)
+        return ipaddress.IPv4Address(_ensure_unicode(addr_str))
 
     @classmethod
     def make_addr_from_int(cls, ip_int):
@@ -201,7 +208,7 @@ class IpV6Anonymizer(_BaseIpAnonymizer):
     @classmethod
     def make_addr(cls, addr_str):
         """Return an IPv6 address from the given string."""
-        return ipaddress.IPv6Address(addr_str)
+        return ipaddress.IPv6Address(_ensure_unicode(addr_str))
 
     @classmethod
     def make_addr_from_int(cls, ip_int):

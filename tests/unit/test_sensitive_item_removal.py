@@ -118,6 +118,10 @@ arista_password_lines = [
     ('username noc secret sha512 {}', '$6$RMxgK5ALGIf.nWEC$tHuKCyfNtJMCY561P52dTzHUmYMmLxb/Mxik.j3vMUs8lMCPocM00/NAS.SN6GCWx7d/vQIgxnClyQLAb7n3x0')
 ]
 
+misc_password_lines = [
+    ('my password is ', '$1$salt$abcdefghijklmnopqrs')
+]
+
 unique_passwords = [
     '12345ABCDEF',
     'ABCDEF123456789',
