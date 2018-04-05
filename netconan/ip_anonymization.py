@@ -52,6 +52,10 @@ def _generate_bit_from_hash(salt, string):
     last_hash_digit = md5((salt + string).encode()).hexdigest()[-1]
     return int(last_hash_digit, 16) & 1
 
+def _ensure_unicode(str):
+    if not isinstance(str, text_type):
+        str = u(str)
+    return str
 
 @add_metaclass(ABCMeta)
 class _BaseIpAnonymizer:
@@ -107,12 +111,6 @@ class _BaseIpAnonymizer:
             ip = self._ip_to_str(bits)
             anon = self._ip_to_str(anon_bits)
             file_out.write('{}\t{}\n'.format(ip, anon))
-
-    @classmethod
-    def ensure_unicode(cls, str):
-        if not isinstance(str, text_type):
-            str = u(str)
-        return str
 
     @classmethod
     def _ip_to_str(cls, bits):
@@ -181,7 +179,7 @@ class IpAnonymizer(_BaseIpAnonymizer):
         as octal (1.2.3.32).
         """
         addr_str = IpAnonymizer._DROP_ZEROS_PATTERN.sub(r'\1.\2.\3.\4', addr_str)
-        return ipaddress.IPv4Address(cls.ensure_unicode(addr_str))
+        return ipaddress.IPv4Address(_ensure_unicode(addr_str))
 
     @classmethod
     def make_addr_from_int(cls, ip_int):
@@ -208,7 +206,7 @@ class IpV6Anonymizer(_BaseIpAnonymizer):
     @classmethod
     def make_addr(cls, addr_str):
         """Return an IPv6 address from the given string."""
-        return ipaddress.IPv6Address(cls.ensure_unicode(addr_str))
+        return ipaddress.IPv6Address(_ensure_unicode(addr_str))
 
     @classmethod
     def make_addr_from_int(cls, ip_int):

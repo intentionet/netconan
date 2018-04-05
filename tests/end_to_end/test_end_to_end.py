@@ -37,21 +37,18 @@ AS num 8625 and 64818 should be changed
 """
 
     filename = "test.txt"
-    input_dir = str(tmpdir.mkdir("input"))
-    input_file = path.join(input_dir, filename)
-    with open(input_file, 'w') as f_tmp:
-        f_tmp.write(input_contents)
+    input_dir = tmpdir.mkdir("input")
+    input_dir.join(filename).write(input_contents)
 
-    output_dir = str(tmpdir.mkdir("output"))
-    output_file = path.join(output_dir, filename)
+    output_dir = tmpdir.mkdir("output")
+    output_file = output_dir.join(filename)
 
-    ref_file = path.join(str(tmpdir), filename)
-    with open(ref_file, 'w') as f_tmp:
-        f_tmp.write(ref_contents)
+    ref_file = tmpdir.join(filename)
+    ref_file.write(ref_contents)
 
     args = [
-        '-i', input_dir,
-        '-o', output_dir,
+        '-i', str(input_dir),
+        '-o', str(output_dir),
         '-s', 'TESTSALT',
         '-a',
         '-p',
@@ -61,4 +58,4 @@ AS num 8625 and 64818 should be changed
     main(args)
 
     # Make sure output file matches the ref
-    assert(filecmp.cmp(ref_file, output_file))
+    assert(filecmp.cmp(str(ref_file), str(output_file)))
