@@ -109,6 +109,12 @@ class _BaseIpAnonymizer:
             file_out.write('{}\t{}\n'.format(ip, anon))
 
     @classmethod
+    def ensure_unicode(cls, str):
+        if not isinstance(str, text_type):
+            str = u(str)
+        return str
+
+    @classmethod
     def _ip_to_str(cls, bits):
         return str(cls.make_addr_from_int(int(bits, 2)))
 
@@ -175,9 +181,7 @@ class IpAnonymizer(_BaseIpAnonymizer):
         as octal (1.2.3.32).
         """
         addr_str = IpAnonymizer._DROP_ZEROS_PATTERN.sub(r'\1.\2.\3.\4', addr_str)
-        if not isinstance(addr_str, text_type):
-            addr_str = u(addr_str)
-        return ipaddress.IPv4Address(addr_str)
+        return ipaddress.IPv4Address(cls.ensure_unicode(addr_str))
 
     @classmethod
     def make_addr_from_int(cls, ip_int):
@@ -204,9 +208,7 @@ class IpV6Anonymizer(_BaseIpAnonymizer):
     @classmethod
     def make_addr(cls, addr_str):
         """Return an IPv6 address from the given string."""
-        if not isinstance(addr_str, text_type):
-            addr_str = u(addr_str)
-        return ipaddress.IPv6Address(addr_str)
+        return ipaddress.IPv6Address(cls.ensure_unicode(addr_str))
 
     @classmethod
     def make_addr_from_int(cls, ip_int):
