@@ -52,10 +52,12 @@ def _generate_bit_from_hash(salt, string):
     last_hash_digit = md5((salt + string).encode()).hexdigest()[-1]
     return int(last_hash_digit, 16) & 1
 
+
 def _ensure_unicode(str):
     if not isinstance(str, text_type):
         str = u(str)
     return str
+
 
 @add_metaclass(ABCMeta)
 class _BaseIpAnonymizer:

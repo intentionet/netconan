@@ -16,7 +16,6 @@
 import filecmp
 
 from netconan.netconan import main
-from os import path
 
 
 def test_end_to_end(tmpdir):
