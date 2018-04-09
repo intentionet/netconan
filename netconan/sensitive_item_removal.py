@@ -44,8 +44,8 @@ _ALLOWED_REGEX_PREFIX = '(?:["\'{:] ?|^ ?)'
 # Number of digits to extract from hash for sensitive keyword replacement
 _ANON_SENSITIVE_WORD_LEN = 6
 
-# Text that is allowed to surround sensitive text, to be preserved
-_SENSITIVE_ITEM_ENCLOSING_TEXT = ['\'', '"', '\\\'', '\\"']
+# Text that is allowed to surround passwords, to be preserved
+_PASSWORD_ENCLOSING_TEXT = ['\'', '"', '\\\'', '\\"']
 
 
 class AsNumberAnonymizer:
@@ -175,7 +175,7 @@ def _check_sensitive_item_format(val):
     enclosing_text = ''
     item_format = _sensitive_item_formats.text
 
-    for surround_text in _SENSITIVE_ITEM_ENCLOSING_TEXT:
+    for surround_text in _PASSWORD_ENCLOSING_TEXT:
         if val.endswith(surround_text) and val.startswith(surround_text):
             enclosing_text = surround_text
             val = val[len(surround_text):-len(surround_text)]
