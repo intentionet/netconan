@@ -23,14 +23,14 @@ def test_end_to_end(tmpdir):
     input_contents = """
 # Intentionet's sensitive test file
 ip address 192.168.2.1 255.255.255.255
-my password is $1$salt$ABCDEFGHIJKLMNOPQRS
+my hash is $1$salt$ABCDEFGHIJKLMNOPQRS
 AS num 12345 and 65432 should be changed
 
 """
     ref_contents = """
 # 1cbbc2's fd8607 test file
 ip address 201.235.139.13 255.255.255.255
-my password is $1$0000$CxUUGIrqPb7GaB5midrQZ.
+my hash is $1$0000$CxUUGIrqPb7GaB5midrQZ.
 AS num 8625 and 64818 should be changed
 
 """

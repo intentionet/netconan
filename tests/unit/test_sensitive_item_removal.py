@@ -17,7 +17,7 @@ from netconan.sensitive_item_removal import (
     anonymize_as_numbers, anonymize_sensitive_words, AsNumberAnonymizer,
     replace_matching_item, generate_default_sensitive_item_regexes,
     generate_sensitive_word_regexes, _sensitive_item_formats,
-    _anonymize_value, _check_sensitive_item_format)
+    _anonymize_value, _check_sensitive_item_format, _extract_enclosing_text)
 import pytest
 
 # Tuple format is config_line, sensitive_text (should not be in output line)
@@ -119,7 +119,48 @@ arista_password_lines = [
 ]
 
 misc_password_lines = [
-    ('my password is ', '$1$salt$abcdefghijklmnopqrs')
+    ('my password is ', '$1$salt$abcdefghijklmnopqrs'),
+    ('set community {}', 'RemoveMe')
+]
+
+sensitive_lines = (cisco_password_lines +
+                   cisco_snmp_community_lines + juniper_password_lines +
+                   arista_password_lines + misc_password_lines)
+
+sensitive_items_and_formats = [
+    ('094F4107180B', _sensitive_item_formats.cisco_type7),
+    ('00071C080555', _sensitive_item_formats.cisco_type7),
+    ('1608030A2B25', _sensitive_item_formats.cisco_type7),
+    ('070C2E424F072E04043A0E1E01', _sensitive_item_formats.cisco_type7),
+    ('01999999', _sensitive_item_formats.numeric),
+    ('987654321', _sensitive_item_formats.numeric),
+    ('0000000000000000', _sensitive_item_formats.numeric),
+    ('1234567890', _sensitive_item_formats.numeric),
+    ('7', _sensitive_item_formats.numeric),
+    ('A', _sensitive_item_formats.hexadecimal),
+    ('0FFFFFFFFF', _sensitive_item_formats.hexadecimal),
+    ('ABCDEF', _sensitive_item_formats.hexadecimal),
+    ('7ab34c2fe31', _sensitive_item_formats.hexadecimal),
+    ('deadBEEF', _sensitive_item_formats.hexadecimal),
+    ('27a', _sensitive_item_formats.hexadecimal),
+    ('$1$SALT$mutX1.3APXbr8JdR/Xi6t.', _sensitive_item_formats.md5),
+    ('$1$SALT$X8i6w2OOpAaEMNBGfSoZC0', _sensitive_item_formats.md5),
+    ('$1$SALT$ddio24/QfJatZkSKGuB4Z/', _sensitive_item_formats.md5),
+    ('$1$salt$rwny14pmwbMjy1WTfxf4h/', _sensitive_item_formats.md5),
+    ('$1$salt$BFdHEr6MVYydPmpY3FPXV/', _sensitive_item_formats.md5),
+    ('$1$salt$jp6JinwkFEV.2OCDaXrmO1', _sensitive_item_formats.md5),
+    ('$1$./4k$OVkG7VKh5GKt1/XjSO78.0', _sensitive_item_formats.md5),
+    ('$1$CNANTest$xAfu6Am1d5D/.6OVICuOu/', _sensitive_item_formats.md5),
+    ('$1$67Q0XA3z$YqiBW/xxKWr74oHPXEkIv1', _sensitive_item_formats.md5),
+    ('thisIsATest', _sensitive_item_formats.text),
+    ('netconan', _sensitive_item_formats.text),
+    ('STRING', _sensitive_item_formats.text),
+    ('text_here', _sensitive_item_formats.text),
+    ('more-text-here0', _sensitive_item_formats.text),
+    ('ABCDEFG', _sensitive_item_formats.text),
+    ('$9$HqfQ1IcrK8n/t0IcvM24aZGi6/t', _sensitive_item_formats.juniper_type9),
+    ('$9$YVgoZk.5n6AHq9tORlegoJGDkPfQCtOP5Qn9pRE', _sensitive_item_formats.juniper_type9),
+    ('$6$RMxgK5ALGIf.nWEC$tHuKCyfNtJMCY561P52dTzHUmYMmLxb/Mxik.j3vMUs8lMCPocM00/NAS.SN6GCWx7d/vQIgxnClyQLAb7n3x0', _sensitive_item_formats.sha512)
 ]
 
 unique_passwords = [
@@ -321,52 +362,69 @@ def test__anonymize_value_unique():
         unique_anon_vals.add(anon_val)
 
 
-@pytest.mark.parametrize('val, format_', [
-    ('094F4107180B', _sensitive_item_formats.cisco_type7),
-    ('00071C080555', _sensitive_item_formats.cisco_type7),
-    ('1608030A2B25', _sensitive_item_formats.cisco_type7),
-    ('070C2E424F072E04043A0E1E01', _sensitive_item_formats.cisco_type7),
-    ('01999999', _sensitive_item_formats.numeric),
-    ('987654321', _sensitive_item_formats.numeric),
-    ('0000000000000000', _sensitive_item_formats.numeric),
-    ('1234567890', _sensitive_item_formats.numeric),
-    ('7', _sensitive_item_formats.numeric),
-    ('A', _sensitive_item_formats.hexadecimal),
-    ('0FFFFFFFFF', _sensitive_item_formats.hexadecimal),
-    ('ABCDEF', _sensitive_item_formats.hexadecimal),
-    ('7ab34c2fe31', _sensitive_item_formats.hexadecimal),
-    ('deadBEEF', _sensitive_item_formats.hexadecimal),
-    ('27a', _sensitive_item_formats.hexadecimal),
-    ('$1$SALT$mutX1.3APXbr8JdR/Xi6t.', _sensitive_item_formats.md5),
-    ('$1$SALT$X8i6w2OOpAaEMNBGfSoZC0', _sensitive_item_formats.md5),
-    ('$1$SALT$ddio24/QfJatZkSKGuB4Z/', _sensitive_item_formats.md5),
-    ('$1$salt$rwny14pmwbMjy1WTfxf4h/', _sensitive_item_formats.md5),
-    ('$1$salt$BFdHEr6MVYydPmpY3FPXV/', _sensitive_item_formats.md5),
-    ('$1$salt$jp6JinwkFEV.2OCDaXrmO1', _sensitive_item_formats.md5),
-    ('$1$./4k$OVkG7VKh5GKt1/XjSO78.0', _sensitive_item_formats.md5),
-    ('$1$CNANTest$xAfu6Am1d5D/.6OVICuOu/', _sensitive_item_formats.md5),
-    ('$1$67Q0XA3z$YqiBW/xxKWr74oHPXEkIv1', _sensitive_item_formats.md5),
-    ('thisIsATest', _sensitive_item_formats.text),
-    ('netconan', _sensitive_item_formats.text),
-    ('STRING', _sensitive_item_formats.text),
-    ('text_here', _sensitive_item_formats.text),
-    ('more-text-here0', _sensitive_item_formats.text),
-    ('ABCDEFG', _sensitive_item_formats.text),
-    ('$9$HqfQ1IcrK8n/t0IcvM24aZGi6/t', _sensitive_item_formats.juniper_type9),
-    ('$9$YVgoZk.5n6AHq9tORlegoJGDkPfQCtOP5Qn9pRE', _sensitive_item_formats.juniper_type9),
-    ('$6$RMxgK5ALGIf.nWEC$tHuKCyfNtJMCY561P52dTzHUmYMmLxb/Mxik.j3vMUs8lMCPocM00/NAS.SN6GCWx7d/vQIgxnClyQLAb7n3x0', _sensitive_item_formats.sha512)
-])
+@pytest.mark.parametrize('val, format_', sensitive_items_and_formats)
 def test__check_sensitive_item_format(val, format_):
     """Test sensitive item format detection."""
-    assert(_check_sensitive_item_format(val) == format_)
+    item_format = _check_sensitive_item_format(val)
+    assert(item_format == format_)
 
 
-@pytest.mark.parametrize('config_line,sensitive_text', cisco_password_lines +
-                         cisco_snmp_community_lines + juniper_password_lines +
-                         arista_password_lines)
+@pytest.mark.parametrize('val', unique_passwords)
+@pytest.mark.parametrize('quote', [
+    '\'',
+    '"',
+    '\\\'',
+    '\\"'
+])
+def test__extract_enclosing_text(val, quote):
+    """Test extraction of enclosing quotes."""
+    enclosed_val = quote + val + quote
+    enclosing_text, extracted_text = _extract_enclosing_text(enclosed_val)
+
+    # Confirm the extracted text matches the original text
+    assert(extracted_text == val)
+    # Confirm the extracted enclosing text matches the original enclosing text
+    assert (enclosing_text == quote)
+
+
+@pytest.mark.parametrize('config_line,sensitive_text', sensitive_lines)
 def test_pwd_and_com_removal(regexes, config_line, sensitive_text):
     """Test removal of passwords and communities from config lines."""
     config_line = config_line.format(sensitive_text)
+    pwd_lookup = {}
+    assert(sensitive_text not in replace_matching_item(regexes, config_line, pwd_lookup))
+
+
+@pytest.mark.parametrize('config_line,sensitive_text', sensitive_lines)
+@pytest.mark.parametrize('prepend_text', [
+    '"',
+    '\'',
+    '{',
+    ':',
+    'something " ',
+    'something \' ',
+    'something { ',
+    'something : '
+])
+def test_pwd_and_com_removal_prepend(regexes, config_line, sensitive_text, prepend_text):
+    """Test that sensitive lines are still anonymized correctly if preceded by allowed text."""
+    config_line = prepend_text + config_line.format(sensitive_text)
+    pwd_lookup = {}
+    assert(sensitive_text not in replace_matching_item(regexes, config_line, pwd_lookup))
+
+
+@pytest.mark.parametrize('config_line,sensitive_text', sensitive_lines)
+@pytest.mark.parametrize('append_text', [
+    '"',
+    '\'',
+    '}',
+    '" something',
+    '\' something',
+    '} something',
+])
+def test_pwd_and_com_removal_append(regexes, config_line, sensitive_text, append_text):
+    """Test that sensitive lines are still anonymized correctly if followed by allowed text."""
+    config_line = config_line.format(sensitive_text) + append_text
     pwd_lookup = {}
     assert(sensitive_text not in replace_matching_item(regexes, config_line, pwd_lookup))
 

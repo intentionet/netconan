@@ -29,14 +29,23 @@ from six import b
 # These are catch-all regexes to find lines that seem like they might contain
 # sensitive info
 default_catch_all_regexes = [
-    [('(\S* )*"?\K(\$9\$[^\s;"]+)(?="? ?.*)', 2)],
-    [('(\S* )*"?\K(\$1\$[^\s;"]+)(?="? ?.*)', 2)],
-    [('(\S* )*encrypted-password \K(\S+)(?= ?.*)', None)],
-    [('(\S* ?)*key "\K([^"]+)(?=".*)', 2)]
+    [('set community \K(\S+)', 1)],
+    [('\K("?\$9\$[^\s;"]+)', 1)],
+    [('\K("?\$1\$[^\s;"]+)', 1)],
+    [('encrypted-password \K(\S+)', None)],
+    [('key "\K([^"]+)', 1)]
 ]
+
+# A regex matching any of the characters that are allowed to precede a password regex
+# (e.g. sensitive line is allowed to be in quotes or after a colon)
+# This is an ignored group, so it does not muck with the password regex indicies
+_ALLOWED_REGEX_PREFIX = '(?:[^-_a-zA-Z\d] ?|^ ?)'
 
 # Number of digits to extract from hash for sensitive keyword replacement
 _ANON_SENSITIVE_WORD_LEN = 6
+
+# Text that is allowed to surround passwords, to be preserved
+_PASSWORD_ENCLOSING_TEXT = ['\'', '"', '\\\'', '\\"']
 
 
 class AsNumberAnonymizer:
@@ -122,11 +131,13 @@ def _anonymize_value(val, lookup):
     already been anonymized in the provided lookup, then the previous anon
     value will be used.
     """
+    # Separate enclosing text (e.g. quotes) from the underlying value
+    enclosing_text, val = _extract_enclosing_text(val)
     item_format = _check_sensitive_item_format(val)
 
     anon_val = 'netconanRemoved{}'.format(len(lookup))
     if val in lookup:
-        return lookup[val]
+        return enclosing_text + lookup[val] + enclosing_text
 
     if item_format == _sensitive_item_formats.cisco_type7:
         # Not salting sensitive data, using static salt here to more easily
@@ -158,33 +169,46 @@ def _anonymize_value(val, lookup):
         anon_val = '$9$0000IRc-dsJGirewg4JDj9At0RhSreK8Xhc'
 
     lookup[val] = anon_val
-    return anon_val
+    return enclosing_text + anon_val + enclosing_text
 
 
 def _check_sensitive_item_format(val):
     """Determine the type/format of the value passed in."""
+    item_format = _sensitive_item_formats.text
+
     # Order is important here (e.g. type 7 looks like hex or text, but has a
-    # specific format so it should be identified before hex or text)
-    if regex.match(r'^[0-9]+$', val):
-        return _sensitive_item_formats.numeric
-    if regex.match(r'^[01][0-9]([0-9a-fA-F]{2})+$', val):
-        return _sensitive_item_formats.cisco_type7
-    if regex.match(r'^[0-9a-fA-F]+$', val):
-        return _sensitive_item_formats.hexadecimal
-    if regex.match(r'^\$1\$[\S]+\$[\S]+$', val):
-        return _sensitive_item_formats.md5
-    if regex.match(r'^\$6\$[\S]+$', val):
-        return _sensitive_item_formats.sha512
+    # specific format so it should override hex or text)
     if regex.match(r'^\$9\$[\S]+$', val):
-        return _sensitive_item_formats.juniper_type9
-    return _sensitive_item_formats.text
+        item_format = _sensitive_item_formats.juniper_type9
+    if regex.match(r'^\$6\$[\S]+$', val):
+        item_format = _sensitive_item_formats.sha512
+    if regex.match(r'^\$1\$[\S]+\$[\S]+$', val):
+        item_format = _sensitive_item_formats.md5
+    if regex.match(r'^[0-9a-fA-F]+$', val):
+        item_format = _sensitive_item_formats.hexadecimal
+    if regex.match(r'^[01][0-9]([0-9a-fA-F]{2})+$', val):
+        item_format = _sensitive_item_formats.cisco_type7
+    if regex.match(r'^[0-9]+$', val):
+        item_format = _sensitive_item_formats.numeric
+    return item_format
+
+
+def _extract_enclosing_text(val):
+    """Extract enclosing quotes from text and return the enclosing text and enclosed text."""
+    enclosing_text = ''
+    for surround_text in _PASSWORD_ENCLOSING_TEXT:
+        if val.endswith(surround_text) and val.startswith(surround_text):
+            enclosing_text = surround_text
+            val = val[len(surround_text):-len(surround_text)]
+            break
+    return enclosing_text, val
 
 
 def generate_default_sensitive_item_regexes():
     """Compile and return the default password and community line regexes."""
     combined_regexes = default_pwd_line_regexes + default_com_line_regexes + \
         default_catch_all_regexes
-    return [[(regex.compile(regex_), num) for regex_, num in group]
+    return [[(regex.compile(_ALLOWED_REGEX_PREFIX + regex_), num) for regex_, num in group]
             for group in combined_regexes]
 
 
@@ -205,7 +229,8 @@ def replace_matching_item(compiled_regexes, input_line, pwd_lookup):
 
         # Apply all related regexes before returning the output_line
         for compiled_re, sensitive_item_num in compiled_regex_grp:
-            match = compiled_re.match(output_line)
+            # Using search instead of match here to find the match anywhere in the input line
+            match = compiled_re.search(output_line)
             if match is None:
                 continue
             match_found = True
