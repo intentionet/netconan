@@ -394,7 +394,7 @@ def test_pwd_and_com_removal(regexes, config_line, sensitive_text):
     'something : '
 ])
 def test_pwd_and_com_removal_prepend(regexes, config_line, sensitive_text, prepend_text):
-    """Test that sensitive lines are still anonymized correctly if preceeded by allowed text."""
+    """Test that sensitive lines are still anonymized correctly if preceded by allowed text."""
     config_line = prepend_text + config_line.format(sensitive_text)
     pwd_lookup = {}
     assert(sensitive_text not in replace_matching_item(regexes, config_line, pwd_lookup))

@@ -36,9 +36,9 @@ default_catch_all_regexes = [
     [('(\S* ?)*key "\K([^"]+)(?=".*)', 2)]
 ]
 
-# Regex matching any of the characters that are allowed to preceed a password regex
-# (e.g. password line is allowed to be in quotes, not at the beginning of a line)
-# This is an ignored group, so it does not muck with the actual password regex indicies
+# A regex matching any of the characters that are allowed to precede a password regex
+# (e.g. sensitive line is allowed to be in quotes or after a colon)
+# This is an ignored group, so it does not muck with the password regex indicies
 _ALLOWED_REGEX_PREFIX = '(?:["\'{:] ?|^ ?)'
 
 # Number of digits to extract from hash for sensitive keyword replacement
