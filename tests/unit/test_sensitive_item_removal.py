@@ -124,8 +124,8 @@ misc_password_lines = [
 ]
 
 sensitive_lines = (cisco_password_lines +
-    cisco_snmp_community_lines + juniper_password_lines +
-    arista_password_lines + misc_password_lines)
+                   cisco_snmp_community_lines + juniper_password_lines +
+                   arista_password_lines + misc_password_lines)
 
 unique_passwords = [
     '12345ABCDEF',
@@ -364,14 +364,6 @@ def test__anonymize_value_unique():
 def test__check_sensitive_item_format(val, format_):
     """Test sensitive item format detection."""
     assert(_check_sensitive_item_format(val) == format_)
-
-
-@pytest.mark.parametrize('config_line,sensitive_text', sensitive_lines)
-def test_pwd_and_com_removal(regexes, config_line, sensitive_text):
-    """Test removal of passwords and communities from config lines."""
-    config_line = config_line.format(sensitive_text)
-    pwd_lookup = {}
-    assert(sensitive_text not in replace_matching_item(regexes, config_line, pwd_lookup))
 
 
 @pytest.mark.parametrize('config_line,sensitive_text', sensitive_lines)
