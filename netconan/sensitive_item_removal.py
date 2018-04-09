@@ -131,7 +131,9 @@ def _anonymize_value(val, lookup):
     already been anonymized in the provided lookup, then the previous anon
     value will be used.
     """
-    enclosing_text, item_format = _check_sensitive_item_format(val)
+    # Separate enclosing text (e.g. quotes) from the underlying value
+    enclosing_text, val = _extract_enclosing_text(val)
+    item_format = _check_sensitive_item_format(val)
 
     anon_val = 'netconanRemoved{}'.format(len(lookup))
     if val in lookup:
@@ -172,14 +174,7 @@ def _anonymize_value(val, lookup):
 
 def _check_sensitive_item_format(val):
     """Determine the type/format of the value passed in."""
-    enclosing_text = ''
     item_format = _sensitive_item_formats.text
-
-    for surround_text in _PASSWORD_ENCLOSING_TEXT:
-        if val.endswith(surround_text) and val.startswith(surround_text):
-            enclosing_text = surround_text
-            val = val[len(surround_text):-len(surround_text)]
-            break
 
     # Order is important here (e.g. type 7 looks like hex or text, but has a
     # specific format so it should override hex or text)
@@ -195,7 +190,18 @@ def _check_sensitive_item_format(val):
         item_format = _sensitive_item_formats.cisco_type7
     if regex.match(r'^[0-9]+$', val):
         item_format = _sensitive_item_formats.numeric
-    return enclosing_text, item_format
+    return item_format
+
+
+def _extract_enclosing_text(val):
+    """Extract enclosing quotes from text and return the enclosing text and enclosed text."""
+    enclosing_text = ''
+    for surround_text in _PASSWORD_ENCLOSING_TEXT:
+        if val.endswith(surround_text) and val.startswith(surround_text):
+            enclosing_text = surround_text
+            val = val[len(surround_text):-len(surround_text)]
+            break
+    return enclosing_text, val
 
 
 def generate_default_sensitive_item_regexes():

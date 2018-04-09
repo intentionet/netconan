@@ -17,7 +17,7 @@ from netconan.sensitive_item_removal import (
     anonymize_as_numbers, anonymize_sensitive_words, AsNumberAnonymizer,
     replace_matching_item, generate_default_sensitive_item_regexes,
     generate_sensitive_word_regexes, _sensitive_item_formats,
-    _anonymize_value, _check_sensitive_item_format)
+    _anonymize_value, _check_sensitive_item_format, _extract_enclosing_text)
 import pytest
 
 # Tuple format is config_line, sensitive_text (should not be in output line)
@@ -330,8 +330,8 @@ def test__anonymize_value(val):
     """Test sensitive item anonymization."""
     pwd_lookup = {}
     anon_val = _anonymize_value(val, pwd_lookup)
-    enclosing_text, val_format = _check_sensitive_item_format(val)
-    enclosing_text, anon_val_format = _check_sensitive_item_format(anon_val)
+    val_format = _check_sensitive_item_format(val)
+    anon_val_format = _check_sensitive_item_format(anon_val)
 
     # Confirm the anonymized value does not match the original value
     assert(anon_val != val)
@@ -365,22 +365,26 @@ def test__anonymize_value_unique():
 @pytest.mark.parametrize('val, format_', sensitive_items_and_formats)
 def test__check_sensitive_item_format(val, format_):
     """Test sensitive item format detection."""
-    enclosing_text, item_format = _check_sensitive_item_format(val)
+    item_format = _check_sensitive_item_format(val)
     assert(item_format == format_)
 
 
-@pytest.mark.parametrize('val, format_', sensitive_items_and_formats)
-@pytest.mark.parametrize('enclosing_text', [
+@pytest.mark.parametrize('val', unique_passwords)
+@pytest.mark.parametrize('quote', [
     '\'',
     '"',
     '\\\'',
     '\\"'
 ])
-def test__check_sensitive_item_format_enclosed(val, format_, enclosing_text):
-    """Test sensitive item format is unaffected by being enclosed in quotes."""
-    enclosing_text, item_format = _check_sensitive_item_format(val)
-    enclosing_text, enclosed_item_format = _check_sensitive_item_format(enclosing_text + val + enclosing_text)
-    assert(item_format == enclosed_item_format)
+def test__extract_enclosing_text(val, quote):
+    """Test extraction of enclosing quotes."""
+    enclosed_val = quote + val + quote
+    enclosing_text, extracted_text = _extract_enclosing_text(enclosed_val)
+
+    # Confirm the extracted text matches the original text
+    assert(extracted_text == val)
+    # Confirm the extracted enclosing text matches the original enclosing text
+    assert (enclosing_text == quote)
 
 
 @pytest.mark.parametrize('config_line,sensitive_text', sensitive_lines)
