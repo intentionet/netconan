@@ -211,6 +211,7 @@ def replace_matching_item(compiled_regexes, input_line, pwd_lookup):
 
         # Apply all related regexes before returning the output_line
         for compiled_re, sensitive_item_num in compiled_regex_grp:
+            # Using search instead of match here to find the match anywhere in the input line
             match = compiled_re.search(output_line)
             if match is None:
                 continue
