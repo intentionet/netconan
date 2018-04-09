@@ -376,7 +376,7 @@ def test__check_sensitive_item_format(val, format_):
     '\\\'',
     '\\"'
 ])
-def test__anonymize_value_enclosed(val, format_, enclosing_text):
+def test__check_sensitive_item_format_enclosed(val, format_, enclosing_text):
     """Test sensitive item format is unaffected by being enclosed in quotes."""
     enclosing_text, item_format = _check_sensitive_item_format(val)
     enclosing_text, enclosed_item_format = _check_sensitive_item_format(enclosing_text + val + enclosing_text)
