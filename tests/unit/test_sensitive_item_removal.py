@@ -119,8 +119,13 @@ arista_password_lines = [
 ]
 
 misc_password_lines = [
-    ('my password is ', '$1$salt$abcdefghijklmnopqrs')
+    ('my password is ', '$1$salt$abcdefghijklmnopqrs'),
+    ('set community {}', 'RemoveMe')
 ]
+
+sensitive_lines = (cisco_password_lines +
+    cisco_snmp_community_lines + juniper_password_lines +
+    arista_password_lines + misc_password_lines)
 
 unique_passwords = [
     '12345ABCDEF',
@@ -361,12 +366,52 @@ def test__check_sensitive_item_format(val, format_):
     assert(_check_sensitive_item_format(val) == format_)
 
 
-@pytest.mark.parametrize('config_line,sensitive_text', cisco_password_lines +
-                         cisco_snmp_community_lines + juniper_password_lines +
-                         arista_password_lines)
+@pytest.mark.parametrize('config_line,sensitive_text', sensitive_lines)
 def test_pwd_and_com_removal(regexes, config_line, sensitive_text):
     """Test removal of passwords and communities from config lines."""
     config_line = config_line.format(sensitive_text)
+    pwd_lookup = {}
+    assert(sensitive_text not in replace_matching_item(regexes, config_line, pwd_lookup))
+
+
+@pytest.mark.parametrize('config_line,sensitive_text', sensitive_lines)
+def test_pwd_and_com_removal(regexes, config_line, sensitive_text):
+    """Test removal of passwords and communities from config lines."""
+    config_line = config_line.format(sensitive_text)
+    pwd_lookup = {}
+    assert(sensitive_text not in replace_matching_item(regexes, config_line, pwd_lookup))
+
+
+@pytest.mark.parametrize('config_line,sensitive_text', sensitive_lines)
+@pytest.mark.parametrize('prepend_text', [
+    '"',
+    '\'',
+    '{',
+    ':',
+    'something " ',
+    'something \' ',
+    'something { ',
+    'something : '
+])
+def test_pwd_and_com_removal_prepend(regexes, config_line, sensitive_text, prepend_text):
+    """Test that sensitive lines are still anonymized correctly if preceeded by allowed text."""
+    config_line = prepend_text + config_line.format(sensitive_text)
+    pwd_lookup = {}
+    assert(sensitive_text not in replace_matching_item(regexes, config_line, pwd_lookup))
+
+
+@pytest.mark.parametrize('config_line,sensitive_text', sensitive_lines)
+@pytest.mark.parametrize('append_text', [
+    '"',
+    '\'',
+    '}',
+    '" something',
+    '\' something',
+    '} something',
+])
+def test_pwd_and_com_removal_append(regexes, config_line, sensitive_text, append_text):
+    """Test that sensitive lines are still anonymized correctly if followed by allowed text."""
+    config_line = config_line.format(sensitive_text) + append_text
     pwd_lookup = {}
     assert(sensitive_text not in replace_matching_item(regexes, config_line, pwd_lookup))
 

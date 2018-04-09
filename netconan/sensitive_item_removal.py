@@ -29,11 +29,17 @@ from six import b
 # These are catch-all regexes to find lines that seem like they might contain
 # sensitive info
 default_catch_all_regexes = [
+    [('set community \K(\S+)(?= ?.*)', 1)],
     [('(\S* )*"?\K(\$9\$[^\s;"]+)(?="? ?.*)', 2)],
     [('(\S* )*"?\K(\$1\$[^\s;"]+)(?="? ?.*)', 2)],
     [('(\S* )*encrypted-password \K(\S+)(?= ?.*)', None)],
     [('(\S* ?)*key "\K([^"]+)(?=".*)', 2)]
 ]
+
+# Regex matching any of the characters that are allowed to preceed a password regex
+# (e.g. password line is allowed to be in quotes, not at the beginning of a line)
+# This is an ignored group, so it does not muck with the actual password regex indicies
+_ALLOWED_REGEX_PREFIX = '(?:["\'{:] ?|^ ?)'
 
 # Number of digits to extract from hash for sensitive keyword replacement
 _ANON_SENSITIVE_WORD_LEN = 6
@@ -184,7 +190,7 @@ def generate_default_sensitive_item_regexes():
     """Compile and return the default password and community line regexes."""
     combined_regexes = default_pwd_line_regexes + default_com_line_regexes + \
         default_catch_all_regexes
-    return [[(regex.compile(regex_), num) for regex_, num in group]
+    return [[(regex.compile(_ALLOWED_REGEX_PREFIX + regex_), num) for regex_, num in group]
             for group in combined_regexes]
 
 
@@ -205,7 +211,7 @@ def replace_matching_item(compiled_regexes, input_line, pwd_lookup):
 
         # Apply all related regexes before returning the output_line
         for compiled_re, sensitive_item_num in compiled_regex_grp:
-            match = compiled_re.match(output_line)
+            match = compiled_re.search(output_line)
             if match is None:
                 continue
             match_found = True
