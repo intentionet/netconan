@@ -29,17 +29,17 @@ from six import b
 # These are catch-all regexes to find lines that seem like they might contain
 # sensitive info
 default_catch_all_regexes = [
-    [('set community \K(\S+)(?= ?.*)', 1)],
-    [('(\S* )*"?\K(\$9\$[^\s;"]+)(?="? ?.*)', 2)],
-    [('(\S* )*"?\K(\$1\$[^\s;"]+)(?="? ?.*)', 2)],
-    [('(\S* )*encrypted-password \K(\S+)(?= ?.*)', None)],
-    [('(\S* ?)*key "\K([^"]+)(?=".*)', 2)]
+    [('set community \K(\S+)', 1)],
+    [('\K("?\$9\$[^\s;"]+)', 1)],
+    [('\K("?\$1\$[^\s;"]+)', 1)],
+    [('encrypted-password \K(\S+)', None)],
+    [('key "\K([^"]+)', 1)]
 ]
 
 # A regex matching any of the characters that are allowed to precede a password regex
 # (e.g. sensitive line is allowed to be in quotes or after a colon)
 # This is an ignored group, so it does not muck with the password regex indicies
-_ALLOWED_REGEX_PREFIX = '(?:["\'{:] ?|^ ?)'
+_ALLOWED_REGEX_PREFIX = '(?:[^-_a-zA-Z\d] ?|^ ?)'
 
 # Number of digits to extract from hash for sensitive keyword replacement
 _ANON_SENSITIVE_WORD_LEN = 6
