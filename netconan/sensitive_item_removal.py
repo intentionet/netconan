@@ -44,6 +44,9 @@ _ALLOWED_REGEX_PREFIX = '(?:["\'{:] ?|^ ?)'
 # Number of digits to extract from hash for sensitive keyword replacement
 _ANON_SENSITIVE_WORD_LEN = 6
 
+# Text that is allowed to surround sensitive text, to be preserved
+_SENSITIVE_ITEM_ENCLOSING_TEXT = ['\'', '"', '\\\'', '\\"']
+
 
 class AsNumberAnonymizer:
     """An anonymizer for AS numbers."""
@@ -128,11 +131,11 @@ def _anonymize_value(val, lookup):
     already been anonymized in the provided lookup, then the previous anon
     value will be used.
     """
-    item_format = _check_sensitive_item_format(val)
+    enclosing_text, item_format = _check_sensitive_item_format(val)
 
     anon_val = 'netconanRemoved{}'.format(len(lookup))
     if val in lookup:
-        return lookup[val]
+        return enclosing_text + lookup[val] + enclosing_text
 
     if item_format == _sensitive_item_formats.cisco_type7:
         # Not salting sensitive data, using static salt here to more easily
@@ -164,26 +167,35 @@ def _anonymize_value(val, lookup):
         anon_val = '$9$0000IRc-dsJGirewg4JDj9At0RhSreK8Xhc'
 
     lookup[val] = anon_val
-    return anon_val
+    return enclosing_text + anon_val + enclosing_text
 
 
 def _check_sensitive_item_format(val):
     """Determine the type/format of the value passed in."""
+    enclosing_text = ''
+    item_format = _sensitive_item_formats.text
+
+    for surround_text in _SENSITIVE_ITEM_ENCLOSING_TEXT:
+        if val.endswith(surround_text) and val.startswith(surround_text):
+            enclosing_text = surround_text
+            val = val[len(surround_text):-len(surround_text)]
+            break
+
     # Order is important here (e.g. type 7 looks like hex or text, but has a
-    # specific format so it should be identified before hex or text)
-    if regex.match(r'^[0-9]+$', val):
-        return _sensitive_item_formats.numeric
-    if regex.match(r'^[01][0-9]([0-9a-fA-F]{2})+$', val):
-        return _sensitive_item_formats.cisco_type7
-    if regex.match(r'^[0-9a-fA-F]+$', val):
-        return _sensitive_item_formats.hexadecimal
-    if regex.match(r'^\$1\$[\S]+\$[\S]+$', val):
-        return _sensitive_item_formats.md5
-    if regex.match(r'^\$6\$[\S]+$', val):
-        return _sensitive_item_formats.sha512
+    # specific format so it should override hex or text)
     if regex.match(r'^\$9\$[\S]+$', val):
-        return _sensitive_item_formats.juniper_type9
-    return _sensitive_item_formats.text
+        item_format = _sensitive_item_formats.juniper_type9
+    if regex.match(r'^\$6\$[\S]+$', val):
+        item_format = _sensitive_item_formats.sha512
+    if regex.match(r'^\$1\$[\S]+\$[\S]+$', val):
+        item_format = _sensitive_item_formats.md5
+    if regex.match(r'^[0-9a-fA-F]+$', val):
+        item_format = _sensitive_item_formats.hexadecimal
+    if regex.match(r'^[01][0-9]([0-9a-fA-F]{2})+$', val):
+        item_format = _sensitive_item_formats.cisco_type7
+    if regex.match(r'^[0-9]+$', val):
+        item_format = _sensitive_item_formats.numeric
+    return enclosing_text, item_format
 
 
 def generate_default_sensitive_item_regexes():
