@@ -396,9 +396,10 @@ def test_pwd_removal(regexes, config_line, sensitive_text):
 
 
 @pytest.mark.parametrize('whitespace', [
-    '  ',
+    ' ',
     '\t',
-    '\n'
+    '\n',
+    ' \t\n'
 ])
 def test_pwd_removal_preserve_leading_whitespace(regexes, whitespace):
     """Test leading whitespace is preserved in config lines."""
