@@ -220,7 +220,7 @@ def generate_sensitive_word_regexes(sensitive_words):
 def replace_matching_item(compiled_regexes, input_line, pwd_lookup):
     """If line matches a regex, anonymize or remove the line."""
     # Collapse whitespace to simplify regexes
-    output_line = '{}'.format(' '.join(input_line.split()))
+    output_line = ' '.join(input_line.split())
 
     # Note: compiled_regexes is a list of lists; the inner list is a group of
     # related regexes
@@ -258,5 +258,4 @@ def replace_matching_item(compiled_regexes, input_line, pwd_lookup):
     # Restore leading and trailing whitespace for readability and context
     leading = input_line[:-len(input_line.lstrip())]
     trailing = input_line[len(input_line.rstrip()):]
-    output_line = '{}{}{}'.format(leading, output_line, trailing)
-    return output_line
+    return leading + output_line + trailing
