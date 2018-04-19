@@ -207,7 +207,7 @@ def _extract_enclosing_text(val):
 def generate_default_sensitive_item_regexes():
     """Compile and return the default password and community line regexes."""
     combined_regexes = default_pwd_line_regexes + default_com_line_regexes + \
-                       default_catch_all_regexes
+        default_catch_all_regexes
     return [[(regex.compile(_ALLOWED_REGEX_PREFIX + regex_), num) for regex_, num in group]
             for group in combined_regexes]
 
