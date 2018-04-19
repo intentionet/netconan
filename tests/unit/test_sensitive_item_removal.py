@@ -410,9 +410,10 @@ def test_pwd_removal_preserve_leading_whitespace(regexes, whitespace):
 
 
 @pytest.mark.parametrize('whitespace', [
-    '  ',
+    ' ',
     '\t',
-    '\n'
+    '\n',
+    ' \t\n'
 ])
 def test_pwd_removal_preserve_trailing_whitespace(regexes, whitespace):
     """Test trailing whitespace is preserved in config lines."""
