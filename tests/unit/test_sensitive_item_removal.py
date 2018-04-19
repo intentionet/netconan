@@ -388,11 +388,39 @@ def test__extract_enclosing_text(val, quote):
 
 
 @pytest.mark.parametrize('config_line,sensitive_text', sensitive_lines)
-def test_pwd_and_com_removal(regexes, config_line, sensitive_text):
+def test_pwd_removal(regexes, config_line, sensitive_text):
     """Test removal of passwords and communities from config lines."""
     config_line = config_line.format(sensitive_text)
     pwd_lookup = {}
     assert(sensitive_text not in replace_matching_item(regexes, config_line, pwd_lookup))
+
+
+@pytest.mark.parametrize('whitespace', [
+    '  ',
+    '\t',
+    '\n'
+])
+def test_pwd_removal_preserve_leading_whitespace(regexes, whitespace):
+    """Test leading whitespace is preserved in config lines."""
+    config_line = '{whitespace}{line}'.format(line='password secret',
+                                              whitespace=whitespace)
+    pwd_lookup = {}
+    processed_line = replace_matching_item(regexes, config_line, pwd_lookup)
+    assert(processed_line.startswith(whitespace))
+
+
+@pytest.mark.parametrize('whitespace', [
+    '  ',
+    '\t',
+    '\n'
+])
+def test_pwd_removal_preserve_trailing_whitespace(regexes, whitespace):
+    """Test trailing whitespace is preserved in config lines."""
+    config_line = '{line}{whitespace}'.format(line='password secret',
+                                              whitespace=whitespace)
+    pwd_lookup = {}
+    processed_line = replace_matching_item(regexes, config_line, pwd_lookup)
+    assert(processed_line.endswith(whitespace))
 
 
 @pytest.mark.parametrize('config_line,sensitive_text', sensitive_lines)
@@ -406,7 +434,7 @@ def test_pwd_and_com_removal(regexes, config_line, sensitive_text):
     'something { ',
     'something : '
 ])
-def test_pwd_and_com_removal_prepend(regexes, config_line, sensitive_text, prepend_text):
+def test_pwd_removal_prepend(regexes, config_line, sensitive_text, prepend_text):
     """Test that sensitive lines are still anonymized correctly if preceded by allowed text."""
     config_line = prepend_text + config_line.format(sensitive_text)
     pwd_lookup = {}
@@ -422,7 +450,7 @@ def test_pwd_and_com_removal_prepend(regexes, config_line, sensitive_text, prepe
     '\' something',
     '} something',
 ])
-def test_pwd_and_com_removal_append(regexes, config_line, sensitive_text, append_text):
+def test_pwd_removal_append(regexes, config_line, sensitive_text, append_text):
     """Test that sensitive lines are still anonymized correctly if followed by allowed text."""
     config_line = config_line.format(sensitive_text) + append_text
     pwd_lookup = {}
@@ -434,7 +462,7 @@ def test_pwd_and_com_removal_append(regexes, config_line, sensitive_text, append
     '      interface GigabitEthernet0/0',
     'ip address 1.2.3.4 255.255.255.0'
 ])
-def test_pwd_and_com_removal_insensitive_lines(regexes, config_line):
+def test_pwd_removal_insensitive_lines(regexes, config_line):
     """Make sure benign lines are not affected by sensitive_item_removal."""
     pwd_lookup = {}
     # Collapse all whitespace in original config_line and add newline since

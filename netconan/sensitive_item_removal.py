@@ -207,7 +207,7 @@ def _extract_enclosing_text(val):
 def generate_default_sensitive_item_regexes():
     """Compile and return the default password and community line regexes."""
     combined_regexes = default_pwd_line_regexes + default_com_line_regexes + \
-        default_catch_all_regexes
+                       default_catch_all_regexes
     return [[(regex.compile(_ALLOWED_REGEX_PREFIX + regex_), num) for regex_, num in group]
             for group in combined_regexes]
 
@@ -219,8 +219,8 @@ def generate_sensitive_word_regexes(sensitive_words):
 
 def replace_matching_item(compiled_regexes, input_line, pwd_lookup):
     """If line matches a regex, anonymize or remove the line."""
-    # Collapse all whitespace to simplify regexes
-    output_line = '{}\n'.format(' '.join(input_line.split()))
+    # Collapse whitespace to simplify regexes
+    output_line = '{}'.format(' '.join(input_line.split()))
 
     # Note: compiled_regexes is a list of lists; the inner list is a group of
     # related regexes
@@ -254,4 +254,9 @@ def replace_matching_item(compiled_regexes, input_line, pwd_lookup):
         # If any matches existed in this regex group, stop processing more regexes
         if match_found:
             break
+
+    # Restore leading and trailing whitespace for readability and context
+    leading = input_line[:-len(input_line.lstrip())]
+    trailing = input_line[len(input_line.rstrip()):]
+    output_line = '{}{}{}'.format(leading, output_line, trailing)
     return output_line
