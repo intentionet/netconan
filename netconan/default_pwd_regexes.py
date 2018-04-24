@@ -65,7 +65,7 @@ default_pwd_line_regexes = [
     [('(ntp authentication-key \d+ md5) \K(\S+)', 2)],
     [('(syscon( password| address \S+)) \K(\S+)', 3)],
     [('(snmp-server user( \S+)+ (auth (md5|sha))) \K(\S+)', 5),
-     ('(snmp-server user( \S+)+ priv (3des|aes|des)) \K(\S+)', 4)],
+     ('(snmp-server user( \S+)+ priv( 3des| aes( \d+)?| des)?) \K(\S+)', 5)],
     [('((crypto )?isakmp key( \d)?) \K(\S+)', 4)],
     [('(set session-key (in|out)bound ah \d+) \K(\S+)', 3)],
     [('(set session-key (in|out)bound esp \d+ cipher?) \K(\S+)', 3),
