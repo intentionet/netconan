@@ -22,6 +22,7 @@ from binascii import b2a_hex
 from enum import Enum
 from hashlib import md5
 from .default_pwd_regexes import default_pwd_line_regexes, default_com_line_regexes
+from .default_reserved_words import default_reserved_words
 # Using passlib for digests not supported by hashlib
 from passlib.hash import cisco_type7, md5_crypt, sha512_crypt
 from six import b
@@ -94,6 +95,59 @@ class AsNumberAnonymizer:
     def get_as_number_pattern(self):
         """Return the compiled regex to find AS numbers."""
         return self.as_num_regex
+
+
+class SensitiveWordAnonymizer:
+    """An anonymizer for sensitive keywords."""
+
+    def __init__(self, sensitive_words, salt, reserved_words=default_reserved_words):
+        """Create an anonymizer for specified list of sensitive words and set of reserved words to leave alone."""
+        self.reserved_words = reserved_words
+        self.sens_regex = self._generate_sensitive_word_regex(sensitive_words)
+        self.sens_word_replacements = self._generate_sensitive_word_replacements(sensitive_words, salt)
+        # Figure out which reserved words may clash with sensitive words, so they can be preserved in anonymization
+        self.conflicting_words = self._generate_conflicting_reserved_word_list(sensitive_words)
+
+    def anonymize(self, line):
+        """Anonymize sensitive words from the input line."""
+        leading, words, trailing = _split_line(line)
+        if self.sens_regex.search(line) is not None:
+            # Anonymize only words that do not match the conflicting (reserved) words
+            words = [
+                w if w in self.conflicting_words else self.sens_regex.sub(self._lookup_anon_word, w) for w in words
+            ]
+        # Restore leading and trailing whitespace for readability and context
+        return leading + ' '.join(words) + trailing
+
+    def _generate_conflicting_reserved_word_list(self, sensitive_words):
+        """Return a list of reserved words that may conflict with the specified sensitive words."""
+        conflicting_words = set()
+        for sensitive_word in sensitive_words:
+            conflicting_words.update(set([w for w in self.reserved_words if sensitive_word in w]))
+        if conflicting_words:
+            logging.warning('Specified sensitive words overlap with reserved words. '
+                            'The following reserved words will be preserved: %s', conflicting_words)
+        return conflicting_words
+
+    @classmethod
+    def _generate_sensitive_word_regex(cls, sensitive_words):
+        """Compile and return regex for the specified list of sensitive words."""
+        return regex.compile('({})'.format('|'.join(sensitive_words)), regex.IGNORECASE)
+
+    @classmethod
+    def _generate_sensitive_word_replacements(cls, sensitive_words, salt):
+        """Compile and return a dict of sensitive word replacements."""
+        replacements = {}
+        for sens_word in sensitive_words:
+            # Only using part of the hash result as the anonymized replacement
+            # to cut down on the size of the replacements
+            sens_word = sens_word.lower()
+            replacements[sens_word] = md5((salt + sens_word).encode()).hexdigest()[:_ANON_SENSITIVE_WORD_LEN]
+        return replacements
+
+    def _lookup_anon_word(self, match):
+        """Lookup anonymized word for the given sensitive word regex match."""
+        return self.sens_word_replacements[match.group(0).lower()]
 
 
 class _sensitive_item_formats(Enum):
@@ -215,15 +269,11 @@ def generate_default_sensitive_item_regexes():
             for group in combined_regexes]
 
 
-def generate_sensitive_word_regexes(sensitive_words):
-    """Compile and return regexes for the specified list of sensitive words."""
-    return [regex.compile(sens_word, regex.IGNORECASE) for sens_word in sensitive_words]
-
-
 def replace_matching_item(compiled_regexes, input_line, pwd_lookup):
     """If line matches a regex, anonymize or remove the line."""
-    # Collapse whitespace to simplify regexes
-    output_line = ' '.join(input_line.split())
+    # Collapse whitespace to simplify regexes, also preserve leading and trailing whitespace
+    leading, words, trailing = _split_line(input_line)
+    output_line = ' '.join(words)
 
     # Note: compiled_regexes is a list of lists; the inner list is a group of
     # related regexes
@@ -259,6 +309,9 @@ def replace_matching_item(compiled_regexes, input_line, pwd_lookup):
             break
 
     # Restore leading and trailing whitespace for readability and context
-    leading = input_line[:-len(input_line.lstrip())]
-    trailing = input_line[len(input_line.rstrip()):]
     return leading + output_line + trailing
+
+
+def _split_line(line):
+    """Split line into leading whitespace, list of words, and trailing whitespace."""
+    return line[:-len(line.lstrip())], line.split(), line[len(line.rstrip()):]
