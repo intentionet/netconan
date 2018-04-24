@@ -26,16 +26,17 @@ from .default_pwd_regexes import default_pwd_line_regexes, default_com_line_rege
 from passlib.hash import cisco_type7, md5_crypt, sha512_crypt
 from six import b
 
-# These are catch-all regexes to find lines that seem like they might contain
-# sensitive info
-default_catch_all_regexes = [
-    [('set community \K(\S+)', 1)],
-    [('\K("?\$9\$[^\s;"]+)', 1)],
-    [('\K("?\$1\$[^\s;"]+)', 1)],
+# These are extra regexes to find lines that seem like they might contain
+# sensitive info (these are not already caught by RANCID default regexes)
+extra_password_regexes = [
     [('encrypted-password \K(\S+)', None)],
     [('key "\K([^"]+)', 1)],
+    [('key-hash sha256 (\S+)', 1)],
+    [('set community \K(\S+)', 1)],
     [('snmp-server mib community-map \K([^ :]+)', 1)],
-    [('key-hash sha256 (\S+)', 1)]
+    # Catch-all's matching what looks like hashed passwords
+    [('\K("?\$9\$[^\s;"]+)', 1)],
+    [('\K("?\$1\$[^\s;"]+)', 1)],
 ]
 
 # A regex matching any of the characters that are allowed to precede a password regex
@@ -209,7 +210,7 @@ def _extract_enclosing_text(val):
 def generate_default_sensitive_item_regexes():
     """Compile and return the default password and community line regexes."""
     combined_regexes = default_pwd_line_regexes + default_com_line_regexes + \
-        default_catch_all_regexes
+        extra_password_regexes
     return [[(regex.compile(_ALLOWED_REGEX_PREFIX + regex_), num) for regex_, num in group]
             for group in combined_regexes]
 
