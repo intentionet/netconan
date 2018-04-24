@@ -137,13 +137,12 @@ class SensitiveWordAnonymizer:
     @classmethod
     def _generate_sensitive_word_replacements(cls, sensitive_words, salt):
         """Compile and return a dict of sensitive word replacements."""
-        replacements = {}
-        for sens_word in sensitive_words:
-            # Only using part of the hash result as the anonymized replacement
-            # to cut down on the size of the replacements
-            sens_word = sens_word.lower()
-            replacements[sens_word] = md5((salt + sens_word).encode()).hexdigest()[:_ANON_SENSITIVE_WORD_LEN]
-        return replacements
+        # Only using part of the md5 hash result as the anonymized replacement
+        # to cut down on the size of the replacements
+        return {
+            sens_word.lower(): md5((salt + sens_word.lower()).encode()).hexdigest()[:_ANON_SENSITIVE_WORD_LEN]
+            for sens_word in sensitive_words
+        }
 
     def _lookup_anon_word(self, match):
         """Lookup anonymized word for the given sensitive word regex match."""
