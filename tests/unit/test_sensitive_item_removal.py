@@ -76,7 +76,7 @@ cisco_password_lines = [
     ('snmp-server user Someone Somegroup v3 auth sha {0} priv 3des {0}', 'RemoveMe'),
     ('snmp-server user Someone Somegroup v3 auth sha {0} priv {0}', 'RemoveMe'),
     ('snmp-server user Someone Somegroup auth md5 {0} priv aes 128 {0}', 'RemoveMe'),
-    ('snmp-server user Someone Somegroup auth md5 {0} priv {0} localizedkey', 'RemoveMe'),
+    ('snmp-server user Someone Somegroup auth md5 {0} priv {0} something', 'RemoveMe'),
     # TODO: Figure out SHA format, this line throws: Error in Auth password
     ('snmp-server user Someone Somegroup v3 encrypted auth sha {}', 'RemoveMe'),
     ('crypto isakmp key {} address 1.1.1.1 255.255.255.0', 'RemoveMe'),
