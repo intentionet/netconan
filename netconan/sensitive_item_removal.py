@@ -33,7 +33,9 @@ default_catch_all_regexes = [
     [('\K("?\$9\$[^\s;"]+)', 1)],
     [('\K("?\$1\$[^\s;"]+)', 1)],
     [('encrypted-password \K(\S+)', None)],
-    [('key "\K([^"]+)', 1)]
+    [('key "\K([^"]+)', 1)],
+    [('snmp-server mib community-map \K([^ :]+)', 1)],
+    [('key-hash sha256 (\S+)', 1)]
 ]
 
 # A regex matching any of the characters that are allowed to precede a password regex

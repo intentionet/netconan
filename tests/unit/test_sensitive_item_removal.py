@@ -74,13 +74,17 @@ cisco_password_lines = [
     ('syscon address 1.1.1.1 {}', 'RemoveMe'),
     ('snmp-server user Someone Somegroup remote Crap v3 auth md5 {}', 'RemoveMe'),
     ('snmp-server user Someone Somegroup v3 auth sha {0} priv 3des {0}', 'RemoveMe'),
+    ('snmp-server user Someone Somegroup v3 auth sha {0} priv {0}', 'RemoveMe'),
+    ('snmp-server user Someone Somegroup auth md5 {0} priv aes 128 {0}', 'RemoveMe'),
+    ('snmp-server user Someone Somegroup auth md5 {0} priv {0} localizedkey', 'RemoveMe'),
     # TODO: Figure out SHA format, this line throws: Error in Auth password
     ('snmp-server user Someone Somegroup v3 encrypted auth sha {}', 'RemoveMe'),
     ('crypto isakmp key {} address 1.1.1.1 255.255.255.0', 'RemoveMe'),
     ('crypto isakmp key 6 {} hostname Something', 'RemoveMe'),
     ('set session-key inbound ah 4294967295 {}', '1234abcdef'),
     ('set session-key outbound esp 256 authenticator {}', '1234abcdef'),
-    ('set session-key outbound esp 256 cipher {0} authenticator {0}', '1234abcdef')
+    ('set session-key outbound esp 256 cipher {0} authenticator {0}', '1234abcdef'),
+    ('key-hash sha256 {}', 'RemoveMe')
 ]
 
 cisco_snmp_community_lines = [
@@ -93,7 +97,8 @@ cisco_snmp_community_lines = [
     ('snmp-server host 1.1.1.1 traps version 3 noauth {}', 'RemoveMe'),
     ('snmp-server host 1.1.1.1 informs version 3 priv {} memory', 'RemoveMe'),
     ('snmp-server host 1.1.1.1 version 2c {}', 'RemoveMe'),
-    ('snmp-server host 1.1.1.1 {} vrrp', 'RemoveMe')
+    ('snmp-server host 1.1.1.1 {} vrrp', 'RemoveMe'),
+    ('snmp-server mib community-map {}:100 context public1', 'RemoveMe')
 ]
 
 # TODO(https://github.com/intentionet/netconan/issues/4):
