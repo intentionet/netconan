@@ -110,14 +110,15 @@ class SensitiveWordAnonymizer:
 
     def anonymize(self, line):
         """Anonymize sensitive words from the input line."""
-        leading, words, trailing = _split_line(line)
         if self.sens_regex.search(line) is not None:
+            leading, words, trailing = _split_line(line)
             # Anonymize only words that do not match the conflicting (reserved) words
             words = [
                 w if w in self.conflicting_words else self.sens_regex.sub(self._lookup_anon_word, w) for w in words
             ]
-        # Restore leading and trailing whitespace for readability and context
-        return leading + ' '.join(words) + trailing
+            # Restore leading and trailing whitespace since those were removed when splitting into words
+            line = leading + ' '.join(words) + trailing
+        return line
 
     def _generate_conflicting_reserved_word_list(self, sensitive_words):
         """Return a list of reserved words that may conflict with the specified sensitive words."""
