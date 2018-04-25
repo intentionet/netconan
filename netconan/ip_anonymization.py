@@ -60,7 +60,7 @@ def _ensure_unicode(str):
 
 
 @add_metaclass(ABCMeta)
-class _BaseIpAnonymizer:
+class _BaseIpAnonymizer(object):
     def __init__(self, salt, length, salter=_generate_bit_from_hash):
         self.salt = salt
         self.cache = bidict({'': ''})

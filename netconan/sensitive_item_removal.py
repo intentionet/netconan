@@ -52,7 +52,7 @@ _ANON_SENSITIVE_WORD_LEN = 6
 _PASSWORD_ENCLOSING_TEXT = ['\'', '"', '\\\'', '\\"']
 
 
-class AsNumberAnonymizer:
+class AsNumberAnonymizer(object):
     """An anonymizer for AS numbers."""
 
     # AS number block boundaries - each number corresponds to beginning of the next AS num block
@@ -97,7 +97,7 @@ class AsNumberAnonymizer:
         return self.as_num_regex
 
 
-class SensitiveWordAnonymizer:
+class SensitiveWordAnonymizer(object):
     """An anonymizer for sensitive keywords."""
 
     def __init__(self, sensitive_words, salt, reserved_words=default_reserved_words):
