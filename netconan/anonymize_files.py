@@ -22,8 +22,8 @@ import string
 from .ip_anonymization import (
     IpAnonymizer, IpV6Anonymizer, anonymize_ip_addr)
 from .sensitive_item_removal import (
-    anonymize_as_numbers, anonymize_sensitive_words, AsNumberAnonymizer, replace_matching_item,
-    generate_default_sensitive_item_regexes, generate_sensitive_word_regexes)
+    anonymize_as_numbers, AsNumberAnonymizer, replace_matching_item,
+    SensitiveWordAnonymizer, generate_default_sensitive_item_regexes)
 
 _DEFAULT_SALT_LENGTH = 16
 _CHAR_CHOICES = string.ascii_letters + string.digits
@@ -36,9 +36,9 @@ def anonymize_files_in_dir(input_dir_path, output_dir_path, anon_pwd, anon_ip,
     anonymizer4 = None
     anonymizer6 = None
     anonymizer_as_num = None
+    anonymizer_sensitive_word = None
     compiled_regexes = None
     pwd_lookup = None
-    sensitive_word_regexes = None
     # The salt is only used for IP and sensitive word anonymization:
     if salt is None:
         salt = ''.join(random.choice(_CHAR_CHOICES) for _ in range(_DEFAULT_SALT_LENGTH))
@@ -48,7 +48,7 @@ def anonymize_files_in_dir(input_dir_path, output_dir_path, anon_pwd, anon_ip,
         compiled_regexes = generate_default_sensitive_item_regexes()
         pwd_lookup = {}
     if sensitive_words is not None:
-        sensitive_word_regexes = generate_sensitive_word_regexes(sensitive_words)
+        anonymizer_sensitive_word = SensitiveWordAnonymizer(sensitive_words, salt)
     if anon_ip or undo_ip_anon:
         anonymizer4 = IpAnonymizer(salt)
         anonymizer6 = IpV6Anonymizer(salt)
@@ -60,10 +60,10 @@ def anonymize_files_in_dir(input_dir_path, output_dir_path, anon_pwd, anon_ip,
         output_file = os.path.join(output_dir_path, file_name)
         if os.path.isfile(input_file) and not file_name.startswith('.'):
             logging.info("Anonymizing %s", file_name)
-            anonymize_file(input_file, output_file, salt,
+            anonymize_file(input_file, output_file,
                            compiled_regexes=compiled_regexes,
                            pwd_lookup=pwd_lookup,
-                           sensitive_word_regexes=sensitive_word_regexes,
+                           anonymizer_sensitive_word=anonymizer_sensitive_word,
                            anonymizer_as_num=anonymizer_as_num,
                            undo_ip_anon=undo_ip_anon,
                            anonymizer4=anonymizer4,
@@ -75,9 +75,9 @@ def anonymize_files_in_dir(input_dir_path, output_dir_path, anon_pwd, anon_ip,
             anonymizer6.dump_to_file(f_out)
 
 
-def anonymize_file(filename_in, filename_out, salt, compiled_regexes=None,
+def anonymize_file(filename_in, filename_out, compiled_regexes=None,
                    anonymizer4=None, anonymizer6=None, pwd_lookup=None,
-                   sensitive_word_regexes=None, anonymizer_as_num=None,
+                   anonymizer_sensitive_word=None, anonymizer_as_num=None,
                    undo_ip_anon=False):
     """Anonymize contents of input file and save to the output file.
 
@@ -98,9 +98,8 @@ def anonymize_file(filename_in, filename_out, salt, compiled_regexes=None,
             if anonymizer4 is not None:
                 output_line = anonymize_ip_addr(anonymizer4, output_line, undo_ip_anon)
 
-            if sensitive_word_regexes is not None:
-                output_line = anonymize_sensitive_words(sensitive_word_regexes,
-                                                        output_line, salt)
+            if anonymizer_sensitive_word is not None:
+                output_line = anonymizer_sensitive_word.anonymize(output_line)
 
             if anonymizer_as_num is not None:
                 output_line = anonymize_as_numbers(anonymizer_as_num, output_line)

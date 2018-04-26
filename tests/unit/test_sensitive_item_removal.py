@@ -14,9 +14,9 @@
 #   limitations under the License.
 
 from netconan.sensitive_item_removal import (
-    anonymize_as_numbers, anonymize_sensitive_words, AsNumberAnonymizer,
+    anonymize_as_numbers, AsNumberAnonymizer,
     replace_matching_item, generate_default_sensitive_item_regexes,
-    generate_sensitive_word_regexes, _sensitive_item_formats,
+    SensitiveWordAnonymizer, _sensitive_item_formats,
     _anonymize_value, _check_sensitive_item_format, _extract_enclosing_text)
 import pytest
 
@@ -303,16 +303,16 @@ def test_as_number_invalid(invalid_as_number):
 ])
 def test_anonymize_sensitive_words(raw_line, sensitive_words):
     """Test anonymization of specified sensitive words."""
-    sens_word_regexes = generate_sensitive_word_regexes(sensitive_words)
+    sens_word_anonymizer = SensitiveWordAnonymizer(sensitive_words, SALT, [])
     line = raw_line.format(*sensitive_words)
-    anon_line = anonymize_sensitive_words(sens_word_regexes, line, SALT)
+    anon_line = sens_word_anonymizer.anonymize(line)
 
     # Now anonymize each sensitive word individually & build another anon line
-    anon_words = [anonymize_sensitive_words(sens_word_regexes, word, SALT) for word in sensitive_words]
+    anon_words = [sens_word_anonymizer.anonymize(word) for word in sensitive_words]
     individually_anon_line = raw_line.format(*anon_words)
 
-    anon_line_lower = anonymize_sensitive_words(sens_word_regexes, line.lower(), SALT)
-    anon_line_upper = anonymize_sensitive_words(sens_word_regexes, line.upper(), SALT)
+    anon_line_lower = sens_word_anonymizer.anonymize(line.lower())
+    anon_line_upper = sens_word_anonymizer.anonymize(line.upper())
 
     # Make sure reanonymizing each word individually gives the same result as
     # anonymizing all at once, the first time
@@ -330,6 +330,25 @@ def test_anonymize_sensitive_words(raw_line, sensitive_words):
         assert(sens_word.upper() not in anon_line_upper)
 
 
+def test_anonymize_sensitive_words_preserve_reserved_word():
+    """Test preservation of reserved words when anonymizing sensitive words."""
+    reserved_word = 'search'
+    keyword = 'sea'
+    keyword_plural = 'seas'
+    line = '{reserved_word} {keyword} {keyword_plural}'\
+        .format(reserved_word=reserved_word, keyword=keyword, keyword_plural=keyword_plural)
+
+    anonymizer = SensitiveWordAnonymizer([keyword], SALT, [reserved_word])
+    anon_line = anonymizer.anonymize(line)
+
+    # Confirm keyword and plural keyword are removed from the line
+    assert(keyword not in anon_line.split())
+    assert(keyword_plural not in anon_line.split())
+
+    # Confirm the reserved word was not replaced
+    assert(reserved_word in anon_line.split())
+
+
 @pytest.mark.parametrize('val', unique_passwords)
 def test__anonymize_value(val):
     """Test sensitive item anonymization."""
@@ -344,7 +363,7 @@ def test__anonymize_value(val):
     # Confirm format for anonmymized value matches format of the original value
     assert(anon_val_format == val_format)
 
-    if (val_format == _sensitive_item_formats.md5):
+    if val_format == _sensitive_item_formats.md5:
         org_salt_size = len(val.split('$')[2])
         anon_salt_size = len(anon_val.split('$')[2])
         # Make sure salt size is preserved for md5 sensitive items
