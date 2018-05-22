@@ -14,7 +14,7 @@
 #   limitations under the License.
 
 # These are important tokens in network device configs and should not be modified by keyword anonymization
-default_reserved_words = [
+default_reserved_words = {
     '3des',
     '3des-cbc',
     '3des-sha1',
@@ -3199,4 +3199,4 @@ default_reserved_words = [
     'yellow',
     'zone',
     'zones'
-]
+}

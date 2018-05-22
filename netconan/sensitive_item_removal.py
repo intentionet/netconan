@@ -33,7 +33,8 @@ extra_password_regexes = [
     [('encrypted-password \K(\S+)', None)],
     [('key "\K([^"]+)', 1)],
     [('key-hash sha256 (\S+)', 1)],
-    [('set community \K(\S+)', 1)],
+    # Replace communities that do not look like well-known BGP communities (i.e. snmp communities)
+    [('set community \K((?!\d+|\d+\:\d+|gshut|internet|local-AS|no-advertise|no-export|none).+)', 1)],
     [('snmp-server mib community-map \K([^ :]+)', 1)],
     # Catch-all's matching what looks like hashed passwords
     [('\K("?\$9\$[^\s;"]+)', 1)],
@@ -269,7 +270,7 @@ def generate_default_sensitive_item_regexes():
             for group in combined_regexes]
 
 
-def replace_matching_item(compiled_regexes, input_line, pwd_lookup):
+def replace_matching_item(compiled_regexes, input_line, pwd_lookup, reserved_words=default_reserved_words):
     """If line matches a regex, anonymize or remove the line."""
     # Collapse whitespace to simplify regexes, also preserve leading and trailing whitespace
     leading, words, trailing = _split_line(input_line)
@@ -299,6 +300,9 @@ def replace_matching_item(compiled_regexes, input_line, pwd_lookup):
                 return '! Sensitive line SCRUBBED by netconan\n'
 
             sensitive_val = match.group(sensitive_item_num)
+            if sensitive_val in reserved_words:
+                logging.debug('Skipping anonymization of reserved word: "%s"', sensitive_val)
+                break
             anon_val = _anonymize_value(sensitive_val, pwd_lookup)
             output_line = compiled_re.sub(anon_val, output_line)
             logging.debug(

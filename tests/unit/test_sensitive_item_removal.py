@@ -419,6 +419,17 @@ def test_pwd_removal(regexes, config_line, sensitive_text):
     assert(sensitive_text not in replace_matching_item(regexes, config_line, pwd_lookup))
 
 
+@pytest.mark.parametrize('config_line', [
+    'password ipaddress',
+    'set community p2p',
+    'digest secret snmp'
+])
+def test_pwd_removal_preserve_reserved_word(regexes, config_line):
+    """Test that reserved words are preserved even if they appear in password lines."""
+    pwd_lookup = {}
+    assert (config_line == replace_matching_item(regexes, config_line, pwd_lookup))
+
+
 @pytest.mark.parametrize('whitespace', [
     ' ',
     '\t',
@@ -486,7 +497,15 @@ def test_pwd_removal_append(regexes, config_line, sensitive_text, append_text):
 @pytest.mark.parametrize('config_line', [
     'nothing in this string should be replaced',
     '      interface GigabitEthernet0/0',
-    'ip address 1.2.3.4 255.255.255.0'
+    'ip address 1.2.3.4 255.255.255.0',
+    'set community 12345',
+    'set community 1234:5678',
+    'set community gshut',
+    'set community internet',
+    'set community local-AS',
+    'set community no-advertise',
+    'set community no-export',
+    'set community none',
 ])
 def test_pwd_removal_insensitive_lines(regexes, config_line):
     """Make sure benign lines are not affected by sensitive_item_removal."""
