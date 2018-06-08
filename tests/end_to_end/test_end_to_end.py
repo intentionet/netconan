@@ -25,6 +25,8 @@ def test_end_to_end(tmpdir):
 ip address 192.168.2.1 255.255.255.255
 my hash is $1$salt$ABCDEFGHIJKLMNOPQRS
 AS num 12345 and 65432 should be changed
+password foobar
+password reservedword
 
 """
     ref_contents = """
@@ -32,6 +34,8 @@ AS num 12345 and 65432 should be changed
 ip address 201.235.139.13 255.255.255.255
 my hash is $1$0000$CxUUGIrqPb7GaB5midrQZ.
 AS num 8625 and 64818 should be changed
+password netconanRemoved1
+password reservedword
 
 """
 
@@ -52,6 +56,7 @@ AS num 8625 and 64818 should be changed
         '-a',
         '-p',
         '-w', 'intentionet,sensitive',
+        '-r', 'reservedword',
         '-n', '65432,12345'
     ]
     main(args)

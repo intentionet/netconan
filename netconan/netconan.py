@@ -54,6 +54,8 @@ def _parse_args(argv):
                         help='Directory to place anonymized files')
     parser.add_argument('-p', '--anonymize-passwords', action='store_true', default=False,
                         help='Anonymize password and snmp community lines')
+    parser.add_argument('-r', '--reserved-words', default=None,
+                        help='List of comma separated words that should not be anonymized')
     parser.add_argument('-s', '--salt', default=None,
                         help='Salt for IP and sensitive keyword anonymization')
     parser.add_argument('-u', '--undo', action='store_true', default=False,
@@ -98,16 +100,20 @@ def main(argv=sys.argv[1:]):
             raise ValueError('Can only dump IP address map when anonymizing IP '
                              'addresses.')
 
-    sensitive_words = None
-    if args.sensitive_words is not None:
-        sensitive_words = args.sensitive_words.split(',')
-
     as_numbers = None
     if args.as_numbers is not None:
         as_numbers = args.as_numbers.split(',')
 
+    reserved_words = None
+    if args.reserved_words is not None:
+        reserved_words = args.reserved_words.split(',')
+
+    sensitive_words = None
+    if args.sensitive_words is not None:
+        sensitive_words = args.sensitive_words.split(',')
+
     anonymize_files_in_dir(args.input, args.output, args.anonymize_passwords, args.anonymize_ips, args.salt,
-                           args.dump_ip_map, sensitive_words, args.undo, as_numbers)
+                           args.dump_ip_map, sensitive_words, args.undo, as_numbers, reserved_words)
 
 
 if __name__ == '__main__':

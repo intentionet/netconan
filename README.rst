@@ -91,7 +91,8 @@ For more information about less commonly-used features, see the Netconan help (`
 
     usage: netconan [-h] [-a] [-c CONFIG] [-d DUMP_IP_MAP] -i INPUT
                     [-l {DEBUG,INFO,WARNING,ERROR,CRITICAL}] [-n AS_NUMBERS] -o
-                    OUTPUT [-p] [-s SALT] [-u] [-w SENSITIVE_WORDS]
+                    OUTPUT [-p] [-r RESERVED_WORDS] [-s SALT] [-u]
+                    [-w SENSITIVE_WORDS]
 
     Args that can start with '--' can also be set in a config file (specified via
     -c). If an arg is specified in more than one place, then command line values
@@ -116,6 +117,9 @@ For more information about less commonly-used features, see the Netconan help (`
                             Directory to place anonymized files
       -p, --anonymize-passwords
                             Anonymize password and snmp community lines
+      -r RESERVED_WORDS, --reserved-words RESERVED_WORDS
+                            List of comma separated words that should not be
+                            anonymized
       -s SALT, --salt SALT  Salt for IP and sensitive keyword anonymization
       -u, --undo            Undo reversible anonymization (must specify salt)
       -w SENSITIVE_WORDS, --sensitive-words SENSITIVE_WORDS
