@@ -302,7 +302,7 @@ def replace_matching_item(compiled_regexes, input_line, pwd_lookup, reserved_wor
             sensitive_val = match.group(sensitive_item_num)
             if sensitive_val in reserved_words:
                 logging.debug('Skipping anonymization of reserved word: "%s"', sensitive_val)
-                break
+                continue
             anon_val = _anonymize_value(sensitive_val, pwd_lookup)
             output_line = compiled_re.sub(anon_val, output_line)
             logging.debug(
