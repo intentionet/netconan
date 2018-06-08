@@ -420,8 +420,8 @@ def test_pwd_removal(regexes, config_line, sensitive_text):
 
 
 @pytest.mark.parametrize('config_line, sensitive_text', [
-('snmp-server user Someone Somegroup auth md5 ipaddress priv {0} something', 'RemoveMe'),
-('snmp-server user Someone Somegroup auth md5 {0} priv ipaddress something', 'RemoveMe')
+    ('snmp-server user Someone Somegroup auth md5 ipaddress priv {0} something', 'RemoveMe'),
+    ('snmp-server user Someone Somegroup auth md5 {0} priv ipaddress something', 'RemoveMe')
 ])
 def test_pwd_removal_and_preserve_reserved_word(regexes, config_line, sensitive_text):
     """Test removal of passwords when reserved words must be skipped."""
