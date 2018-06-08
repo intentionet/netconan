@@ -19,6 +19,7 @@ import os
 import random
 import string
 
+from .default_reserved_words import default_reserved_words
 from .ip_anonymization import (
     IpAnonymizer, IpV6Anonymizer, anonymize_ip_addr)
 from .sensitive_item_removal import (
@@ -31,7 +32,7 @@ _CHAR_CHOICES = string.ascii_letters + string.digits
 
 def anonymize_files_in_dir(input_dir_path, output_dir_path, anon_pwd, anon_ip,
                            salt=None, dumpfile=None, sensitive_words=None,
-                           undo_ip_anon=False, as_numbers=None):
+                           undo_ip_anon=False, as_numbers=None, reserved_words=None):
     """Anonymize each file in input directory and save to output directory."""
     anonymizer4 = None
     anonymizer6 = None
@@ -47,6 +48,9 @@ def anonymize_files_in_dir(input_dir_path, output_dir_path, anon_pwd, anon_ip,
     if anon_pwd:
         compiled_regexes = generate_default_sensitive_item_regexes()
         pwd_lookup = {}
+    if reserved_words is not None:
+        default_reserved_words.update(reserved_words)
+
     if sensitive_words is not None:
         anonymizer_sensitive_word = SensitiveWordAnonymizer(sensitive_words, salt)
     if anon_ip or undo_ip_anon:
