@@ -511,11 +511,13 @@ def test_pwd_removal_append(regexes, config_line, sensitive_text, append_text):
     'ip address 1.2.3.4 255.255.255.0',
     'set community 12345',
     'set community 1234:5678',
+    'set community (1234:5678)',
     'set community gshut',
     'set community internet',
     'set community local-AS',
     'set community no-advertise',
     'set community no-export',
+    'set community (no-export)',
     'set community none',
 ])
 def test_pwd_removal_insensitive_lines(regexes, config_line):

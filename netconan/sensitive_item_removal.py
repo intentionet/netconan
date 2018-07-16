@@ -34,7 +34,7 @@ extra_password_regexes = [
     [('key "\K([^"]+)', 1)],
     [('key-hash sha256 (\S+)', 1)],
     # Replace communities that do not look like well-known BGP communities (i.e. snmp communities)
-    [('set community \K((?!\d+|\d+\:\d+|gshut|internet|local-AS|no-advertise|no-export|none).+)', 1)],
+    [('set community \K((?!\(?(\d+|\d+\:\d+|gshut|internet|local-AS|no-advertise|no-export|none)\)?).+)', 1)],
     [('snmp-server mib community-map \K([^ :]+)', 1)],
     # Catch-all's matching what looks like hashed passwords
     [('\K("?\$9\$[^\s;"]+)', 1)],
