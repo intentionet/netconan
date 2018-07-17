@@ -125,7 +125,9 @@ arista_password_lines = [
 
 misc_password_lines = [
     ('my password is ', '$1$salt$abcdefghijklmnopqrs'),
-    ('set community {}', 'RemoveMe')
+    ('set community {} trailing text', 'RemoveMe'),
+    ('set community {}', '1234a'),
+    ('set community {}', 'a1234')
 ]
 
 sensitive_lines = (cisco_password_lines +
@@ -512,6 +514,8 @@ def test_pwd_removal_append(regexes, config_line, sensitive_text, append_text):
     'set community 12345',
     'set community 1234:5678',
     'set community (1234:5678)',
+    'set community 1234:5678 additive',
+    'set community (1234:5678) additive',
     'set community gshut',
     'set community internet',
     'set community local-AS',

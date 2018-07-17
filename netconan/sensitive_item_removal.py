@@ -27,19 +27,6 @@ from .default_reserved_words import default_reserved_words
 from passlib.hash import cisco_type7, md5_crypt, sha512_crypt
 from six import b
 
-# These are extra regexes to find lines that seem like they might contain
-# sensitive info (these are not already caught by RANCID default regexes)
-extra_password_regexes = [
-    [('encrypted-password \K(\S+)', None)],
-    [('key "\K([^"]+)', 1)],
-    [('key-hash sha256 (\S+)', 1)],
-    # Replace communities that do not look like well-known BGP communities (i.e. snmp communities)
-    [('set community \K((?!\(?(\d+|\d+\:\d+|gshut|internet|local-AS|no-advertise|no-export|none)\)?).+)', 1)],
-    [('snmp-server mib community-map \K([^ :]+)', 1)],
-    # Catch-all's matching what looks like hashed passwords
-    [('\K("?\$9\$[^\s;"]+)', 1)],
-    [('\K("?\$1\$[^\s;"]+)', 1)],
-]
 
 # A regex matching any of the characters that are allowed to precede a password regex
 # (e.g. sensitive line is allowed to be in quotes or after a colon)
@@ -49,8 +36,26 @@ _ALLOWED_REGEX_PREFIX = '(?:[^-_a-zA-Z\d] ?|^ ?)'
 # Number of digits to extract from hash for sensitive keyword replacement
 _ANON_SENSITIVE_WORD_LEN = 6
 
+# Communities that are not SNMP communities and should be ignored/not anonymized
+# This includes well-known BGP communities and numeric communities (can be in parenthesis, as allowed in Cisco XR)
+_IGNORED_COMMUNITIES = '(\(?(\d+|\d+\:\d+|gshut|internet|local-AS|no-advertise|no-export|none)\)?(?!\S))'
+
 # Text that is allowed to surround passwords, to be preserved
 _PASSWORD_ENCLOSING_TEXT = ['\'', '"', '\\\'', '\\"']
+
+# These are extra regexes to find lines that seem like they might contain
+# sensitive info (these are not already caught by RANCID default regexes)
+extra_password_regexes = [
+    [('encrypted-password \K(\S+)', None)],
+    [('key "\K([^"]+)', 1)],
+    [('key-hash sha256 (\S+)', 1)],
+    # Replace communities that do not look like well-known BGP communities (i.e. snmp communities)
+    [('set community \K((?!{ignore})\S+)'.format(ignore=_IGNORED_COMMUNITIES), 1)],
+    [('snmp-server mib community-map \K([^ :]+)', 1)],
+    # Catch-all's matching what looks like hashed passwords
+    [('\K("?\$9\$[^\s;"]+)', 1)],
+    [('\K("?\$1\$[^\s;"]+)', 1)],
+]
 
 
 class AsNumberAnonymizer(object):
