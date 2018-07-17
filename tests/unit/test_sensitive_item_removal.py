@@ -125,7 +125,7 @@ arista_password_lines = [
 
 misc_password_lines = [
     ('my password is ', '$1$salt$abcdefghijklmnopqrs'),
-    ('set community {}', 'RemoveMe'),
+    ('set community {} trailing text', 'RemoveMe'),
     ('set community {}', '1234a'),
     ('set community {}', 'a1234')
 ]
