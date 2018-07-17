@@ -37,7 +37,7 @@ _ALLOWED_REGEX_PREFIX = '(?:[^-_a-zA-Z\d] ?|^ ?)'
 _ANON_SENSITIVE_WORD_LEN = 6
 
 # Communities that are not SNMP communities and should be ignored/not anonymized
-# This include well-known BGP communities and numeric communities (can be in parenthesis, as allowed in Cisco XR)
+# This includes well-known BGP communities and numeric communities (can be in parenthesis, as allowed in Cisco XR)
 _IGNORED_COMMUNITIES = '(\(?(\d+|\d+\:\d+|gshut|internet|local-AS|no-advertise|no-export|none)\)?(?!\S))'
 
 # Text that is allowed to surround passwords, to be preserved
