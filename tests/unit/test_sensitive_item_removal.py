@@ -100,7 +100,8 @@ cisco_snmp_community_lines = [
     ('snmp-server host 1.1.1.1 version 2c {}', 'RemoveMe'),
     ('snmp-server host 1.1.1.1 {} vrrp', 'RemoveMe'),
     ('snmp-server mib community-map {}:100 context public1', 'RemoveMe'),
-    ('snmp-server community {} RW 2', 'secretcommunity')
+    ('snmp-server community {} RW 2', 'secretcommunity'),
+    ('rf-switch snmp-community {}', 'RemoveMe')
 ]
 
 # TODO(https://github.com/intentionet/netconan/issues/4):
