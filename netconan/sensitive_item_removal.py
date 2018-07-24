@@ -52,6 +52,7 @@ extra_password_regexes = [
     # Replace communities that do not look like well-known BGP communities (i.e. snmp communities)
     [('set community \K((?!{ignore})\S+)'.format(ignore=_IGNORED_COMMUNITIES), 1)],
     [('snmp-server mib community-map \K([^ :]+)', 1)],
+    [('snmp-community \K(\S+)', 1)],
     # Catch-all's matching what looks like hashed passwords
     [('\K("?\$9\$[^\s;"]+)', 1)],
     [('\K("?\$1\$[^\s;"]+)', 1)],
