@@ -101,7 +101,7 @@ default_pwd_line_regexes = [
 ]
 # Taken from RANCID community scrubbing regexes
 default_com_line_regexes = [
-    [('((snmp-server .*community)( [08])?) \K(\S+)', 4)],
+    [('((snmp-server (\S+ )*community)( [08])?) \K(\S+)', 5)],
     # TODO(https://github.com/intentionet/netconan/issues/5):
     # Confirm this catches all community possibilities for snmp-server
     [('(snmp-server host (\S+)( informs| traps| version '
