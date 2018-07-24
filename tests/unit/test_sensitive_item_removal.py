@@ -31,6 +31,7 @@ cisco_password_lines = [
     ('username Someone password 7 {}', '122A00190102180D3C2E'),
     ('enable password level 12 {}', 'RemoveMe'),
     ('enable password 7 {}', '122A00190102180D3C2E'),
+    ('enable password level 3 5 {}', '$1$wtHI$0rN7R8PKwC30AsCGA77vy.'),
     ('enable secret 5 {}', '$1$wtHI$0rN7R8PKwC30AsCGA77vy.'),
     ('username Someone view Someview password 7 {}', '122A00190102180D3C2E'),
     ('username Someone password {}', 'RemoveMe'),

@@ -44,9 +44,8 @@
 #  2. sensitive item regex-match-index
 #       note that if this is None, any matching config line will be removed
 default_pwd_line_regexes = [
-    [('(password( level)?( \d+)?) \K(\S+)', 4)],
+    [('((password|passwd)( level \d+)?( \d+)?) \K(\S+)', 5)],
     [('(username( \S+)+ (password|secret)( \d| sha512)?) \K(\S+)', 5)],
-    [('((enable )?(password|passwd)( level \d+)?( \d)?) \K(\S+)', 6)],
     [('((enable )?secret( \d)?) \K(\S+)', 4)],
     [('(ip ftp password( \d)?) \K(\S+)', 3)],
     [('(ip ospf authentication-key( \d)?) \K(\S+)', 3)],
