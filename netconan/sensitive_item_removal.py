@@ -42,7 +42,7 @@ _ANON_SENSITIVE_WORD_LEN = 6
 # Text followed by the word 'additive'
 _IGNORED_COMM_ADDITIVE = '\S+ additive'
 # Numeric, colon separated, and parameter ($) communities
-_IGNORED_COMM_COLON = '(peeras|\$\w+|\d+)(\:(peeras|\$\w+|\d+))?'
+_IGNORED_COMM_COLON = '(peeras|\$\w+|\d+)\:(peeras|\$\w+|\d+)'
 # List of communities enclosed in parenthesis, being permissive here for the
 # content inside the parenthesis for simplicity
 _IGNORED_COMM_LIST = '\([\S ]+\)'
