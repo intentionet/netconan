@@ -28,17 +28,31 @@ from passlib.hash import cisco_type7, md5_crypt, sha512_crypt
 from six import b
 
 
-# A regex matching any of the characters that are allowed to precede a password regex
-# (e.g. sensitive line is allowed to be in quotes or after a colon)
+# A regex matching any of the characters that are allowed to precede a password
+# regex (e.g. sensitive line is allowed to be in quotes or after a colon)
 # This is an ignored group, so it does not muck with the password regex indicies
 _ALLOWED_REGEX_PREFIX = '(?:[^-_a-zA-Z\d] ?|^ ?)'
 
 # Number of digits to extract from hash for sensitive keyword replacement
 _ANON_SENSITIVE_WORD_LEN = 6
 
-# Communities that are not SNMP communities and should be ignored/not anonymized
-# This includes well-known BGP communities and numeric communities (can be in parenthesis, as allowed in Cisco XR)
-_IGNORED_COMMUNITIES = '(\(?(\d+|\d+\:\d+|gshut|internet|local-AS|no-advertise|no-export|none)\)?(?!\S))'
+# BGP communities should be ignored/not anonymized, and can be detected by the
+# following patterns, mostly extracted from examples at
+# https://www.cisco.com/c/en/us/td/docs/routers/crs/software/crs_r4-1/routing/command/reference/b_routing_cr41crs/b_routing_cr41crs_chapter_01000.html
+# Text followed by the word 'additive'
+_IGNORED_COMM_ADDITIVE = '\S+ additive'
+# Numeric, colon separated, and parameter ($) communities
+_IGNORED_COMM_COLON = '(peeras|\$\w+|\d+)\:(peeras|\$\w+|\d+)'
+# List of communities enclosed in parenthesis, being permissive here for the
+# content inside the parenthesis for simplicity
+_IGNORED_COMM_LIST = '\([\S ]+\)'
+# Well-known BPG communities
+_IGNORED_COMM_WELL_KNOWN = 'gshut|internet|local-AS|no-advertise|no-export|none'
+_IGNORED_COMMUNITIES = ('((\d+|{additive}|{colon}|{list}|{well_known})(?!\S))'
+                        .format(additive=_IGNORED_COMM_ADDITIVE,
+                                colon=_IGNORED_COMM_COLON,
+                                list=_IGNORED_COMM_LIST,
+                                well_known=_IGNORED_COMM_WELL_KNOWN))
 
 # Text that is allowed to surround passwords, to be preserved
 _PASSWORD_ENCLOSING_TEXT = ['\'', '"', '\\\'', '\\"']
@@ -49,8 +63,10 @@ extra_password_regexes = [
     [('encrypted-password \K(\S+)', None)],
     [('key "\K([^"]+)', 1)],
     [('key-hash sha256 (\S+)', 1)],
-    # Replace communities that do not look like well-known BGP communities (i.e. snmp communities)
-    [('set community \K((?!{ignore})\S+)'.format(ignore=_IGNORED_COMMUNITIES), 1)],
+    # Replace communities that do not look like well-known BGP communities
+    # i.e. snmp communities
+    [('set community \K((?!{ignore})\S+)'
+      .format(ignore=_IGNORED_COMMUNITIES), 1)],
     [('snmp-server mib community-map \K([^ :]+)', 1)],
     [('snmp-community \K(\S+)', 1)],
     # Catch-all's matching what looks like hashed passwords

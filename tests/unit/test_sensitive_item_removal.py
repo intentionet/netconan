@@ -526,6 +526,14 @@ def test_pwd_removal_append(regexes, config_line, sensitive_text, append_text):
     'set community no-export',
     'set community (no-export)',
     'set community none',
+    'set community (12345 123:456 $foo:$bar no-export)',
+    'set community (12345 123:456 $foo:$bar no-export) additive',
+    'set community $foo:123',
+    'set community $foo:$bar',
+    'set community 123:$bar',
+    'set community blah additive',
+    'set community no-export additive',
+    'set community peeras:24',
 ])
 def test_pwd_removal_insensitive_lines(regexes, config_line):
     """Make sure benign lines are not affected by sensitive_item_removal."""
