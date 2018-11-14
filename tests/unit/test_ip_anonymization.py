@@ -280,7 +280,7 @@ def test_dump_iptree(tmpdir, anonymizer_v4):
     with open(filename, 'r') as f_tmp:
         # Build mapping dict from the output of the ip_tree dump
         for line in f_tmp.readlines():
-            m = regex.match('\s*(\d+\.\d+.\d+.\d+)\s+(\d+\.\d+.\d+.\d+)\s*', line)
+            m = regex.match(r'\s*(\d+\.\d+.\d+.\d+)\s+(\d+\.\d+.\d+.\d+)\s*', line)
             ip_addr = m.group(1)
             ip_addr_anon = m.group(2)
             ip_mapping_from_dump[ip_addr] = ip_addr_anon

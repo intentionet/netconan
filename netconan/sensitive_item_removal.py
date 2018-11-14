@@ -31,7 +31,7 @@ from six import b
 # A regex matching any of the characters that are allowed to precede a password
 # regex (e.g. sensitive line is allowed to be in quotes or after a colon)
 # This is an ignored group, so it does not muck with the password regex indicies
-_ALLOWED_REGEX_PREFIX = '(?:[^-_a-zA-Z\d] ?|^ ?)'
+_ALLOWED_REGEX_PREFIX = r'(?:[^-_a-zA-Z\d] ?|^ ?)'
 
 # Number of digits to extract from hash for sensitive keyword replacement
 _ANON_SENSITIVE_WORD_LEN = 6
@@ -40,15 +40,15 @@ _ANON_SENSITIVE_WORD_LEN = 6
 # following patterns, mostly extracted from examples at
 # https://www.cisco.com/c/en/us/td/docs/routers/crs/software/crs_r4-1/routing/command/reference/b_routing_cr41crs/b_routing_cr41crs_chapter_01000.html
 # Text followed by the word 'additive'
-_IGNORED_COMM_ADDITIVE = '\S+ additive'
+_IGNORED_COMM_ADDITIVE = r'\S+ additive'
 # Numeric, colon separated, and parameter ($) communities
-_IGNORED_COMM_COLON = '(peeras|\$\w+|\d+)\:(peeras|\$\w+|\d+)'
+_IGNORED_COMM_COLON = r'(peeras|\$\w+|\d+)\:(peeras|\$\w+|\d+)'
 # List of communities enclosed in parenthesis, being permissive here for the
 # content inside the parenthesis for simplicity
-_IGNORED_COMM_LIST = '\([\S ]+\)'
+_IGNORED_COMM_LIST = r'\([\S ]+\)'
 # Well-known BPG communities
 _IGNORED_COMM_WELL_KNOWN = 'gshut|internet|local-AS|no-advertise|no-export|none'
-_IGNORED_COMMUNITIES = ('((\d+|{additive}|{colon}|{list}|{well_known})(?!\S))'
+_IGNORED_COMMUNITIES = (r'((\d+|{additive}|{colon}|{list}|{well_known})(?!\S))'
                         .format(additive=_IGNORED_COMM_ADDITIVE,
                                 colon=_IGNORED_COMM_COLON,
                                 list=_IGNORED_COMM_LIST,
@@ -60,18 +60,18 @@ _PASSWORD_ENCLOSING_TEXT = ['\'', '"', '\\\'', '\\"']
 # These are extra regexes to find lines that seem like they might contain
 # sensitive info (these are not already caught by RANCID default regexes)
 extra_password_regexes = [
-    [('encrypted-password \K(\S+)', None)],
-    [('key "\K([^"]+)', 1)],
-    [('key-hash sha256 (\S+)', 1)],
+    [(r'encrypted-password \K(\S+)', None)],
+    [(r'key "\K([^"]+)', 1)],
+    [(r'key-hash sha256 (\S+)', 1)],
     # Replace communities that do not look like well-known BGP communities
     # i.e. snmp communities
-    [('set community \K((?!{ignore})\S+)'
+    [(r'set community \K((?!{ignore})\S+)'
       .format(ignore=_IGNORED_COMMUNITIES), 1)],
-    [('snmp-server mib community-map \K([^ :]+)', 1)],
-    [('snmp-community \K(\S+)', 1)],
+    [(r'snmp-server mib community-map \K([^ :]+)', 1)],
+    [(r'snmp-community \K(\S+)', 1)],
     # Catch-all's matching what looks like hashed passwords
-    [('\K("?\$9\$[^\s;"]+)', 1)],
-    [('\K("?\$1\$[^\s;"]+)', 1)],
+    [(r'\K("?\$9\$[^\s;"]+)', 1)],
+    [(r'\K("?\$1\$[^\s;"]+)', 1)],
 ]
 
 
@@ -96,7 +96,8 @@ class AsNumberAnonymizer(object):
         """Generate regex for finding AS number."""
         # Match a non-digit, any of the AS numbers and another non-digit
         # Using lookahead and lookbehind to match on context but not include that context in the match
-        self.as_num_regex = regex.compile('(\D|^)\K(' + '|'.join(as_numbers) + ')(?=\D|$)')
+        self.as_num_regex = regex.compile(r'(\D|^)\K({})(?=\D|$)'.format(
+            '|'.join(as_numbers)))
 
     def _generate_as_number_replacement(self, as_number):
         """Generate a replacement AS number for the given AS number and salt."""
