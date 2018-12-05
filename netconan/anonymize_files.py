@@ -101,15 +101,7 @@ def anonymize_file(filename_in, filename_out, compiled_regexes=None,
     logging.debug("File out %s", filename_out)
 
     # Make parent dirs for output file if they don't exist
-    dirname = os.path.dirname(filename_out)
-    if len(dirname) > 0:
-        try:
-            os.makedirs(dirname)
-        except OSError as e:
-            if e.errno == errno.EEXIST and os.path.isdir(dirname):
-                pass
-            else:
-                raise
+    _mkdirs(filename_out)
 
     with open(filename_out, 'w') as f_out, open(filename_in, 'r') as f_in:
         for line in f_in:
@@ -133,3 +125,16 @@ def anonymize_file(filename_in, filename_out, compiled_regexes=None,
                 logging.debug("Input line:  %s", line.rstrip())
                 logging.debug("Output line: %s", output_line.rstrip())
             f_out.write(output_line)
+
+
+def _mkdirs(file_path):
+    """Make parent directories for the specified file if they don't exist."""
+    dir_path = os.path.dirname(file_path)
+    if len(dir_path) > 0:
+        try:
+            os.makedirs(dir_path)
+        except OSError as e:
+            if e.errno == errno.EEXIST and os.path.isdir(dir_path):
+                pass
+            else:
+                raise
