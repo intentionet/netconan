@@ -13,10 +13,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-import filecmp
-
 import os
-import pytest
 
 from netconan.anonymize_files import anonymize_files
 
@@ -42,17 +39,7 @@ _SENSITIVE_WORDS = [
 ]
 
 
-@pytest.fixture()
-def ref_file(tmpdir):
-    """Create and return path to ref file."""
-    ref_file_path = os.path.join(str(tmpdir), "ref.txt")
-    with open(ref_file_path, 'w') as f:
-        f.write(_REF_CONTENTS)
-        f.flush()
-        yield ref_file_path
-
-
-def test_anonymize_files_dir(tmpdir, ref_file):
+def test_anonymize_files_dir(tmpdir):
     """Test anonymize_files with a file in root of input dir."""
     filename = "test.txt"
     input_dir = tmpdir.mkdir("input")
@@ -64,11 +51,12 @@ def test_anonymize_files_dir(tmpdir, ref_file):
     anonymize_files(str(input_dir), str(output_dir), True, True, salt=_SALT,
                     sensitive_words=_SENSITIVE_WORDS)
 
-    # Make sure output file matches the ref
-    assert(filecmp.cmp(str(ref_file), str(output_file)))
+    # Make sure output file exists and matches the ref
+    assert(os.path.isfile(str(output_file)))
+    assert(read_file(str(output_file)) == _REF_CONTENTS)
 
 
-def test_anonymize_files_dir_skip_hidden(tmpdir, ref_file):
+def test_anonymize_files_dir_skip_hidden(tmpdir):
     """Test that file starting with '.' is skipped."""
     filename = ".test.txt"
     input_dir = tmpdir.mkdir("input")
@@ -85,7 +73,7 @@ def test_anonymize_files_dir_skip_hidden(tmpdir, ref_file):
     assert(not os.path.exists(str(output_file)))
 
 
-def test_anonymize_files_dir_nested(tmpdir, ref_file):
+def test_anonymize_files_dir_nested(tmpdir):
     """Test anonymize_files with a file in a nested dir i.e. not at root of input dir."""
     filename = "test.txt"
     input_dir = tmpdir.mkdir("input")
@@ -97,11 +85,12 @@ def test_anonymize_files_dir_nested(tmpdir, ref_file):
     anonymize_files(str(input_dir), str(output_dir), True, True, salt=_SALT,
                     sensitive_words=_SENSITIVE_WORDS)
 
-    # Make sure output file matches the ref
-    assert(filecmp.cmp(str(ref_file), str(output_file)))
+    # Make sure output file exists and matches the ref
+    assert(os.path.isfile(str(output_file)))
+    assert(read_file(str(output_file)) == _REF_CONTENTS)
 
 
-def test_anonymize_files_file(tmpdir, ref_file):
+def test_anonymize_files_file(tmpdir):
     """Test anonymize_files with input file instead of dir."""
     filename = "test.txt"
     input_file = tmpdir.join(filename)
@@ -112,5 +101,12 @@ def test_anonymize_files_file(tmpdir, ref_file):
     anonymize_files(str(input_file), str(output_file), True, True, salt=_SALT,
                     sensitive_words=_SENSITIVE_WORDS)
 
-    # Make sure output file matches the ref
-    assert(filecmp.cmp(str(ref_file), str(output_file)))
+    # Make sure output file exists and matches the ref
+    assert(os.path.isfile(str(output_file)))
+    assert(read_file(str(output_file)) == _REF_CONTENTS)
+
+
+def read_file(file_path):
+    """Read and return contents of file at specified path."""
+    with open(file_path, 'r') as f:
+        return f.read()
