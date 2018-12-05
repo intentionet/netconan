@@ -19,7 +19,7 @@ import logging
 import os
 import sys
 
-from .anonymize_files import anonymize_files_in_dir
+from .anonymize_files import anonymize_files
 
 
 def _parse_args(argv):
@@ -44,14 +44,14 @@ def _parse_args(argv):
     parser.add_argument('-d', '--dump-ip-map', default=None,
                         help='Dump IP address anonymization map to specified file')
     parser.add_argument('-i', '--input', required=True,
-                        help='Directory containing files to anonymize')
+                        help='Input file or directory containing files to anonymize')
     parser.add_argument('-l', '--log-level', default='INFO',
                         choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
                         help='Determines what level of logs to display')
     parser.add_argument('-n', '--as-numbers', default=None,
                         help='List of comma separated AS numbers to anonymize')
     parser.add_argument('-o', '--output', required=True,
-                        help='Directory to place anonymized files')
+                        help='Output file or directory where anonymized files are placed')
     parser.add_argument('-p', '--anonymize-passwords', action='store_true', default=False,
                         help='Anonymize password and snmp community lines')
     parser.add_argument('-r', '--reserved-words', default=None,
@@ -70,22 +70,20 @@ def main(argv=sys.argv[1:]):
     args = _parse_args(argv)
 
     if not args.input:
-        raise ValueError("Input directory must be specified")
+        raise ValueError("Input must be specified")
 
     if not os.path.exists(args.input):
-        raise ValueError("Input directory does not exist")
+        raise ValueError("Input does not exist")
 
     log_level = logging.getLevelName(args.log_level)
     logging.basicConfig(format='%(levelname)s %(message)s', level=log_level)
 
-    if len(os.listdir(args.input)) == 0:
-        raise ValueError("Input directory is empty")
+    if os.path.isdir(args.input):
+        if len(os.listdir(args.input)) == 0:
+            raise ValueError("Input directory is empty")
 
     if not args.output:
-        raise ValueError("Output directory must be specified")
-
-    if not os.path.exists(args.output):
-        os.makedirs(args.output)
+        raise ValueError("Output must be specified")
 
     if args.undo:
         if args.anonymize_ips:
@@ -112,8 +110,8 @@ def main(argv=sys.argv[1:]):
     if args.sensitive_words is not None:
         sensitive_words = args.sensitive_words.split(',')
 
-    anonymize_files_in_dir(args.input, args.output, args.anonymize_passwords, args.anonymize_ips, args.salt,
-                           args.dump_ip_map, sensitive_words, args.undo, as_numbers, reserved_words)
+    anonymize_files(args.input, args.output, args.anonymize_passwords, args.anonymize_ips, args.salt,
+                    args.dump_ip_map, sensitive_words, args.undo, as_numbers, reserved_words)
 
 
 if __name__ == '__main__':
