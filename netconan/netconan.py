@@ -78,12 +78,16 @@ def main(argv=sys.argv[1:]):
     log_level = logging.getLevelName(args.log_level)
     logging.basicConfig(format='%(levelname)s %(message)s', level=log_level)
 
+    if not args.output:
+        raise ValueError("Output must be specified")
+
     if os.path.isdir(args.input):
         if len(os.listdir(args.input)) == 0:
             raise ValueError("Input directory is empty")
-
-    if not args.output:
-        raise ValueError("Output must be specified")
+    else:
+        if (not os.path.basename(args.output) or
+                (os.path.exists(args.output) and os.path.isdir(args.output))):
+            raise ValueError("Output must be a file if input is a file")
 
     if args.undo:
         if args.anonymize_ips:
