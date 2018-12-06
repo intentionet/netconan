@@ -16,7 +16,6 @@
 from __future__ import absolute_import
 import configargparse
 import logging
-import os
 import sys
 
 from .anonymize_files import anonymize_files
