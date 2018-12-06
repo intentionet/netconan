@@ -60,10 +60,20 @@ def anonymize_files(input_path, output_path, anon_pwd, anon_ip,
     if as_numbers is not None:
         anonymizer_as_num = AsNumberAnonymizer(as_numbers, salt)
 
+    if not os.path.exists(input_path):
+        raise ValueError("Input does not exist")
+
     # Generate list of file tuples: (input file path, output file path)
+    file_list = []
     if os.path.isfile(input_path):
         file_list = [(input_path, output_path)]
     else:
+        if not os.listdir(input_path):
+            raise ValueError("Input directory is empty")
+        if os.path.isfile(output_path):
+            raise ValueError("Output path must be a directory if input path is "
+                             "a directory")
+
         for root, dirs, files in os.walk(input_path):
             rel_root = os.path.relpath(root, input_path)
             file_list = [(
@@ -102,6 +112,11 @@ def anonymize_file(filename_in, filename_out, compiled_regexes=None,
 
     # Make parent dirs for output file if they don't exist
     _mkdirs(filename_out)
+
+    if os.path.isdir(filename_out):
+        raise ValueError('Cannot write output file; '
+                         'output file is a directory ({})'
+                         .format(filename_out))
 
     with open(filename_out, 'w') as f_out, open(filename_in, 'r') as f_in:
         for line in f_in:

@@ -15,6 +15,8 @@
 
 import os
 
+import pytest
+
 from netconan.anonymize_files import anonymize_files
 
 
@@ -37,6 +39,58 @@ _SENSITIVE_WORDS = [
     "intentionet",
     "sensitive",
 ]
+
+
+def test_anonymize_files_bad_input_empty(tmpdir):
+    """Test anonymize_files with empty input dir."""
+    input_dir = tmpdir.mkdir("input")
+    output_dir = tmpdir.mkdir("output")
+
+    with pytest.raises(ValueError, match='Input directory is empty'):
+        anonymize_files(str(input_dir), str(output_dir), True, True, salt=_SALT,
+                        sensitive_words=_SENSITIVE_WORDS)
+
+
+def test_anonymize_files_bad_input_missing(tmpdir):
+    """Test anonymize_files with non-existent input."""
+    filename = "test.txt"
+    input_file = tmpdir.join(filename)
+
+    output_file = tmpdir.mkdir("out").join(filename)
+
+    with pytest.raises(ValueError, match='Input does not exist'):
+        anonymize_files(str(input_file), str(output_file), True, True,
+                        salt=_SALT,
+                        sensitive_words=_SENSITIVE_WORDS)
+
+
+def test_anonymize_files_bad_output_file(tmpdir):
+    """Test anonymize_files when output 'file' already exists but is a dir."""
+    filename = "test.txt"
+    input_file = tmpdir.join(filename)
+    input_file.write(_INPUT_CONTENTS)
+
+    output_file = tmpdir.mkdir("out").mkdir(filename)
+
+    with pytest.raises(ValueError, match='Cannot write output file.*'):
+        anonymize_files(str(input_file), str(output_file), True, True,
+                        salt=_SALT,
+                        sensitive_words=_SENSITIVE_WORDS)
+
+
+def test_anonymize_files_bad_output_dir(tmpdir):
+    """Test anonymize_files when output 'dir' already exists but is a file."""
+    filename = "test.txt"
+    input_dir = tmpdir.mkdir("input")
+    input_dir.join(filename).write(_INPUT_CONTENTS)
+
+    output_file = tmpdir.join("out")
+    output_file.write('blah')
+
+    with pytest.raises(ValueError, match='Output path must be a directory.*'):
+        anonymize_files(str(input_dir), str(output_file), True, True,
+                        salt=_SALT,
+                        sensitive_words=_SENSITIVE_WORDS)
 
 
 def test_anonymize_files_dir(tmpdir):
