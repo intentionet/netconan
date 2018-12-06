@@ -64,7 +64,6 @@ def anonymize_files(input_path, output_path, anon_pwd, anon_ip,
         raise ValueError("Input does not exist")
 
     # Generate list of file tuples: (input file path, output file path)
-    file_list = []
     if os.path.isfile(input_path):
         file_list = [(input_path, output_path)]
     else:
