@@ -83,7 +83,7 @@ For *reversible operations* (specifically, IP address anonymization), Netconan c
 Running netconan
 ================
 
-Netconan processes all files not starting with ``.`` housed in the top level of the specified input directory and saves processed files in the specified output directory.
+Netconan processes the ``input`` file or recursively processes files in the ``input`` directory (skipping files starting with ``.``) and saves processed files at the specified ``output``.
 
 For more information about less commonly-used features, see the Netconan help (``-h``).  For more information on config file syntax, see `here <https://goo.gl/R74nmi>`_.
 
@@ -108,13 +108,13 @@ For more information about less commonly-used features, see the Netconan help (`
       -d DUMP_IP_MAP, --dump-ip-map DUMP_IP_MAP
                             Dump IP address anonymization map to specified file
       -i INPUT, --input INPUT
-                            Directory containing files to anonymize
+                            Input file or directory containing files to anonymize
       -l {DEBUG,INFO,WARNING,ERROR,CRITICAL}, --log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}
                             Determines what level of logs to display
       -n AS_NUMBERS, --as-numbers AS_NUMBERS
                             List of comma separated AS numbers to anonymize
       -o OUTPUT, --output OUTPUT
-                            Directory to place anonymized files
+                            Output file or directory where anonymized files are placed
       -p, --anonymize-passwords
                             Anonymize password and snmp community lines
       -r RESERVED_WORDS, --reserved-words RESERVED_WORDS

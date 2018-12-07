@@ -14,6 +14,7 @@
 #   limitations under the License.
 
 from __future__ import absolute_import
+import errno
 import logging
 import os
 import random
@@ -30,10 +31,10 @@ _DEFAULT_SALT_LENGTH = 16
 _CHAR_CHOICES = string.ascii_letters + string.digits
 
 
-def anonymize_files_in_dir(input_dir_path, output_dir_path, anon_pwd, anon_ip,
-                           salt=None, dumpfile=None, sensitive_words=None,
-                           undo_ip_anon=False, as_numbers=None, reserved_words=None):
-    """Anonymize each file in input directory and save to output directory."""
+def anonymize_files(input_path, output_path, anon_pwd, anon_ip,
+                    salt=None, dumpfile=None, sensitive_words=None,
+                    undo_ip_anon=False, as_numbers=None, reserved_words=None):
+    """Anonymize each file in input and save to output."""
     anonymizer4 = None
     anonymizer6 = None
     anonymizer_as_num = None
@@ -59,19 +60,36 @@ def anonymize_files_in_dir(input_dir_path, output_dir_path, anon_pwd, anon_ip,
     if as_numbers is not None:
         anonymizer_as_num = AsNumberAnonymizer(as_numbers, salt)
 
-    for file_name in os.listdir(input_dir_path):
-        input_file = os.path.join(input_dir_path, file_name)
-        output_file = os.path.join(output_dir_path, file_name)
-        if os.path.isfile(input_file) and not file_name.startswith('.'):
-            logging.info("Anonymizing %s", file_name)
-            anonymize_file(input_file, output_file,
-                           compiled_regexes=compiled_regexes,
-                           pwd_lookup=pwd_lookup,
-                           anonymizer_sensitive_word=anonymizer_sensitive_word,
-                           anonymizer_as_num=anonymizer_as_num,
-                           undo_ip_anon=undo_ip_anon,
-                           anonymizer4=anonymizer4,
-                           anonymizer6=anonymizer6)
+    if not os.path.exists(input_path):
+        raise ValueError("Input does not exist")
+
+    # Generate list of file tuples: (input file path, output file path)
+    if os.path.isfile(input_path):
+        file_list = [(input_path, output_path)]
+    else:
+        if not os.listdir(input_path):
+            raise ValueError("Input directory is empty")
+        if os.path.isfile(output_path):
+            raise ValueError("Output path must be a directory if input path is "
+                             "a directory")
+
+        for root, dirs, files in os.walk(input_path):
+            rel_root = os.path.relpath(root, input_path)
+            file_list = [(
+                os.path.join(input_path, rel_root, f),
+                os.path.join(output_path, rel_root, f)
+            ) for f in files if not f.startswith('.')]
+
+    for in_path, out_path in file_list:
+        anonymize_file(in_path,
+                       out_path,
+                       compiled_regexes=compiled_regexes,
+                       pwd_lookup=pwd_lookup,
+                       anonymizer_sensitive_word=anonymizer_sensitive_word,
+                       anonymizer_as_num=anonymizer_as_num,
+                       undo_ip_anon=undo_ip_anon,
+                       anonymizer4=anonymizer4,
+                       anonymizer6=anonymizer6)
 
     if dumpfile is not None:
         with open(dumpfile, 'w') as f_out:
@@ -90,6 +108,15 @@ def anonymize_file(filename_in, filename_out, compiled_regexes=None,
     """
     logging.debug("File in  %s", filename_in)
     logging.debug("File out %s", filename_out)
+
+    # Make parent dirs for output file if they don't exist
+    _mkdirs(filename_out)
+
+    if os.path.isdir(filename_out):
+        raise ValueError('Cannot write output file; '
+                         'output file is a directory ({})'
+                         .format(filename_out))
+
     with open(filename_out, 'w') as f_out, open(filename_in, 'r') as f_in:
         for line in f_in:
             output_line = line
@@ -112,3 +139,16 @@ def anonymize_file(filename_in, filename_out, compiled_regexes=None,
                 logging.debug("Input line:  %s", line.rstrip())
                 logging.debug("Output line: %s", output_line.rstrip())
             f_out.write(output_line)
+
+
+def _mkdirs(file_path):
+    """Make parent directories for the specified file if they don't exist."""
+    dir_path = os.path.dirname(file_path)
+    if len(dir_path) > 0:
+        try:
+            os.makedirs(dir_path)
+        except OSError as e:
+            if e.errno == errno.EEXIST and os.path.isdir(dir_path):
+                pass
+            else:
+                raise
