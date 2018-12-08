@@ -128,20 +128,25 @@ def test_anonymize_files_dir_skip_hidden(tmpdir):
 
 
 def test_anonymize_files_dir_nested(tmpdir):
-    """Test anonymize_files with a file in a nested dir i.e. not at root of input dir."""
+    """Test anonymize_files with files in nested dirs i.e. not at root of input dir."""
     filename = "test.txt"
     input_dir = tmpdir.mkdir("input")
-    input_dir.mkdir("subdir").join(filename).write(_INPUT_CONTENTS)
+    input_dir.mkdir("subdir1").join(filename).write(_INPUT_CONTENTS)
+    input_dir.mkdir("subdir2").mkdir("subsubdir").join(filename).write(_INPUT_CONTENTS)
 
     output_dir = tmpdir.mkdir("output")
-    output_file = output_dir.join("subdir").join(filename)
+    output_file_1 = output_dir.join("subdir1").join(filename)
+    output_file_2 = output_dir.join("subdir2").join("subsubdir").join(filename)
 
     anonymize_files(str(input_dir), str(output_dir), True, True, salt=_SALT,
                     sensitive_words=_SENSITIVE_WORDS)
 
-    # Make sure output file exists and matches the ref
-    assert(os.path.isfile(str(output_file)))
-    assert(read_file(str(output_file)) == _REF_CONTENTS)
+    # Make sure both output files exists and match the ref
+    assert(os.path.isfile(str(output_file_1)))
+    assert(read_file(str(output_file_1)) == _REF_CONTENTS)
+
+    assert(os.path.isfile(str(output_file_2)))
+    assert(read_file(str(output_file_2)) == _REF_CONTENTS)
 
 
 def test_anonymize_files_file(tmpdir):

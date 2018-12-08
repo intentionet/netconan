@@ -64,6 +64,7 @@ def anonymize_files(input_path, output_path, anon_pwd, anon_ip,
         raise ValueError("Input does not exist")
 
     # Generate list of file tuples: (input file path, output file path)
+    file_list = []
     if os.path.isfile(input_path):
         file_list = [(input_path, output_path)]
     else:
@@ -75,10 +76,10 @@ def anonymize_files(input_path, output_path, anon_pwd, anon_ip,
 
         for root, dirs, files in os.walk(input_path):
             rel_root = os.path.relpath(root, input_path)
-            file_list = [(
+            file_list.extend([(
                 os.path.join(input_path, rel_root, f),
                 os.path.join(output_path, rel_root, f)
-            ) for f in files if not f.startswith('.')]
+            ) for f in files if not f.startswith('.')])
 
     for in_path, out_path in file_list:
         anonymize_file(in_path,
