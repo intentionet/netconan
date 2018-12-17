@@ -82,15 +82,18 @@ def anonymize_files(input_path, output_path, anon_pwd, anon_ip,
             ) for f in files if not f.startswith('.')])
 
     for in_path, out_path in file_list:
-        anonymize_file(in_path,
-                       out_path,
-                       compiled_regexes=compiled_regexes,
-                       pwd_lookup=pwd_lookup,
-                       anonymizer_sensitive_word=anonymizer_sensitive_word,
-                       anonymizer_as_num=anonymizer_as_num,
-                       undo_ip_anon=undo_ip_anon,
-                       anonymizer4=anonymizer4,
-                       anonymizer6=anonymizer6)
+        try:
+            anonymize_file(in_path,
+                           out_path,
+                           compiled_regexes=compiled_regexes,
+                           pwd_lookup=pwd_lookup,
+                           anonymizer_sensitive_word=anonymizer_sensitive_word,
+                           anonymizer_as_num=anonymizer_as_num,
+                           undo_ip_anon=undo_ip_anon,
+                           anonymizer4=anonymizer4,
+                           anonymizer6=anonymizer6)
+        except Exception as e:
+            logging.error('Failed to anonymize file {}: {}'.format(in_path, e))
 
     if dumpfile is not None:
         with open(dumpfile, 'w') as f_out:
