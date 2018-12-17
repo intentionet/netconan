@@ -300,6 +300,10 @@ def test_dump_iptree(tmpdir, anonymizer_v4):
                          '1.2.3.4.5',
                          'something1::abc',
                          '123::ABsomething',
+                         '1.2.333.4',
+                         '1.2.0333.4',
+                         '1.256.3.4',
+                         '-1.2.3.4',
                          ])
 def test_false_positives(anonymizer_v4, anonymizer_v6, line):
     """Test that text without a valid address is not anonymized."""
