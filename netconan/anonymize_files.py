@@ -92,8 +92,8 @@ def anonymize_files(input_path, output_path, anon_pwd, anon_ip,
                            undo_ip_anon=undo_ip_anon,
                            anonymizer4=anonymizer4,
                            anonymizer6=anonymizer6)
-        except Exception as e:
-            logging.error('Failed to anonymize file {}: {}'.format(in_path, e))
+        except Exception:
+            logging.error('Failed to anonymize file %s', in_path, exc_info=True)
 
     if dumpfile is not None:
         with open(dumpfile, 'w') as f_out:
