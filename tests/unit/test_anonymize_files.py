@@ -17,6 +17,8 @@ import os
 
 import pytest
 
+from testfixtures import LogCapture
+
 from netconan.anonymize_files import anonymize_file, anonymize_files
 
 _INPUT_CONTENTS = """
@@ -75,9 +77,13 @@ def test_anonymize_files_bad_output_file(tmpdir):
         anonymize_file(str(input_file), str(output_file))
 
     # Anonymizing files should complete okay, because it skips the errored file
-    anonymize_files(str(input_file), str(output_file), True, True,
-                    salt=_SALT,
-                    sensitive_words=_SENSITIVE_WORDS)
+    with LogCapture() as log_capture:
+        anonymize_files(str(input_file), str(output_file), True, True,
+                        salt=_SALT,
+                        sensitive_words=_SENSITIVE_WORDS)
+        log_capture.check_present(
+            ('root', 'ERROR', 'Failed to anonymize file {}'.format(str(input_file)))
+        )
 
 
 def test_anonymize_files_bad_output_dir(tmpdir):
