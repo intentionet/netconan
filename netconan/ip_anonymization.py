@@ -25,7 +25,7 @@ from hashlib import md5
 from six import add_metaclass, iteritems, text_type, u
 
 
-_IPv4_OCTET_PATTERN = r'(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])'
+_IPv4_OCTET_PATTERN = r'(25[0-5]|(2[0-4]|1?[0-9])?[0-9])'
 
 # Deliberately allowing leading zeros and will remove them later
 IPv4_PATTERN = regex.compile(
@@ -44,7 +44,7 @@ IPv6_PATTERN = regex.compile(
     r'|[0-9a-f]{1,4}:((:[0-9a-f]{1,4}){1,6})'
     r'|:((:[0-9a-f]{1,4}){1,7}|:)'
     r'|fe80:(:[0-9a-f]{0,4}){0,4}%[0-9a-z]{1,}' +
-    r'|::(ffff(:0{{1,4}}){{0,1}}:){{0,1}}({octet}\.){{3}}{octet}'
+    r'|::(ffff(:0{{1,4}})?:)?({octet}\.){{3}}{octet}'
     r'|([0-9a-f]{{1,4}}:){{1,4}}:({octet}\.){{3}}{octet})'.format(
         octet=_IPv4_OCTET_PATTERN) +
     r'(?=[-\s<>/\'",=\]\)]|$)',
