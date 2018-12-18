@@ -17,8 +17,9 @@ import os
 
 import pytest
 
-from netconan.anonymize_files import anonymize_files
+from testfixtures import LogCapture
 
+from netconan.anonymize_files import anonymize_file, anonymize_files
 
 _INPUT_CONTENTS = """
 # Intentionet's sensitive test file
@@ -73,9 +74,20 @@ def test_anonymize_files_bad_output_file(tmpdir):
     output_file = tmpdir.mkdir("out").mkdir(filename)
 
     with pytest.raises(ValueError, match='Cannot write output file.*'):
+        anonymize_file(str(input_file), str(output_file))
+
+    # Anonymizing files should complete okay, because it skips the errored file
+    with LogCapture() as log_capture:
         anonymize_files(str(input_file), str(output_file), True, True,
                         salt=_SALT,
                         sensitive_words=_SENSITIVE_WORDS)
+        # Confirm the correct message is logged
+        log_capture.check_present(
+            ('root', 'ERROR', 'Failed to anonymize file {}'.format(str(input_file)))
+        )
+        # Confirm the exception info was also logged
+        assert ('Cannot write output file; output file is a directory'
+                in str(log_capture.records[-1].exc_info[1]))
 
 
 def test_anonymize_files_bad_output_dir(tmpdir):
