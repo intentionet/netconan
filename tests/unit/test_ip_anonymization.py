@@ -35,6 +35,8 @@ ip_v4_list = [
     ('241.99.99.99'),
     ('249.99.99.99'),
     ('254.254.254.254'),
+    ('010.011.012.013'),
+    ('1.2.3.0000014'),
 ]
 
 ip_v6_list = [
@@ -267,11 +269,12 @@ def test_dump_iptree(tmpdir, anonymizer_v4):
     ip_mapping_from_dump = {}
 
     # Make sure all addresses to be checked are in ip_tree and generate reference mapping
-    for ip_addr in ip_v4_list:
-        ip_int = int(anonymizer_v4.make_addr(ip_addr))
+    for ip_addr_raw in ip_v4_list:
+        ip_addr = anonymizer_v4.make_addr(ip_addr_raw)
+        ip_int = int(ip_addr)
         ip_int_anon = anonymizer_v4.anonymize(ip_int)
         ip_addr_anon = str(ipaddress.IPv4Address(ip_int_anon))
-        ip_mapping[ip_addr] = ip_addr_anon
+        ip_mapping[str(ip_addr)] = ip_addr_anon
 
     filename = str(tmpdir.mkdir("test").join("test_dump_iptree.txt"))
     with open(filename, 'w') as f_tmp:
@@ -300,6 +303,10 @@ def test_dump_iptree(tmpdir, anonymizer_v4):
                          '1.2.3.4.5',
                          'something1::abc',
                          '123::ABsomething',
+                         '1.2.333.4',
+                         '1.2.0333.4',
+                         '1.256.3.4',
+                         '-1.2.3.4',
                          ])
 def test_false_positives(anonymizer_v4, anonymizer_v6, line):
     """Test that text without a valid address is not anonymized."""
