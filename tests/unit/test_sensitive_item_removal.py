@@ -438,7 +438,8 @@ def test_pwd_removal_and_preserve_reserved_word(regexes, config_line, sensitive_
 @pytest.mark.parametrize('config_line', [
     'password ipaddress',
     'set community p2p',
-    'digest secret snmp'
+    'digest secret snmp',
+    'password {',
 ])
 def test_pwd_removal_preserve_reserved_word(regexes, config_line):
     """Test that reserved words are preserved even if they appear in password lines."""
