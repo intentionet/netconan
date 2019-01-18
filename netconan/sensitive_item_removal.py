@@ -31,7 +31,8 @@ from six import b
 # A regex matching any of the characters that are allowed to precede a password
 # regex (e.g. sensitive line is allowed to be in quotes or after a colon)
 # This is an ignored group, so it does not muck with the password regex indicies
-_ALLOWED_REGEX_PREFIX = r'(?:[^-_a-zA-Z\d] ?|^ ?)'
+# And the \K means it is not part of the regex match text
+_ALLOWED_REGEX_PREFIX = r'(?:[^-_a-zA-Z\d] ?|^ ?)\K'
 
 # Number of digits to extract from hash for sensitive keyword replacement
 _ANON_SENSITIVE_WORD_LEN = 6
@@ -55,7 +56,9 @@ _IGNORED_COMMUNITIES = (r'((\d+|{additive}|{colon}|{list}|{well_known})(?!\S))'
                                 well_known=_IGNORED_COMM_WELL_KNOWN))
 
 # Text that is allowed to surround passwords, to be preserved
-_PASSWORD_ENCLOSING_TEXT = ['\'', '"', '\\\'', '\\"']
+_PASSWORD_ENCLOSING_TEXT = ['\\\'', '\\"', '\'', '"', ' ']
+_PASSWORD_ENCLOSING_TEXT_HEAD = _PASSWORD_ENCLOSING_TEXT + ['[']
+_PASSWORD_ENCLOSING_TEXT_TAIL = _PASSWORD_ENCLOSING_TEXT + [']', ';', ',']
 
 # These are extra regexes to find lines that seem like they might contain
 # sensitive info (these are not already caught by RANCID default regexes)
@@ -204,7 +207,7 @@ def anonymize_sensitive_words(sensitive_word_regexes, line, salt):
     return line
 
 
-def _anonymize_value(val, lookup):
+def _anonymize_value(raw_val, lookup, reserved_words):
     """Generate an anonymized replacement for the input value.
 
     This function tries to determine what type of value was passed in and
@@ -212,14 +215,22 @@ def _anonymize_value(val, lookup):
     already been anonymized in the provided lookup, then the previous anon
     value will be used.
     """
+
     # Separate enclosing text (e.g. quotes) from the underlying value
-    enclosing_text, val = _extract_enclosing_text(val)
-    item_format = _check_sensitive_item_format(val)
+    sens_head, val, sens_tail = _extract_enclosing_text(raw_val)
+    if val in reserved_words:
+        logging.debug('Skipping anonymization of reserved word: "%s"',
+                      val)
+        return sens_head + val + sens_tail
+
+    if val in lookup:
+        anon_val = lookup[val]
+        logging.debug(
+            'Anonymized input "%s" to "%s" (via lookup)', val, anon_val)
+        return sens_head + anon_val + sens_tail
 
     anon_val = 'netconanRemoved{}'.format(len(lookup))
-    if val in lookup:
-        return enclosing_text + lookup[val] + enclosing_text
-
+    item_format = _check_sensitive_item_format(val)
     if item_format == _sensitive_item_formats.cisco_type7:
         # Not salting sensitive data, using static salt here to more easily
         # identify anonymized lines
@@ -250,7 +261,8 @@ def _anonymize_value(val, lookup):
         anon_val = '$9$0000IRc-dsJGirewg4JDj9At0RhSreK8Xhc'
 
     lookup[val] = anon_val
-    return enclosing_text + anon_val + enclosing_text
+    logging.debug('Anonymized input "%s" to "%s"', val, anon_val)
+    return sens_head + anon_val + sens_tail
 
 
 def _check_sensitive_item_format(val):
@@ -274,15 +286,21 @@ def _check_sensitive_item_format(val):
     return item_format
 
 
-def _extract_enclosing_text(val):
-    """Extract enclosing quotes from text and return the enclosing text and enclosed text."""
-    enclosing_text = ''
-    for surround_text in _PASSWORD_ENCLOSING_TEXT:
-        if val.endswith(surround_text) and val.startswith(surround_text):
-            enclosing_text = surround_text
-            val = val[len(surround_text):-len(surround_text)]
-            break
-    return enclosing_text, val
+def _extract_enclosing_text(in_val, head='', tail=''):
+    """Extract allowed enclosing text from input and return the enclosing and enclosed text."""
+    val = in_val
+    for head_text in _PASSWORD_ENCLOSING_TEXT_HEAD:
+        if val.startswith(head_text):
+            head += head_text
+            val = val[len(head_text):]
+    for tail_text in _PASSWORD_ENCLOSING_TEXT_TAIL:
+        if val.endswith(tail_text):
+            tail = tail_text + tail
+            val = val[:-len(tail_text)]
+
+    if val != in_val:
+        return _extract_enclosing_text(val, head, tail)
+    return head, val.strip(), tail
 
 
 def generate_default_sensitive_item_regexes():
@@ -297,7 +315,9 @@ def replace_matching_item(compiled_regexes, input_line, pwd_lookup, reserved_wor
     """If line matches a regex, anonymize or remove the line."""
     # Collapse whitespace to simplify regexes, also preserve leading and trailing whitespace
     leading, words, trailing = _split_line(input_line)
-    output_line = ' '.join(words)
+    # Save enclosing text (like quotes) to avoid removing during anonymization
+    leading, output_line, trailing = _extract_enclosing_text(
+        ' '.join(words), leading, trailing)
 
     # Note: compiled_regexes is a list of lists; the inner list is a group of
     # related regexes
@@ -320,16 +340,12 @@ def replace_matching_item(compiled_regexes, input_line, pwd_lookup, reserved_wor
                     'Anonymizing sensitive info in lines like "%s" is currently'
                     ' unsupported, so removing this line completely',
                     compiled_re.pattern)
-                return '! Sensitive line SCRUBBED by netconan\n'
+                output_line = compiled_re.sub(
+                    '! Sensitive line SCRUBBED by netconan', output_line)
+                break
 
-            sensitive_val = match.group(sensitive_item_num)
-            if sensitive_val in reserved_words:
-                logging.debug('Skipping anonymization of reserved word: "%s"', sensitive_val)
-                continue
-            anon_val = _anonymize_value(sensitive_val, pwd_lookup)
+            anon_val = _anonymize_value(match.group(sensitive_item_num), pwd_lookup, reserved_words)
             output_line = compiled_re.sub(anon_val, output_line)
-            logging.debug(
-                'Anonymized input "%s" to "%s"', sensitive_val, anon_val)
 
         # If any matches existed in this regex group, stop processing more regexes
         if match_found:

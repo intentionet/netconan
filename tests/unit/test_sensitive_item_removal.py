@@ -358,7 +358,7 @@ def test_anonymize_sensitive_words_preserve_reserved_word():
 def test__anonymize_value(val):
     """Test sensitive item anonymization."""
     pwd_lookup = {}
-    anon_val = _anonymize_value(val, pwd_lookup)
+    anon_val = _anonymize_value(val, pwd_lookup, {})
     val_format = _check_sensitive_item_format(val)
     anon_val_format = _check_sensitive_item_format(anon_val)
 
@@ -376,13 +376,13 @@ def test__anonymize_value(val):
         assert(org_salt_size == anon_salt_size)
 
     # Confirm reanonymizing same source value results in same anonymized value
-    assert(anon_val == _anonymize_value(val, pwd_lookup))
+    assert(anon_val == _anonymize_value(val, pwd_lookup, {}))
 
 
 def test__anonymize_value_unique():
     """Test that unique sensitive items have unique anonymized values."""
     pwd_lookup = {}
-    anon_vals = [_anonymize_value(pwd, pwd_lookup) for pwd in unique_passwords]
+    anon_vals = [_anonymize_value(pwd, pwd_lookup, {}) for pwd in unique_passwords]
     unique_anon_vals = set()
 
     for anon_val in anon_vals:
@@ -397,6 +397,53 @@ def test__check_sensitive_item_format(val, format_):
     item_format = _check_sensitive_item_format(val)
     assert(item_format == format_)
 
+@pytest.mark.parametrize('raw_val', unique_passwords)
+@pytest.mark.parametrize('head_text', [
+    '\'',
+    '"',
+    '\\\'',
+    '\\"',
+    '[',
+    '[ ',
+    '"[\'[',
+    '" [',
+])
+def test__extract_enclosing_text_head(raw_val, head_text):
+    """Test extraction of leading text."""
+    val = head_text + raw_val
+    head, extracted_text, tail = _extract_enclosing_text(val)
+
+    # Confirm the extracted text matches the original text
+    assert(extracted_text == raw_val)
+    # Confirm the leading text matches the prepended text
+    assert (head == head_text)
+    assert (not tail)
+
+
+@pytest.mark.parametrize('raw_val', unique_passwords)
+@pytest.mark.parametrize('tail_text', [
+    '\'',
+    '"',
+    '\\\'',
+    '\\"',
+    ']',
+    ' ]',
+    ';',
+    ',',
+    '"],',
+    '] ;',
+])
+def test__extract_enclosing_text_tail(raw_val, tail_text):
+    """Test extraction of trailing text."""
+    val = raw_val + tail_text
+    head, extracted_text, tail = _extract_enclosing_text(val)
+
+    # Confirm the extracted text matches the original text
+    assert (extracted_text == raw_val)
+    # Confirm the trailing text matches the appended text
+    assert (tail == tail_text)
+    assert (not head)
+
 
 @pytest.mark.parametrize('val', unique_passwords)
 @pytest.mark.parametrize('quote', [
@@ -408,12 +455,13 @@ def test__check_sensitive_item_format(val, format_):
 def test__extract_enclosing_text(val, quote):
     """Test extraction of enclosing quotes."""
     enclosed_val = quote + val + quote
-    enclosing_text, extracted_text = _extract_enclosing_text(enclosed_val)
+    head, extracted_text, tail = _extract_enclosing_text(enclosed_val)
 
     # Confirm the extracted text matches the original text
     assert(extracted_text == val)
     # Confirm the extracted enclosing text matches the original enclosing text
-    assert (enclosing_text == quote)
+    assert (head == tail)
+    assert (head == quote)
 
 
 @pytest.mark.parametrize('config_line,sensitive_text', sensitive_lines)
