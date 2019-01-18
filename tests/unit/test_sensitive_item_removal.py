@@ -495,6 +495,17 @@ def test_pwd_removal_preserve_reserved_word(regexes, config_line):
     assert (config_line == replace_matching_item(regexes, config_line, pwd_lookup))
 
 
+@pytest.mark.parametrize('config_line, anon_line', [
+    ('"key": "password FOOBAR",', '"key": "password netconanRemoved0",'),
+    ('"key": "cable shared-secret FOOBAR"', '"key": "! Sensitive line SCRUBBED by netconan"'),
+    ('password "FOOBAR";', 'password "netconanRemoved0";'),
+])
+def test_pwd_removal_preserve_context(regexes, config_line, anon_line):
+    """Test that context is preserved for anonymized lines."""
+    pwd_lookup = {}
+    assert (anon_line == replace_matching_item(regexes, config_line, pwd_lookup))
+
+
 @pytest.mark.parametrize('whitespace', [
     ' ',
     '\t',
