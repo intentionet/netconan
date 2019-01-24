@@ -302,7 +302,7 @@ def _extract_enclosing_text(in_val, head='', tail=''):
 
     if val != in_val:
         return _extract_enclosing_text(val, head, tail)
-    return head, val.strip(), tail
+    return head, val, tail
 
 
 def generate_default_sensitive_item_regexes():
