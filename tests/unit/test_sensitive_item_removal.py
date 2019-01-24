@@ -493,6 +493,7 @@ def test_pwd_removal_and_preserve_reserved_word(regexes, config_line, sensitive_
     'set community p2p',
     'digest secret snmp',
     'password {',
+    'password "ip"',
 ])
 def test_pwd_removal_preserve_reserved_word(regexes, config_line):
     """Test that reserved words are preserved even if they appear in password lines."""
