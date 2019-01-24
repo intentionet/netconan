@@ -60,7 +60,7 @@ default_pwd_line_regexes = [
     [(r'((ikev2 )?(local|remote)-authentication pre-shared-key) \K(\S+)', 4)],
     [(r'((\S )*pre-shared-key( remote| local)?( hex| hexadecimal| ascii-text| \d)?) \K(\S+)', 5)],
     [(r'((tacacs|radius)-server (\S+ )*key)( \d)? \K(\S+)', 5)],
-    [(r'(key( \d)?) \K(\S+)', 3)],
+    [(r'(key( \d| hexadecimal)?) \K(\S+)', 3)],
     [(r'(ntp authentication-key \d+ md5) \K(\S+)', 2)],
     [(r'(syscon( password| address \S+)) \K(\S+)', 3)],
     [(r'(snmp-server user( \S+)+ (auth (md5|sha))) \K(\S+)', 5),
