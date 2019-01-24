@@ -397,6 +397,7 @@ def test__check_sensitive_item_format(val, format_):
     item_format = _check_sensitive_item_format(val)
     assert(item_format == format_)
 
+
 @pytest.mark.parametrize('raw_val', unique_passwords)
 @pytest.mark.parametrize('head_text', [
     '\'',
@@ -407,6 +408,7 @@ def test__check_sensitive_item_format(val, format_):
     '[ ',
     '"[\'[',
     '" [',
+    '{',
 ])
 def test__extract_enclosing_text_head(raw_val, head_text):
     """Test extraction of leading text."""
@@ -432,6 +434,7 @@ def test__extract_enclosing_text_head(raw_val, head_text):
     ',',
     '"],',
     '] ;',
+    '}',
 ])
 def test__extract_enclosing_text_tail(raw_val, tail_text):
     """Test extraction of trailing text."""
@@ -469,7 +472,8 @@ def test_pwd_removal(regexes, config_line, sensitive_text):
     """Test removal of passwords and communities from config lines."""
     config_line = config_line.format(sensitive_text)
     pwd_lookup = {}
-    assert(sensitive_text not in replace_matching_item(regexes, config_line, pwd_lookup))
+    assert(sensitive_text not in replace_matching_item(
+        regexes, config_line, pwd_lookup))
 
 
 @pytest.mark.parametrize('config_line, sensitive_text', [
@@ -480,7 +484,8 @@ def test_pwd_removal_and_preserve_reserved_word(regexes, config_line, sensitive_
     """Test removal of passwords when reserved words must be skipped."""
     config_line = config_line.format(sensitive_text)
     pwd_lookup = {}
-    assert(sensitive_text not in replace_matching_item(regexes, config_line, pwd_lookup))
+    assert(sensitive_text not in replace_matching_item(
+        regexes, config_line, pwd_lookup))
 
 
 @pytest.mark.parametrize('config_line', [
@@ -492,18 +497,20 @@ def test_pwd_removal_and_preserve_reserved_word(regexes, config_line, sensitive_
 def test_pwd_removal_preserve_reserved_word(regexes, config_line):
     """Test that reserved words are preserved even if they appear in password lines."""
     pwd_lookup = {}
-    assert (config_line == replace_matching_item(regexes, config_line, pwd_lookup))
+    assert (config_line == replace_matching_item(
+        regexes, config_line, pwd_lookup))
 
 
 @pytest.mark.parametrize('config_line, anon_line', [
     ('"key": "password FOOBAR",', '"key": "password netconanRemoved0",'),
-    ('"key": "cable shared-secret FOOBAR"', '"key": "! Sensitive line SCRUBBED by netconan"'),
+    ('{"key": "cable shared-secret FOOBAR"}', '{"key": "! Sensitive line SCRUBBED by netconan"}'),
     ('password "FOOBAR";', 'password "netconanRemoved0";'),
 ])
 def test_pwd_removal_preserve_context(regexes, config_line, anon_line):
-    """Test that context is preserved for anonymized lines."""
+    """Test that context is preserved replacing/removing passwords."""
     pwd_lookup = {}
-    assert (anon_line == replace_matching_item(regexes, config_line, pwd_lookup))
+    assert (anon_line == replace_matching_item(
+        regexes, config_line, pwd_lookup))
 
 
 @pytest.mark.parametrize('whitespace', [

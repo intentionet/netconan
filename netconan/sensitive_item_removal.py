@@ -31,7 +31,7 @@ from six import b
 # A regex matching any of the characters that are allowed to precede a password
 # regex (e.g. sensitive line is allowed to be in quotes or after a colon)
 # This is an ignored group, so it does not muck with the password regex indicies
-# And the \K means it is not part of the regex match text
+# And the \K means it is not part of the regex match text/sub text
 _ALLOWED_REGEX_PREFIX = r'(?:[^-_a-zA-Z\d] ?|^ ?)\K'
 
 # Number of digits to extract from hash for sensitive keyword replacement
@@ -57,8 +57,8 @@ _IGNORED_COMMUNITIES = (r'((\d+|{additive}|{colon}|{list}|{well_known})(?!\S))'
 
 # Text that is allowed to surround passwords, to be preserved
 _PASSWORD_ENCLOSING_TEXT = ['\\\'', '\\"', '\'', '"', ' ']
-_PASSWORD_ENCLOSING_TEXT_HEAD = _PASSWORD_ENCLOSING_TEXT + ['[']
-_PASSWORD_ENCLOSING_TEXT_TAIL = _PASSWORD_ENCLOSING_TEXT + [']', ';', ',']
+_PASSWORD_ENCLOSING_HEAD_TEXT = _PASSWORD_ENCLOSING_TEXT + ['[', '{']
+_PASSWORD_ENCLOSING_TAIL_TEXT = _PASSWORD_ENCLOSING_TEXT + [']', '}', ';', ',']
 
 # These are extra regexes to find lines that seem like they might contain
 # sensitive info (these are not already caught by RANCID default regexes)
@@ -215,13 +215,15 @@ def _anonymize_value(raw_val, lookup, reserved_words):
     already been anonymized in the provided lookup, then the previous anon
     value will be used.
     """
-
     # Separate enclosing text (e.g. quotes) from the underlying value
     sens_head, val, sens_tail = _extract_enclosing_text(raw_val)
     if val in reserved_words:
         logging.debug('Skipping anonymization of reserved word: "%s"',
                       val)
-        return sens_head + val + sens_tail
+        return raw_val
+    if not val:
+        logging.debug('Nothing to anonymize after removing special characters')
+        return raw_val
 
     if val in lookup:
         anon_val = lookup[val]
@@ -289,11 +291,11 @@ def _check_sensitive_item_format(val):
 def _extract_enclosing_text(in_val, head='', tail=''):
     """Extract allowed enclosing text from input and return the enclosing and enclosed text."""
     val = in_val
-    for head_text in _PASSWORD_ENCLOSING_TEXT_HEAD:
+    for head_text in _PASSWORD_ENCLOSING_HEAD_TEXT:
         if val.startswith(head_text):
             head += head_text
             val = val[len(head_text):]
-    for tail_text in _PASSWORD_ENCLOSING_TEXT_TAIL:
+    for tail_text in _PASSWORD_ENCLOSING_TAIL_TEXT:
         if val.endswith(tail_text):
             tail = tail_text + tail
             val = val[:-len(tail_text)]
