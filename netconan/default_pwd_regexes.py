@@ -69,6 +69,7 @@ default_pwd_line_regexes = [
     [(r'(set session-key (in|out)bound ah \d+) \K(\S+)', 3)],
     [(r'(set session-key (in|out)bound esp \d+ cipher?) \K(\S+)', 3),
      (r'(set session-key (in|out)bound esp \d+(( cipher \S+)? authenticator)) \K(\S+)', 5)],
+    [(r'hello-authentication-key \K([^;]+)', 1)],
     # TODO(https://github.com/intentionet/netconan/issues/3):
     # Follow-up on these.  They were just copied from RANCID so currently:
     #   They are untested in general and need cases added for unit tests
@@ -93,7 +94,6 @@ default_pwd_line_regexes = [
     #     (to make sure the regex handles different syntaxes allowed in the line)
     [(r'(\S* )*authentication-key [^ ;]+(.*)', None)],
     [(r'(\S* )*md5 \d+ key [^ ;]+(.*)', None)],
-    [(r'(\S* )*hello-authentication-key [^ ;]+(.*)', None)],
     [(r'(\S* )*(secret|simple-password) [^ ;]+(.*)', None)],
     [(r'(\S* )*encrypted-password [^ ;]+(.*)', None)],
     [(r'(\S* )*ssh-(rsa|dsa) \"(.*)', None)],
