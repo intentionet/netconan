@@ -117,7 +117,8 @@ juniper_password_lines = [
     ('set system login user someone authenitcation "{}"', '$1$CNANTest$xAfu6Am1d5D/.6OVICuOu/'),
     ('set system license keys key "{}"', 'SOMETHING sensitive text here'),
     ('set snmp community {} authorization read-only', 'SECRETTEXT'),
-    ('set snmp trap-group {} otherstuff', 'SECRETTEXT')
+    ('set snmp trap-group {} otherstuff', 'SECRETTEXT'),
+    ('key hexadecimal {}', 'ABCDEF123456'),
 ]
 
 # TODO(https://github.com/intentionet/netconan/issues/3):
