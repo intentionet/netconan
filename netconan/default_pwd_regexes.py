@@ -43,6 +43,7 @@
 #       extract and replace just the sensitive information
 #  2. sensitive item regex-match-index
 #       note that if this is None, any matching config line will be removed
+#
 # TODO(https://github.com/intentionet/netconan/issues/107)
 # Some of these regexes need to be updated to support quote enclosed passwords
 # which is allowed for at least some syntax on Juniper devices
