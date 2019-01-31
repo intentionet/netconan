@@ -55,6 +55,8 @@ _IGNORED_COMMUNITIES = (r'((\d+|{additive}|{colon}|{list}|{well_known})(?!\S))'
                                 list=_IGNORED_COMM_LIST,
                                 well_known=_IGNORED_COMM_WELL_KNOWN))
 
+_LINE_SCRUBBED_MESSAGE = '! Sensitive line SCRUBBED by netconan'
+
 # Text that is allowed to surround passwords, to be preserved
 _PASSWORD_ENCLOSING_TEXT = ['\\\'', '\\"', '\'', '"', ' ']
 _PASSWORD_ENCLOSING_HEAD_TEXT = _PASSWORD_ENCLOSING_TEXT + ['[', '{']
@@ -65,7 +67,7 @@ _PASSWORD_ENCLOSING_TAIL_TEXT = _PASSWORD_ENCLOSING_TEXT + [']', '}', ';', ',']
 extra_password_regexes = [
     [(r'encrypted-password \K(\S+)', None)],
     [(r'key "\K([^"]+)', 1)],
-    [(r'key-hash sha256 (\S+)', 1)],
+    [(r'key-hash sha256 \K(\S+)', 1)],
     # Replace communities that do not look like well-known BGP communities
     # i.e. snmp communities
     [(r'set community \K((?!{ignore})\S+)'
@@ -343,7 +345,7 @@ def replace_matching_item(compiled_regexes, input_line, pwd_lookup, reserved_wor
                     ' unsupported, so removing this line completely',
                     compiled_re.pattern)
                 output_line = compiled_re.sub(
-                    '! Sensitive line SCRUBBED by netconan', output_line)
+                    _LINE_SCRUBBED_MESSAGE, output_line)
                 break
 
             anon_val = _anonymize_value(match.group(sensitive_item_num), pwd_lookup, reserved_words)
