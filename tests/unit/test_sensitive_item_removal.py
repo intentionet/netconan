@@ -121,7 +121,7 @@ juniper_password_lines = [
     ('set snmp trap-group {} otherstuff', 'SECRETTEXT'),
     ('key hexadecimal {}', 'ABCDEF123456'),
     ('authentication-key "{}";', '$9$i.m5OBEevLz3RSevx7-VwgZj5TFCA0Tz9p'),
-    ('hello-authentication-key "{}"', '$9$i.m5OBEevLz3RSevx7-VwgZj5TFCA0Tz9p'),
+    ('hello-authentication-key {}', '$9$i.m5OBEevLz3RSevx7-VwgZj5TFCA0Tz9p'),
 ]
 
 # TODO(https://github.com/intentionet/netconan/issues/3):
