@@ -86,4 +86,4 @@ def test_end_to_end_no_anonymization(tmpdir):
 
     # Make sure no output file was generated
     # when no anonymization args are supplied
-    assert(not os.path.exists(output_file))
+    assert(not os.path.exists(str(output_file)))
