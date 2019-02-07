@@ -38,9 +38,9 @@ password reservedword
 
 """
 
+
 def test_end_to_end(tmpdir):
     """Test Netconan main with simulated input file and commandline args."""
-
     filename = "test.txt"
     input_dir = tmpdir.mkdir("input")
     input_dir.join(filename).write(INPUT_CONTENTS)
@@ -66,9 +66,9 @@ def test_end_to_end(tmpdir):
     # Make sure output file matches the ref
     assert(filecmp.cmp(str(ref_file), str(output_file)))
 
+
 def test_end_to_end_no_anonymization(tmpdir):
     """Test Netconan main with simulated input file and no anonymization args."""
-
     filename = "test.txt"
     input_dir = tmpdir.mkdir("input")
     input_dir.join(filename).write(INPUT_CONTENTS)
