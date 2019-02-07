@@ -14,13 +14,11 @@
 #   limitations under the License.
 
 import filecmp
+import os.path
 
 from netconan.netconan import main
 
-
-def test_end_to_end(tmpdir):
-    """Test Netconan main with simulated input file and commandline args."""
-    input_contents = """
+INPUT_CONTENTS = """
 # Intentionet's sensitive test file
 ip address 192.168.2.1 255.255.255.255
 my hash is $1$salt$ABCDEFGHIJKLMNOPQRS
@@ -29,7 +27,8 @@ password foobar
 password reservedword
 
 """
-    ref_contents = """
+
+REF_CONTENTS = """
 # 1cbbc2's fd8607 test file
 ip address 201.235.139.13 255.255.255.255
 my hash is $1$0000$CxUUGIrqPb7GaB5midrQZ.
@@ -39,15 +38,18 @@ password reservedword
 
 """
 
+def test_end_to_end(tmpdir):
+    """Test Netconan main with simulated input file and commandline args."""
+
     filename = "test.txt"
     input_dir = tmpdir.mkdir("input")
-    input_dir.join(filename).write(input_contents)
+    input_dir.join(filename).write(INPUT_CONTENTS)
 
     output_dir = tmpdir.mkdir("output")
     output_file = output_dir.join(filename)
 
     ref_file = tmpdir.join(filename)
-    ref_file.write(ref_contents)
+    ref_file.write(REF_CONTENTS)
 
     args = [
         '-i', str(input_dir),
@@ -57,9 +59,31 @@ password reservedword
         '-p',
         '-w', 'intentionet,sensitive',
         '-r', 'reservedword',
-        '-n', '65432,12345'
+        '-n', '65432,12345',
     ]
     main(args)
 
     # Make sure output file matches the ref
     assert(filecmp.cmp(str(ref_file), str(output_file)))
+
+def test_end_to_end_no_anonymization(tmpdir):
+    """Test Netconan main with simulated input file and no anonymization args."""
+
+    filename = "test.txt"
+    input_dir = tmpdir.mkdir("input")
+    input_dir.join(filename).write(INPUT_CONTENTS)
+
+    output_dir = tmpdir.mkdir("output")
+    output_file = output_dir.join(filename)
+
+    args = [
+        '-i', str(input_dir),
+        '-o', str(output_dir),
+        '-s', 'TESTSALT',
+        '-r', 'reservedword',
+    ]
+    main(args)
+
+    # Make sure no output file was generated
+    # when no anonymization args are supplied
+    assert(not os.path.exists(output_file))
