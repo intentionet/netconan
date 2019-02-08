@@ -102,8 +102,19 @@ def main(argv=sys.argv[1:]):
     if args.sensitive_words is not None:
         sensitive_words = args.sensitive_words.split(',')
 
-    anonymize_files(args.input, args.output, args.anonymize_passwords, args.anonymize_ips, args.salt,
-                    args.dump_ip_map, sensitive_words, args.undo, as_numbers, reserved_words)
+    if not any([
+        as_numbers,
+        sensitive_words,
+        args.anonymize_passwords,
+        args.anonymize_ips,
+        args.undo
+    ]):
+        logging.warning('No anonymization options turned on, '
+                        'no output file(s) will be generated.')
+    else:
+        anonymize_files(args.input, args.output, args.anonymize_passwords,
+                        args.anonymize_ips, args.salt, args.dump_ip_map,
+                        sensitive_words, args.undo, as_numbers, reserved_words)
 
 
 if __name__ == '__main__':
