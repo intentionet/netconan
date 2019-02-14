@@ -50,13 +50,27 @@ ip_v6_list = [
     ('ffff:eeee:dddd:cccc:bbbb:AaAa:9999:8888'),
 ]
 
+# Private-use blocks defined at https://www.iana.org/assignments/iana-ipv4-special-registry/iana-ipv4-special-registry.xhtml
+# Tuples consist of: start of block, end of block, block subnet
+private_blocks = [
+    ('10.0.0.0', '10.255.255.255', '10.0.0.0/8'),
+    ('172.16.0.0', '172.31.255.255', '172.16.0.0/12'),
+    ('192.168.0.0', '192.168.255.255', '192.168.0.0/16'),
+]
+
 SALT = 'saltForTest'
 
 
 @pytest.fixture(scope='module')
 def anonymizer_v4():
-    """All tests in this module use a single IPv4 anonymizer."""
+    """Most tests in this module use a single IPv4 anonymizer."""
     return IpAnonymizer(SALT)
+
+
+@pytest.fixture(scope='module')
+def anonymizer_v4_anonymize_private_blocks():
+    """Some tests in this module use an IPv4 anonymizer that anonymizes private-use blocks."""
+    return IpAnonymizer(SALT, False)
 
 
 @pytest.fixture(scope='module')
@@ -81,6 +95,7 @@ def anonymizer(request):
 @pytest.fixture(scope='module')
 def flip_anonymizer_v4():
     """Create an anonymizer that flips every bit."""
+    # Don't preserve private blocks, because that reduces the number of bits flipped
     return IpAnonymizer(SALT, preserve_private=False, salter=lambda a, b: 1)
 
 
@@ -191,11 +206,23 @@ def test_v4_class_preserved(flip_anonymizer_v4, ip_addr):
     assert(0xFFFFFFFF ^ class_mask == ip_int ^ ip_int_anon)
 
 
-@pytest.mark.parametrize('start, end, subnet', [
-    ('10.0.0.0', '10.255.255.255', '10.0.0.0/8'),
-    ('172.16.0.0', '172.31.255.255', '172.16.0.0/12'),
-    ('192.168.0.0', '192.168.255.255', '192.168.0.0/16'),
-])
+@pytest.mark.parametrize('start, end, subnet', private_blocks)
+def test_anonymize_private_blocks(anonymizer_v4_anonymize_private_blocks, start, end, subnet):
+    """Test that private blocks are anonymized with preserve-private-block option disabled in anonymizer."""
+    ip_int_start = int(anonymizer_v4_anonymize_private_blocks.make_addr(start))
+    ip_int_start_anon = anonymizer_v4_anonymize_private_blocks.anonymize(ip_int_start)
+
+    ip_int_end = int(anonymizer_v4_anonymize_private_blocks.make_addr(end))
+    ip_int_end_anon = anonymizer_v4_anonymize_private_blocks.anonymize(ip_int_end)
+
+    network = ipaddress.ip_network(subnet)
+
+    # Make sure addresses in the block stay in the block
+    assert (ipaddress.ip_address(ip_int_start_anon) not in network)
+    assert (ipaddress.ip_address(ip_int_end_anon) not in network)
+
+
+@pytest.mark.parametrize('start, end, subnet', private_blocks)
 def test_preserve_private_blocks(anonymizer_v4, start, end, subnet):
     """Test that private blocks are preserved."""
     ip_int_start = int(anonymizer_v4.make_addr(start))
@@ -206,6 +233,7 @@ def test_preserve_private_blocks(anonymizer_v4, start, end, subnet):
 
     network = ipaddress.ip_network(subnet)
 
+    # Make sure addresses in the block stay in the block
     assert (ipaddress.ip_address(ip_int_start_anon) in network)
     assert (ipaddress.ip_address(ip_int_end_anon) in network)
 
