@@ -12,7 +12,7 @@ With Netconan, a sensitive input file
     username admin password 7 122A001901
     enable secret 5 $1$wtHI$0rN7R8PKwC30AsCGA77vy.
     !
-    tacacs-server host 10.10.10.10 key pwd1234
+    tacacs-server host 1.2.3.4 key pwd1234
     ip address 10.10.20.30/24
     ip address 2001:2002::9d3b:1
     !
@@ -39,8 +39,8 @@ to produce an output file you can feel comfortable sharing.
     username admin password 7 09424B1D1A0A1913053E012724322D3765
     enable secret 5 $1$0000$EhfXcDfB7iiakW6mwMy1i.
     !
-    tacacs-server host 119.72.192.224 key netconanRemoved2
-    ip address 119.72.218.183/24
+    tacacs-server host 7.227.130.88 key netconanRemoved2
+    ip address 10.72.218.183/24
     ip address cd7e:83e:1eaf:2ada:7535:591e:6d47:a4b8
     !
     route-map e69ceb-to-880ac2 ...
@@ -71,6 +71,8 @@ Netconan attempts to *preserve useful structure*. For example,
 * Netconan preserves prefixes when anonymizing IPv4 and IPv6 addresses: IP addresses with a common prefix before anonymization will share the same prefix length after anonymization. For more information, see J. Xu et al., *On the Design and Performance of Prefix-Preserving IP Traffic Trace Anonymization*, ACM SIGCOMM Workshop on Internet Measurement, 2001 [`link <https://smartech.gatech.edu/bitstream/handle/1853/6573/GIT-CC-01-22.pdf>`_].
 
 * IPv4 classes are preserved.
+
+* Private-use subnets (see `IANA IPv4 assignments <https://www.iana.org/assignments/iana-ipv4-special-registry/iana-ipv4-special-registry.xhtml>`_) are preserved by default, but can be anonymized (with ``--anonymize-private-blocks`` or ``-b``).
 
 * AS number blocks are preserved (i.e. an anonymized public AS number will still be in the public AS number range after anonymization).
 
@@ -103,6 +105,8 @@ For more information about less commonly-used features, see the Netconan help (`
     optional arguments:
       -h, --help            show this help message and exit
       -a, --anonymize-ips   Anonymize IP addresses
+      -b, --anonymize-private-blocks
+                            Anonymize private IPv4 blocks (e.g. 10.0.0.0/8)
       -c CONFIG, --config CONFIG
                             Config file specifying params
       -d DUMP_IP_MAP, --dump-ip-map DUMP_IP_MAP

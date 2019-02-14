@@ -217,7 +217,7 @@ def test_anonymize_private_blocks(anonymizer_v4_anonymize_private_blocks, start,
 
     network = ipaddress.ip_network(subnet)
 
-    # Make sure addresses in the block stay in the block
+    # Make sure addresses in the block are not in the block after anonymization
     assert (ipaddress.ip_address(ip_int_start_anon) not in network)
     assert (ipaddress.ip_address(ip_int_end_anon) not in network)
 
