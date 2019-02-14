@@ -33,7 +33,8 @@ _CHAR_CHOICES = string.ascii_letters + string.digits
 
 def anonymize_files(input_path, output_path, anon_pwd, anon_ip,
                     salt=None, dumpfile=None, sensitive_words=None,
-                    undo_ip_anon=False, as_numbers=None, reserved_words=None):
+                    undo_ip_anon=False, as_numbers=None, reserved_words=None,
+                    preserve_private_blocks=False):
     """Anonymize each file in input and save to output."""
     anonymizer4 = None
     anonymizer6 = None
@@ -55,7 +56,7 @@ def anonymize_files(input_path, output_path, anon_pwd, anon_ip,
     if sensitive_words is not None:
         anonymizer_sensitive_word = SensitiveWordAnonymizer(sensitive_words, salt)
     if anon_ip or undo_ip_anon:
-        anonymizer4 = IpAnonymizer(salt)
+        anonymizer4 = IpAnonymizer(salt, preserve_private_blocks)
         anonymizer6 = IpV6Anonymizer(salt)
     if as_numbers is not None:
         anonymizer_as_num = AsNumberAnonymizer(as_numbers, salt)

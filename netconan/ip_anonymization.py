@@ -164,14 +164,13 @@ class IpAnonymizer(_BaseIpAnonymizer):
         if preserve_private:
             # Preserve private blocks
             for block in IpAnonymizer._PRIVATE_BLOCKS:
-                # Cache all shared prefixes to prevent collisions
+                # Cache prefixes shared w/ private blocks to prevent collisions
                 for position in range(len(block)):
                     value = block[:position]
                     if value + '0' not in self.cache:
                         self.cache[value + '0'] = value + '0'
                     if value + '1' not in self.cache:
                         self.cache[value + '1'] = value + '1'
-
 
     def _is_mask(self, possible_mask_int):
         """Return True if the input int can be used as a 32-bit prefix mask.

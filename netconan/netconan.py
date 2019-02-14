@@ -38,6 +38,9 @@ def _parse_args(argv):
 
     parser.add_argument('-a', '--anonymize-ips', action='store_true', default=False,
                         help='Anonymize IP addresses')
+    parser.add_argument('-b', '--anonymize-private-blocks', default=False,
+                        action='store_true',
+                        help='Anonymize private IPv4 blocks (e.g. 10.0.0.0/8)')
     parser.add_argument('-c', '--config', is_config_file=True,
                         help='Config file specifying params')
     parser.add_argument('-d', '--dump-ip-map', default=None,
@@ -114,7 +117,8 @@ def main(argv=sys.argv[1:]):
     else:
         anonymize_files(args.input, args.output, args.anonymize_passwords,
                         args.anonymize_ips, args.salt, args.dump_ip_map,
-                        sensitive_words, args.undo, as_numbers, reserved_words)
+                        sensitive_words, args.undo, as_numbers, reserved_words,
+                        not args.anonymize_private_blocks)
 
 
 if __name__ == '__main__':
