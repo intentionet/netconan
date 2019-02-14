@@ -18,7 +18,7 @@ import pytest
 import regex
 
 from netconan.ip_anonymization import (
-    IpAnonymizer, IpV6Anonymizer, anonymize_ip_addr)
+    IpAnonymizer, IpV6Anonymizer, anonymize_ip_addr, _ensure_unicode)
 from six import u
 
 ip_v4_list = [
@@ -215,7 +215,7 @@ def test_anonymize_private_blocks(anonymizer_v4_anonymize_private_blocks, start,
     ip_int_end = int(anonymizer_v4_anonymize_private_blocks.make_addr(end))
     ip_int_end_anon = anonymizer_v4_anonymize_private_blocks.anonymize(ip_int_end)
 
-    network = ipaddress.ip_network(subnet)
+    network = ipaddress.ip_network(_ensure_unicode(subnet))
 
     # Make sure addresses in the block are not in the block after anonymization
     assert (ipaddress.ip_address(ip_int_start_anon) not in network)
@@ -231,7 +231,7 @@ def test_preserve_private_blocks(anonymizer_v4, start, end, subnet):
     ip_int_end = int(anonymizer_v4.make_addr(end))
     ip_int_end_anon = anonymizer_v4.anonymize(ip_int_end)
 
-    network = ipaddress.ip_network(subnet)
+    network = ipaddress.ip_network(_ensure_unicode(subnet))
 
     # Make sure addresses in the block stay in the block
     assert (ipaddress.ip_address(ip_int_start_anon) in network)
