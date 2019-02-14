@@ -146,15 +146,32 @@ class IpAnonymizer(_BaseIpAnonymizer):
     """An anonymizer for IPv4 addresses."""
 
     _DROP_ZEROS_PATTERN = regex.compile(r'0*(\d+)\.0*(\d+)\.0*(\d+)\.0*(\d+)')
+    _PRIVATE_BLOCKS = [
+        '00001010',             # 10.0.0.0/8
+        '101011000001',         # 172.16.0.0/12
+        '1100000010101000',     # 192.168.0.0/16
+    ]
 
-    def __init__(self, salt, **kwargs):
+    def __init__(self, salt, preserve_private=True, **kwargs):
         """Create an anonymizer using the specified salt."""
         super(IpAnonymizer, self).__init__(salt, 32, **kwargs)
-        # preserve IPv4 classes
+        # Preserve IPv4 classes
         for i in range(4):
             bits = '1' * i
             self.cache[bits + '1'] = bits + '1'
             self.cache[bits + '0'] = bits + '0'
+
+        if preserve_private:
+            # Preserve private blocks
+            for block in IpAnonymizer._PRIVATE_BLOCKS:
+                # Cache all shared prefixes to prevent collisions
+                for position in range(len(block)):
+                    value = block[:position]
+                    if value + '0' not in self.cache:
+                        self.cache[value + '0'] = value + '0'
+                    if value + '1' not in self.cache:
+                        self.cache[value + '1'] = value + '1'
+
 
     def _is_mask(self, possible_mask_int):
         """Return True if the input int can be used as a 32-bit prefix mask.

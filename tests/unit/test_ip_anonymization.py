@@ -22,9 +22,7 @@ from netconan.ip_anonymization import (
 from six import u
 
 ip_v4_list = [
-    ('10.11.12.13'),
-    ('10.10.10.10'),
-    ('10.1.1.17'),
+    ('12.13.14.15'),
     ('237.73.212.5'),
     ('123.45.67.89'),
     ('92.210.0.255'),
@@ -35,7 +33,7 @@ ip_v4_list = [
     ('241.99.99.99'),
     ('249.99.99.99'),
     ('254.254.254.254'),
-    ('010.011.012.013'),
+    ('009.010.011.012'),
     ('1.2.3.0000014'),
 ]
 
@@ -83,7 +81,7 @@ def anonymizer(request):
 @pytest.fixture(scope='module')
 def flip_anonymizer_v4():
     """Create an anonymizer that flips every bit."""
-    return IpAnonymizer(SALT, salter=lambda a, b: 1)
+    return IpAnonymizer(SALT, preserve_private=False, salter=lambda a, b: 1)
 
 
 def anonymize_line_general(anonymizer, line, ip_addrs):
@@ -191,6 +189,25 @@ def test_v4_class_preserved(flip_anonymizer_v4, ip_addr):
     # All bits that are not forced to be preserved are flipped
     class_mask = get_ip_v4_class_mask(ip_int)
     assert(0xFFFFFFFF ^ class_mask == ip_int ^ ip_int_anon)
+
+
+@pytest.mark.parametrize('start, end, subnet', [
+    ('10.0.0.0', '10.255.255.255', '10.0.0.0/8'),
+    ('172.16.0.0', '172.31.255.255', '172.16.0.0/12'),
+    ('192.168.0.0', '192.168.255.255', '192.168.0.0/16'),
+])
+def test_preserve_private_blocks(anonymizer_v4, start, end, subnet):
+    """Test that private blocks are preserved."""
+    ip_int_start = int(anonymizer_v4.make_addr(start))
+    ip_int_start_anon = anonymizer_v4.anonymize(ip_int_start)
+
+    ip_int_end = int(anonymizer_v4.make_addr(end))
+    ip_int_end_anon = anonymizer_v4.anonymize(ip_int_end)
+
+    network = ipaddress.ip_network(subnet)
+
+    assert (ipaddress.ip_address(ip_int_start_anon) in network)
+    assert (ipaddress.ip_address(ip_int_end_anon) in network)
 
 
 @pytest.mark.parametrize('anonymizer,ip_addr',
