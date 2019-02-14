@@ -30,7 +30,7 @@ password foobar
 """
 _REF_CONTENTS = """
 # 1cbbc2's fd8607 test file
-ip address 201.235.139.13 255.255.255.255
+ip address 192.168.139.13 255.255.255.255
 my hash is $1$0000$CxUUGIrqPb7GaB5midrQZ.
 password netconanRemoved1
 
