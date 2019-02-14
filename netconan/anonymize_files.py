@@ -34,7 +34,7 @@ _CHAR_CHOICES = string.ascii_letters + string.digits
 def anonymize_files(input_path, output_path, anon_pwd, anon_ip,
                     salt=None, dumpfile=None, sensitive_words=None,
                     undo_ip_anon=False, as_numbers=None, reserved_words=None,
-                    preserve_private_blocks=False):
+                    preserve_private_blocks=True):
     """Anonymize each file in input and save to output."""
     anonymizer4 = None
     anonymizer6 = None
