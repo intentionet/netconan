@@ -213,7 +213,7 @@ def test_v4_class_preserved(flip_anonymizer_v4, ip_addr):
     assert(0xFFFFFFFF ^ class_mask == ip_int ^ ip_int_anon)
 
 
-def test_anonymize_custom_prefixes():
+def test_preserve_custom_prefixes():
     """Test that a custom prefix is preserved correctly."""
     subnet = '170.0.0.0/8'
     anonymizer = IpAnonymizer(SALT, [subnet])
