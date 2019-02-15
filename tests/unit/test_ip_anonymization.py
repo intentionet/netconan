@@ -13,13 +13,13 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+from __future__ import unicode_literals
 import ipaddress
 import pytest
 import regex
 
 from netconan.ip_anonymization import (
     IpAnonymizer, IpV6Anonymizer, anonymize_ip_addr, _ensure_unicode)
-from six import u
 
 ip_v4_classes = [
     '0.0.0.0/1',    # Class A
@@ -393,7 +393,7 @@ def test_false_positives(anonymizer_v4, anonymizer_v6, line):
                          ])
 def test_v4_anonymizer_ignores_leading_zeros(anonymizer_v4, zeros, no_zeros):
     """Test that v4 IP address ignore leading zeros & don't interpret octal."""
-    assert(ipaddress.IPv4Address(u(no_zeros)) == anonymizer_v4.make_addr(zeros))
+    assert(ipaddress.IPv4Address(no_zeros) == anonymizer_v4.make_addr(zeros))
 
 
 @pytest.mark.parametrize('ip_int, expected', [

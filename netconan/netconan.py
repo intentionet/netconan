@@ -18,6 +18,7 @@ import configargparse
 import logging
 import sys
 
+from .ip_anonymization import IpAnonymizer
 from .anonymize_files import anonymize_files
 
 
@@ -61,10 +62,9 @@ def _parse_args(argv):
                         help='Undo reversible anonymization (must specify salt)')
     parser.add_argument('-w', '--sensitive-words', default=None,
                         help='List of comma separated keywords to anonymize')
-    parser.add_argument('--preserve-prefixes', default=None,
-                        help='List of comma separated IPv4 prefixes to preserve'
-                             ' (overrides default of IPv4 classes and private-'
-                             'use prefixes)')
+    parser.add_argument('--preserve-prefixes',
+                        default=','.join(IpAnonymizer.DEFAULT_PRESERVED_PREFIXES),
+                        help='List of comma separated IPv4 prefixes to preserve')
     return parser.parse_args(argv)
 
 

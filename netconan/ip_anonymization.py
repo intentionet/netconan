@@ -13,6 +13,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
 
 from bidict import bidict
@@ -145,8 +146,7 @@ class _BaseIpAnonymizer(object):
 class IpAnonymizer(_BaseIpAnonymizer):
     """An anonymizer for IPv4 addresses."""
 
-    _DROP_ZEROS_PATTERN = regex.compile(r'0*(\d+)\.0*(\d+)\.0*(\d+)\.0*(\d+)')
-    _DEFAULT_PRESERVED_PREFIXES = (
+    DEFAULT_PRESERVED_PREFIXES = (
         '0.0.0.0/1',        # Class A
         '128.0.0.0/2',      # Class B
         '192.0.0.0/3',      # Class C
@@ -155,13 +155,14 @@ class IpAnonymizer(_BaseIpAnonymizer):
         '172.16.0.0/12',    # Private-use subnet
         '192.168.0.0/16',   # Private-use subnet
     )
+    _DROP_ZEROS_PATTERN = regex.compile(r'0*(\d+)\.0*(\d+)\.0*(\d+)\.0*(\d+)')
 
     def __init__(self, salt, preserve_prefixes=None, **kwargs):
         """Create an anonymizer using the specified salt."""
         super(IpAnonymizer, self).__init__(salt, 32, **kwargs)
 
         if preserve_prefixes is None:
-            preserve_prefixes = self._DEFAULT_PRESERVED_PREFIXES
+            preserve_prefixes = self.DEFAULT_PRESERVED_PREFIXES
 
         # Preserve relevant prefixes
         for subnet_str in preserve_prefixes:
