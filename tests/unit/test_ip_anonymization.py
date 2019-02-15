@@ -21,6 +21,13 @@ from netconan.ip_anonymization import (
     IpAnonymizer, IpV6Anonymizer, anonymize_ip_addr, _ensure_unicode)
 from six import u
 
+ip_v4_classes = [
+    '0.0.0.0/1',    # Class A
+    '128.0.0.0/2',  # Class B
+    '192.0.0.0/3',  # Class C
+    '224.0.0.0/4',  # Class D (implies class E)
+]
+
 ip_v4_list = [
     ('12.13.14.15'),
     ('237.73.212.5'),
@@ -68,9 +75,9 @@ def anonymizer_v4():
 
 
 @pytest.fixture(scope='module')
-def anonymizer_v4_anonymize_private_blocks():
-    """Some tests in this module use an IPv4 anonymizer that anonymizes private-use blocks."""
-    return IpAnonymizer(SALT, False)
+def anonymizer_v4_anonymize_everything():
+    """Some tests in this module use an IPv4 anonymizer that anonymizes everything (class bits, private-use prefixes)."""
+    return IpAnonymizer(SALT, [])
 
 
 @pytest.fixture(scope='module')
@@ -94,9 +101,9 @@ def anonymizer(request):
 
 @pytest.fixture(scope='module')
 def flip_anonymizer_v4():
-    """Create an anonymizer that flips every bit."""
+    """Create an anonymizer that flips every bit except for class bits."""
     # Don't preserve private blocks, because that reduces the number of bits flipped
-    return IpAnonymizer(SALT, preserve_private=False, salter=lambda a, b: 1)
+    return IpAnonymizer(SALT, preserve_prefixes=ip_v4_classes, salter=lambda a, b: 1)
 
 
 def anonymize_line_general(anonymizer, line, ip_addrs):
@@ -206,25 +213,31 @@ def test_v4_class_preserved(flip_anonymizer_v4, ip_addr):
     assert(0xFFFFFFFF ^ class_mask == ip_int ^ ip_int_anon)
 
 
-@pytest.mark.parametrize('start, end, subnet', private_blocks)
-def test_anonymize_private_blocks(anonymizer_v4_anonymize_private_blocks, start, end, subnet):
-    """Test that private blocks are anonymized with preserve-private-block option disabled in anonymizer."""
-    ip_int_start = int(anonymizer_v4_anonymize_private_blocks.make_addr(start))
-    ip_int_start_anon = anonymizer_v4_anonymize_private_blocks.anonymize(ip_int_start)
+def test_anonymize_custom_prefixes():
+    """Test that a custom prefix is preserved correctly."""
+    subnet = '170.0.0.0/8'
+    anonymizer = IpAnonymizer(SALT, [subnet])
 
-    ip_int_end = int(anonymizer_v4_anonymize_private_blocks.make_addr(end))
-    ip_int_end_anon = anonymizer_v4_anonymize_private_blocks.anonymize(ip_int_end)
+    ip_start = int(anonymizer.make_addr('170.0.0.0'))
+    ip_start_anon = anonymizer.anonymize(ip_start)
+
+    ip_end = int(anonymizer.make_addr('170.255.255.255'))
+    ip_end_anon = anonymizer.anonymize(ip_end)
 
     network = ipaddress.ip_network(_ensure_unicode(subnet))
 
-    # Make sure addresses in the block are not in the block after anonymization
-    assert (ipaddress.ip_address(ip_int_start_anon) not in network)
-    assert (ipaddress.ip_address(ip_int_end_anon) not in network)
+    # Make sure the anonymized addresses are different from the originals
+    assert (ip_start_anon != ip_start)
+    assert (ip_end_anon != ip_end)
+
+    # Make sure the anonymized addresses have the same prefix as the originals
+    assert (ipaddress.ip_address(ip_start_anon) in network)
+    assert (ipaddress.ip_address(ip_end_anon) in network)
 
 
 @pytest.mark.parametrize('start, end, subnet', private_blocks)
-def test_preserve_private_blocks(anonymizer_v4, start, end, subnet):
-    """Test that private blocks are preserved."""
+def test_preserve_private_prefixes(anonymizer_v4, start, end, subnet):
+    """Test that private-use prefixes are preserved by default."""
     ip_int_start = int(anonymizer_v4.make_addr(start))
     ip_int_start_anon = anonymizer_v4.anonymize(ip_int_start)
 

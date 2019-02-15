@@ -38,9 +38,6 @@ def _parse_args(argv):
 
     parser.add_argument('-a', '--anonymize-ips', action='store_true', default=False,
                         help='Anonymize IP addresses')
-    parser.add_argument('-b', '--anonymize-private-blocks', default=False,
-                        action='store_true',
-                        help='Anonymize private IPv4 blocks (e.g. 10.0.0.0/8)')
     parser.add_argument('-c', '--config', is_config_file=True,
                         help='Config file specifying params')
     parser.add_argument('-d', '--dump-ip-map', default=None,
@@ -64,6 +61,10 @@ def _parse_args(argv):
                         help='Undo reversible anonymization (must specify salt)')
     parser.add_argument('-w', '--sensitive-words', default=None,
                         help='List of comma separated keywords to anonymize')
+    parser.add_argument('--preserve-prefixes', default=None,
+                        help='List of comma separated IPv4 prefixes to preserve'
+                             ' (overrides default of IPv4 classes and private-'
+                             'use prefixes)')
     return parser.parse_args(argv)
 
 
@@ -105,6 +106,10 @@ def main(argv=sys.argv[1:]):
     if args.sensitive_words is not None:
         sensitive_words = args.sensitive_words.split(',')
 
+    preserve_prefixes = None
+    if args.preserve_prefixes is not None:
+        preserve_prefixes = args.preserve_prefixes.split(',')
+
     if not any([
         as_numbers,
         sensitive_words,
@@ -118,7 +123,7 @@ def main(argv=sys.argv[1:]):
         anonymize_files(args.input, args.output, args.anonymize_passwords,
                         args.anonymize_ips, args.salt, args.dump_ip_map,
                         sensitive_words, args.undo, as_numbers, reserved_words,
-                        not args.anonymize_private_blocks)
+                        preserve_prefixes)
 
 
 if __name__ == '__main__':

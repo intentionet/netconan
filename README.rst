@@ -70,9 +70,7 @@ Netconan attempts to *preserve useful structure*. For example,
 
 * Netconan preserves prefixes when anonymizing IPv4 and IPv6 addresses: IP addresses with a common prefix before anonymization will share the same prefix length after anonymization. For more information, see J. Xu et al., *On the Design and Performance of Prefix-Preserving IP Traffic Trace Anonymization*, ACM SIGCOMM Workshop on Internet Measurement, 2001 [`link <https://smartech.gatech.edu/bitstream/handle/1853/6573/GIT-CC-01-22.pdf>`_].
 
-* IPv4 classes are preserved.
-
-* Private-use subnets (see `IANA IPv4 assignments <https://www.iana.org/assignments/iana-ipv4-special-registry/iana-ipv4-special-registry.xhtml>`_) are preserved by default, but can be anonymized (with ``--anonymize-private-blocks`` or ``-b``).
+* IPv4 classes and private-use prefixes (see `IANA IPv4 assignments <https://www.iana.org/assignments/iana-ipv4-special-registry/iana-ipv4-special-registry.xhtml>`_) are preserved by default, but can be overriden (with ``--preserve-prefixes`` e.g. ``--preserve-prefixes 12.0.0.0/8`` will preserve a leading octet ``12`` of IP addresses encountered but anonymize octets after the ``12``).
 
 * AS number blocks are preserved (i.e. an anonymized public AS number will still be in the public AS number range after anonymization).
 
@@ -94,7 +92,7 @@ For more information about less commonly-used features, see the Netconan help (`
     usage: netconan [-h] [-a] [-c CONFIG] [-d DUMP_IP_MAP] -i INPUT
                     [-l {DEBUG,INFO,WARNING,ERROR,CRITICAL}] [-n AS_NUMBERS] -o
                     OUTPUT [-p] [-r RESERVED_WORDS] [-s SALT] [-u]
-                    [-w SENSITIVE_WORDS]
+                    [-w SENSITIVE_WORDS] [--preserve-prefixes PRESERVE_PREFIXES]
 
     Args that can start with '--' can also be set in a config file (specified via
     -c). If an arg is specified in more than one place, then command line values
@@ -105,8 +103,6 @@ For more information about less commonly-used features, see the Netconan help (`
     optional arguments:
       -h, --help            show this help message and exit
       -a, --anonymize-ips   Anonymize IP addresses
-      -b, --anonymize-private-blocks
-                            Anonymize private IPv4 blocks (e.g. 10.0.0.0/8)
       -c CONFIG, --config CONFIG
                             Config file specifying params
       -d DUMP_IP_MAP, --dump-ip-map DUMP_IP_MAP
@@ -128,3 +124,7 @@ For more information about less commonly-used features, see the Netconan help (`
       -u, --undo            Undo reversible anonymization (must specify salt)
       -w SENSITIVE_WORDS, --sensitive-words SENSITIVE_WORDS
                             List of comma separated keywords to anonymize
+      --preserve-prefix PRESERVE_PREFIXES
+                            List of comma separated IPv4 prefixes to preserve
+                            (overrides default of IPv4 classes and private-use
+                            prefixes)
