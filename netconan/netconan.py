@@ -18,6 +18,7 @@ import configargparse
 import logging
 import sys
 
+from .ip_anonymization import IpAnonymizer
 from .anonymize_files import anonymize_files
 
 
@@ -61,6 +62,9 @@ def _parse_args(argv):
                         help='Undo reversible anonymization (must specify salt)')
     parser.add_argument('-w', '--sensitive-words', default=None,
                         help='List of comma separated keywords to anonymize')
+    parser.add_argument('--preserve-prefixes',
+                        default=','.join(IpAnonymizer.DEFAULT_PRESERVED_PREFIXES),
+                        help='List of comma separated IPv4 prefixes to preserve')
     return parser.parse_args(argv)
 
 
@@ -102,6 +106,10 @@ def main(argv=sys.argv[1:]):
     if args.sensitive_words is not None:
         sensitive_words = args.sensitive_words.split(',')
 
+    preserve_prefixes = None
+    if args.preserve_prefixes is not None:
+        preserve_prefixes = args.preserve_prefixes.split(',')
+
     if not any([
         as_numbers,
         sensitive_words,
@@ -114,7 +122,8 @@ def main(argv=sys.argv[1:]):
     else:
         anonymize_files(args.input, args.output, args.anonymize_passwords,
                         args.anonymize_ips, args.salt, args.dump_ip_map,
-                        sensitive_words, args.undo, as_numbers, reserved_words)
+                        sensitive_words, args.undo, as_numbers, reserved_words,
+                        preserve_prefixes)
 
 
 if __name__ == '__main__':

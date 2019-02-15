@@ -13,6 +13,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
 
 from bidict import bidict
@@ -145,16 +146,32 @@ class _BaseIpAnonymizer(object):
 class IpAnonymizer(_BaseIpAnonymizer):
     """An anonymizer for IPv4 addresses."""
 
+    DEFAULT_PRESERVED_PREFIXES = (
+        '0.0.0.0/1',        # Class A
+        '128.0.0.0/2',      # Class B
+        '192.0.0.0/3',      # Class C
+        '224.0.0.0/4',      # Class D (implies class E)
+        '10.0.0.0/8',       # Private-use subnet
+        '172.16.0.0/12',    # Private-use subnet
+        '192.168.0.0/16',   # Private-use subnet
+    )
     _DROP_ZEROS_PATTERN = regex.compile(r'0*(\d+)\.0*(\d+)\.0*(\d+)\.0*(\d+)')
 
-    def __init__(self, salt, **kwargs):
+    def __init__(self, salt, preserve_prefixes=None, **kwargs):
         """Create an anonymizer using the specified salt."""
         super(IpAnonymizer, self).__init__(salt, 32, **kwargs)
-        # preserve IPv4 classes
-        for i in range(4):
-            bits = '1' * i
-            self.cache[bits + '1'] = bits + '1'
-            self.cache[bits + '0'] = bits + '0'
+
+        if preserve_prefixes is None:
+            preserve_prefixes = self.DEFAULT_PRESERVED_PREFIXES
+
+        # Preserve relevant prefixes
+        for subnet_str in preserve_prefixes:
+            subnet = ipaddress.ip_network(subnet_str)
+            prefix_bits = self.fmt.format(int(subnet.network_address))[:subnet.prefixlen]
+            for position in range(len(prefix_bits)):
+                value = prefix_bits[:position]
+                self.cache[value + '0'] = value + '0'
+                self.cache[value + '1'] = value + '1'
 
     def _is_mask(self, possible_mask_int):
         """Return True if the input int can be used as a 32-bit prefix mask.

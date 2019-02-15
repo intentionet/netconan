@@ -21,6 +21,7 @@ from netconan.netconan import main
 INPUT_CONTENTS = """
 # Intentionet's sensitive test file
 ip address 192.168.2.1 255.255.255.255
+ip address 1.2.3.4 0.0.0.0
 my hash is $1$salt$ABCDEFGHIJKLMNOPQRS
 AS num 12345 and 65432 should be changed
 password foobar
@@ -30,7 +31,8 @@ password reservedword
 
 REF_CONTENTS = """
 # 1cbbc2's fd8607 test file
-ip address 201.235.139.13 255.255.255.255
+ip address 192.168.139.13 255.255.255.255
+ip address 5.86.28.249 0.0.0.0
 my hash is $1$0000$CxUUGIrqPb7GaB5midrQZ.
 AS num 8625 and 64818 should be changed
 password netconanRemoved1
