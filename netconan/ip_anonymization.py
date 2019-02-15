@@ -146,16 +146,6 @@ class IpAnonymizer(_BaseIpAnonymizer):
     """An anonymizer for IPv4 addresses."""
 
     _DROP_ZEROS_PATTERN = regex.compile(r'0*(\d+)\.0*(\d+)\.0*(\d+)\.0*(\d+)')
-    _DEFAULT_PRESERVED_SUBNETS2 = (
-        '0',                    # Class A
-        '10',                   # Class B
-        '110',                  # Class C
-        '1110',                 # Class D and implies class E
-                                # Private-use subnets
-        '00001010',             # 10.0.0.0/8
-        '101011000001',         # 172.16.0.0/12
-        '1100000010101000',     # 192.168.0.0/16
-    )
     _DEFAULT_PRESERVED_PREFIXES = (
         '0.0.0.0/1',        # Class A
         '128.0.0.0/2',      # Class B
