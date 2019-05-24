@@ -40,7 +40,7 @@ def _parse_args(argv):
     parser.add_argument('-a', '--anonymize-ips', action='store_true', default=False,
                         help='Anonymize IP addresses')
     parser.add_argument('-c', '--config', is_config_file=True,
-                        help='Config file specifying params')
+                        help='Netconan configuration file with defaults for these CLI parameters')
     parser.add_argument('-d', '--dump-ip-map', default=None,
                         help='Dump IP address anonymization map to specified file')
     parser.add_argument('-i', '--input', required=True,
