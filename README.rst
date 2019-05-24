@@ -104,7 +104,8 @@ For more information about less commonly-used features, see the Netconan help (`
       -h, --help            show this help message and exit
       -a, --anonymize-ips   Anonymize IP addresses
       -c CONFIG, --config CONFIG
-                            Config file specifying params
+                            Netconan configuration file with defaults for these
+                            CLI parameters
       -d DUMP_IP_MAP, --dump-ip-map DUMP_IP_MAP
                             Dump IP address anonymization map to specified file
       -i INPUT, --input INPUT
@@ -114,7 +115,8 @@ For more information about less commonly-used features, see the Netconan help (`
       -n AS_NUMBERS, --as-numbers AS_NUMBERS
                             List of comma separated AS numbers to anonymize
       -o OUTPUT, --output OUTPUT
-                            Output file or directory where anonymized files are placed
+                            Output file or directory where anonymized files are
+                            placed
       -p, --anonymize-passwords
                             Anonymize password and snmp community lines
       -r RESERVED_WORDS, --reserved-words RESERVED_WORDS
@@ -124,7 +126,5 @@ For more information about less commonly-used features, see the Netconan help (`
       -u, --undo            Undo reversible anonymization (must specify salt)
       -w SENSITIVE_WORDS, --sensitive-words SENSITIVE_WORDS
                             List of comma separated keywords to anonymize
-      --preserve-prefix PRESERVE_PREFIXES
+      --preserve-prefixes PRESERVE_PREFIXES
                             List of comma separated IPv4 prefixes to preserve
-                            (overrides default of IPv4 classes and private-use
-                            prefixes)
