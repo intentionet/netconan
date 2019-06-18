@@ -64,7 +64,7 @@ setup(
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=[
-        'configargparse', 'bidict', 'enum34', 'ipaddress', 'passlib', 'regex==2019.02.18', 'six'
+        'configargparse', 'bidict', 'enum34', 'ipaddress', 'passlib', 'regex', 'six'
     ],
 
     # List additional groups of dependencies here (e.g. development
