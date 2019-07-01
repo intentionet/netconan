@@ -78,7 +78,8 @@ setup(
 
     # List pytest requirements for running unit tests
     setup_requires=['pytest-runner'],
-    tests_require=['pytest', 'pytest-cov', 'requests_mock', 'testfixtures'],
+    # pytest 5+ does not support Python 2
+    tests_require=['pytest>=4.2.0,<5.0.0', 'pytest-cov', 'requests_mock', 'testfixtures'],
 
     # If there are data files included in your packages that need to be
     # installed, specify them here.  If using Python 2.6 or less, then these
