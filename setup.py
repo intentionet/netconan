@@ -72,20 +72,15 @@ setup(
     # for example:
     # $ pip install -e .[dev,test]
     extras_require={
-        'dev': ['flake8', 'flake8-docstrings'],
+        'dev': ['flake8', 'flake8-docstrings',
+        'pydocstyle<4.0.0'],
         # 'test': ['coverage', 'pytz'],
     },
 
     # List pytest requirements for running unit tests
     setup_requires=['pytest-runner'],
     # pytest 5+ does not support Python 2
-    tests_require=[
-        'pydocstyle<4.0.0',
-        'pytest>=4.2.0,<5.0.0',
-        'pytest-cov',
-        'requests_mock',
-        'testfixtures'
-    ],
+    tests_require=['pytest>=4.2.0,<5.0.0', 'pytest-cov', 'requests_mock', 'testfixtures'],
 
     # If there are data files included in your packages that need to be
     # installed, specify them here.  If using Python 2.6 or less, then these
