@@ -20,7 +20,6 @@ https://github.com/pypa/sampleproject
 
 # Always prefer setuptools over distutils
 from setuptools import setup, find_packages
-from sys import version_info
 from os import path
 
 here = path.abspath(path.dirname(__file__))
