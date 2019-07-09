@@ -67,14 +67,13 @@ setup(
     install_requires=[
         'configargparse<1.0.0',
         'bidict<1.0.0',
+        # Only use enum34 for Python older than 3.4
+        'enum34<2.0.0; python_version < "3.4"',
         'ipaddress<2.0.0',
         'passlib<2.0.0',
         'regex<=2019.6.8',
         'six<2.0.0'
-    ] + (
-        # Only use enum34 for Python older than 3.4
-        ['enum34<2.0.0'] if version_info < (3, 4) else []
-    ),
+    ],
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
