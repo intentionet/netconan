@@ -72,8 +72,11 @@ setup(
     # for example:
     # $ pip install -e .[dev,test]
     extras_require={
-        'dev': ['flake8', 'flake8-docstrings',
-        'pydocstyle<4.0.0'],
+        'dev': [
+            'flake8',
+            'flake8-docstrings',
+            'pydocstyle<4.0.0'
+        ],
         # 'test': ['coverage', 'pytz'],
     },
 
