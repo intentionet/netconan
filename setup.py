@@ -20,6 +20,7 @@ https://github.com/pypa/sampleproject
 
 # Always prefer setuptools over distutils
 from setuptools import setup, find_packages
+from sys import version_info
 from os import path
 
 here = path.abspath(path.dirname(__file__))
@@ -64,21 +65,39 @@ setup(
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=[
-        'configargparse', 'bidict', 'enum34', 'ipaddress', 'passlib', 'regex', 'six'
-    ],
+        'configargparse<1.0.0',
+        'bidict<1.0.0',
+        'ipaddress<2.0.0',
+        'passlib<2.0.0',
+        'regex<=2019.6.8',
+        'six<2.0.0'
+    ] + (
+        # Only use enum34 for Python older than 3.4
+        ['enum34<2.0.0'] if version_info < (3, 4) else []
+    ),
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
     # for example:
     # $ pip install -e .[dev,test]
     extras_require={
-        'dev': ['flake8', 'flake8-docstrings'],
+        'dev': [
+            'flake8<4.0.0',
+            'flake8-docstrings<2.0.0',
+            'pydocstyle<4.0.0'
+        ],
         # 'test': ['coverage', 'pytz'],
     },
 
     # List pytest requirements for running unit tests
-    setup_requires=['pytest-runner'],
-    tests_require=['pytest', 'pytest-cov', 'requests_mock', 'testfixtures'],
+    setup_requires=['pytest-runner<6.0'],
+    # pytest 5+ does not support Python 2
+    tests_require=[
+        'pytest>=4.2.0,<5.0.0',
+        'pytest-cov<3.0.0',
+        'requests_mock<2.0.0',
+        'testfixtures<7.0.0'
+    ],
 
     # If there are data files included in your packages that need to be
     # installed, specify them here.  If using Python 2.6 or less, then these
