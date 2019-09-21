@@ -65,6 +65,8 @@ def _parse_args(argv):
     parser.add_argument('--preserve-prefixes',
                         default=','.join(IpAnonymizer.DEFAULT_PRESERVED_PREFIXES),
                         help='List of comma separated IPv4 prefixes to preserve')
+    parser.add_argument('--preserve-networks', default=None,
+                        help='List of comma separated IPv4 networks to preserve')
     return parser.parse_args(argv)
 
 
@@ -110,6 +112,10 @@ def main(argv=sys.argv[1:]):
     if args.preserve_prefixes is not None:
         preserve_prefixes = args.preserve_prefixes.split(',')
 
+    preserve_networks = None
+    if args.preserve_networks is not None:
+        preserve_networks = args.preserve_networks.split(',')
+
     if not any([
         as_numbers,
         sensitive_words,
@@ -123,7 +129,7 @@ def main(argv=sys.argv[1:]):
         anonymize_files(args.input, args.output, args.anonymize_passwords,
                         args.anonymize_ips, args.salt, args.dump_ip_map,
                         sensitive_words, args.undo, as_numbers, reserved_words,
-                        preserve_prefixes)
+                        preserve_prefixes, preserve_networks)
 
 
 if __name__ == '__main__':

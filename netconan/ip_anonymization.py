@@ -157,12 +157,21 @@ class IpAnonymizer(_BaseIpAnonymizer):
     )
     _DROP_ZEROS_PATTERN = regex.compile(r'0*(\d+)\.0*(\d+)\.0*(\d+)\.0*(\d+)')
 
-    def __init__(self, salt, preserve_prefixes=None, **kwargs):
+    def __init__(self, salt, preserve_prefixes=None, preserve_networks=None, **kwargs):
         """Create an anonymizer using the specified salt."""
         super(IpAnonymizer, self).__init__(salt, 32, **kwargs)
 
         if preserve_prefixes is None:
             preserve_prefixes = self.DEFAULT_PRESERVED_PREFIXES
+
+        self._preserve_networks = []
+        if preserve_networks is not None:
+            self._preserve_networks = [
+                ipaddress.ip_network(n) for n in preserve_networks
+            ]
+            # Make sure the prefixes are also preserved for preserved blocks, so
+            # anonymized addresses outside the block don't accidentally collide
+            preserve_networks.extend(preserve_networks)
 
         # Preserve relevant prefixes
         for subnet_str in preserve_prefixes:
@@ -211,7 +220,11 @@ class IpAnonymizer(_BaseIpAnonymizer):
 
     def should_anonymize(self, ip_int):
         """Check if a given address should be anonymized (e.g. is it a mask or address?)."""
-        return not self._is_mask(ip_int)
+        ip = ipaddress.ip_address(ip_int)
+        return not (
+            self._is_mask(ip_int) or
+            any([ip in n for n in self._preserve_networks])
+        )
 
 
 class IpV6Anonymizer(_BaseIpAnonymizer):

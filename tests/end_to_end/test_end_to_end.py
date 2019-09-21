@@ -26,6 +26,8 @@ my hash is $1$salt$ABCDEFGHIJKLMNOPQRS
 AS num 12345 and 65432 should be changed
 password foobar
 password reservedword
+ip address 11.11.11.11 0.0.0.0
+ip address 11.11.197.79 0.0.0.0
 
 """
 
@@ -37,6 +39,8 @@ my hash is $1$0000$CxUUGIrqPb7GaB5midrQZ.
 AS num 8625 and 64818 should be changed
 password netconanRemoved1
 password reservedword
+ip address 11.11.11.11 0.0.0.0
+ip address 11.11.197.79 0.0.0.0
 
 """
 
@@ -62,6 +66,7 @@ def test_end_to_end(tmpdir):
         '-w', 'intentionet,sensitive',
         '-r', 'reservedword',
         '-n', '65432,12345',
+        '--preserve-networks', '11.11.0.0/16'
     ]
     main(args)
 

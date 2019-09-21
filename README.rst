@@ -72,6 +72,8 @@ Netconan attempts to *preserve useful structure*. For example,
 
 * IPv4 classes and private-use prefixes (see `IANA IPv4 assignments <https://www.iana.org/assignments/iana-ipv4-special-registry/iana-ipv4-special-registry.xhtml>`_) are preserved by default, but can be overriden (with ``--preserve-prefixes`` e.g. ``--preserve-prefixes 12.0.0.0/8`` will preserve a leading octet ``12`` of IP addresses encountered but anonymize octets after the ``12``).
 
+* IPv4 networks can optionally be preserved, e.g. ``--preserve-networks 192.168.0.0/16,172.16.0.0/12,10.0.0.0/8`` preserves all addresses and subnets enclosed in those private-use blocks.
+
 * AS number blocks are preserved (i.e. an anonymized public AS number will still be in the public AS number range after anonymization).
 
 * Standard password and hash formats (salted md5, Cisco Type 7, Juniper Type 9) are recognized and substituted with format-compliant replacements.
@@ -128,3 +130,4 @@ For more information about less commonly-used features, see the Netconan help (`
                             List of comma separated keywords to anonymize
       --preserve-prefixes PRESERVE_PREFIXES
                             List of comma separated IPv4 prefixes to preserve
+      --preserve-networks   List of comma separated IPv4 networks to preserve

@@ -235,6 +235,22 @@ def test_preserve_custom_prefixes():
     assert (ipaddress.ip_address(ip_end_anon) in network)
 
 
+def test_preserve_custom_networks():
+    """Test that addresses within a preserved network are flagged correctly as NOT needing anonymization."""
+    network = '170.0.0.0/8'
+    anonymizer = IpAnonymizer(SALT, preserve_networks=[network])
+
+    ip_start = int(anonymizer.make_addr('170.0.0.0'))
+    ip_end = int(anonymizer.make_addr('170.255.255.255'))
+    ip_other = int(anonymizer.make_addr('10.11.12.13'))
+
+    # Make sure anonymizer indicates addresses within preserved network block should not be anonymized
+    assert not anonymizer.should_anonymize(ip_start)
+    assert not anonymizer.should_anonymize(ip_end)
+    # Make sure the address outside the preserved block should be anonymized
+    assert anonymizer.should_anonymize(ip_other)
+
+
 @pytest.mark.parametrize('start, end, subnet', private_blocks)
 def test_preserve_private_prefixes(anonymizer_v4, start, end, subnet):
     """Test that private-use prefixes are preserved by default."""
