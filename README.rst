@@ -130,4 +130,5 @@ For more information about less commonly-used features, see the Netconan help (`
                             List of comma separated keywords to anonymize
       --preserve-prefixes PRESERVE_PREFIXES
                             List of comma separated IPv4 prefixes to preserve
-      --preserve-networks   List of comma separated IPv4 networks to preserve
+      --preserve-networks PRESERVE_NETWORKS
+                            List of comma separated IPv4 networks to preserve
