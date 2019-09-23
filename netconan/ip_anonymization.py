@@ -167,7 +167,8 @@ class IpAnonymizer(_BaseIpAnonymizer):
         self._preserve_networks = []
         if preserve_networks is not None:
             self._preserve_networks = [
-                ipaddress.ip_network(n) for n in preserve_networks
+                ipaddress.ip_network(_ensure_unicode(n))
+                for n in preserve_networks
             ]
             # Make sure the prefixes are also preserved for preserved blocks, so
             # anonymized addresses outside the block don't accidentally collide
