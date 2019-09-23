@@ -20,6 +20,7 @@ from netconan.netconan import main
 INPUT_CONTENTS = """
 # Intentionet's sensitive test file
 ip address 192.168.2.1 255.255.255.255
+ip address 111.111.111.111
 ip address 1.2.3.4 0.0.0.0
 my hash is $1$salt$ABCDEFGHIJKLMNOPQRS
 AS num 12345 and 65432 should be changed
@@ -33,6 +34,7 @@ ip address 11.11.197.79 0.0.0.0
 REF_CONTENTS = """
 # 1cbbc2's fd8607 test file
 ip address 192.168.2.13 255.255.255.255
+ip address 111.111.111.111
 ip address 77.86.28.249 0.0.0.0
 my hash is $1$0000$CxUUGIrqPb7GaB5midrQZ.
 AS num 8625 and 64818 should be changed
@@ -66,7 +68,7 @@ def test_end_to_end(tmpdir):
         '-r', 'reservedword',
         '-n', '65432,12345',
         '--preserve-networks', '11.11.0.0/16',
-        '--preserve-prefixes', '192.168.2.0/24',
+        '--preserve-addresses', '192.168.2.0/24,111.111.111.111',
     ]
     main(args)
 

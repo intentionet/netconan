@@ -65,11 +65,11 @@ def _parse_args(argv):
     parser.add_argument('--preserve-prefixes',
                         default=','.join(IpAnonymizer.DEFAULT_PRESERVED_PREFIXES),
                         help='List of comma separated IPv4 prefixes to preserve (skip anonymizing the specified prefixes, but host bits are still anonymized)')
-    parser.add_argument('--preserve-networks', default=None,
-                        help='List of comma separated IPv4 networks to preserve (skip anonymizing the prefix and host bits in the specified blocks)')
-    parser.add_argument('--preserve-private-networks', '--preserve-rfc-1918',
+    parser.add_argument('--preserve-addresses', default=None,
+                        help='List of comma separated IPv4 addresses or networks to preserve (skip anonymizing the prefix and host bits in the specified addresses)')
+    parser.add_argument('--preserve-private-addresses', '--preserve-rfc-1918',
                         action='store_true', default=False,
-                        help='Preserve private-use IPv4 networks (skip anonymizing the prefix or host bits for addresses in 192.168.0.0/16, 172.16.0.0/12, and 10.0.0.0/8)')
+                        help='Preserve private-use IPv4 addresses (skip anonymizing addresses in 192.168.0.0/16, 172.16.0.0/12, and 10.0.0.0/8)')
     return parser.parse_args(argv)
 
 
@@ -115,15 +115,15 @@ def main(argv=sys.argv[1:]):
     if args.preserve_prefixes is not None:
         preserve_prefixes = args.preserve_prefixes.split(',')
 
-    preserve_networks = None
-    if args.preserve_networks is not None:
-        preserve_networks = args.preserve_networks.split(',')
+    preserve_addresses = None
+    if args.preserve_addresses is not None:
+        preserve_addresses = args.preserve_addresses.split(',')
 
-    if args.preserve_private_networks:
-        private_networks = list(IpAnonymizer.RFC_1918_NETWORKS)
-        # Merge private networks with explicitly preserved networks
-        preserve_networks = private_networks if preserve_networks is None else (
-            preserve_networks + private_networks
+    if args.preserve_private_addresses:
+        addrs = list(IpAnonymizer.RFC_1918_NETWORKS)
+        # Merge private addresses with explicitly preserved addresses
+        preserve_addresses = addrs if preserve_addresses is None else (
+            preserve_addresses + addrs
         )
 
     if not any([
@@ -139,7 +139,7 @@ def main(argv=sys.argv[1:]):
         anonymize_files(args.input, args.output, args.anonymize_passwords,
                         args.anonymize_ips, args.salt, args.dump_ip_map,
                         sensitive_words, args.undo, as_numbers, reserved_words,
-                        preserve_prefixes, preserve_networks)
+                        preserve_prefixes, preserve_addresses)
 
 
 if __name__ == '__main__':
