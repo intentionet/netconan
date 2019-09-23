@@ -67,8 +67,8 @@ def test_end_to_end(tmpdir):
         '-w', 'intentionet,sensitive',
         '-r', 'reservedword',
         '-n', '65432,12345',
-        '--preserve-networks', '11.11.0.0/16',
-        '--preserve-addresses', '192.168.2.0/24,111.111.111.111',
+        '--preserve-addresses', '11.11.0.0/16,111.111.111.111',
+        '--preserve-prefixes', '192.168.2.0/24',
     ]
     main(args)
 
