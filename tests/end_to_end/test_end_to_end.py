@@ -13,7 +13,6 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-import filecmp
 import os.path
 
 from netconan.netconan import main
@@ -31,8 +30,8 @@ password reservedword
 
 REF_CONTENTS = """
 # 1cbbc2's fd8607 test file
-ip address 192.168.139.13 255.255.255.255
-ip address 5.86.28.249 0.0.0.0
+ip address 192.168.2.13 255.255.255.255
+ip address 77.86.28.249 0.0.0.0
 my hash is $1$0000$CxUUGIrqPb7GaB5midrQZ.
 AS num 8625 and 64818 should be changed
 password netconanRemoved1
@@ -62,11 +61,17 @@ def test_end_to_end(tmpdir):
         '-w', 'intentionet,sensitive',
         '-r', 'reservedword',
         '-n', '65432,12345',
+        '--preserve-prefixes', '192.168.2.0/24',
     ]
     main(args)
 
-    # Make sure output file matches the ref
-    assert(filecmp.cmp(str(ref_file), str(output_file)))
+    with open(str(ref_file)) as f_ref, open(str(output_file)) as f_out:
+        # Compare lines for more readable failed assertion message
+        t_ref = f_ref.read().split('\n')
+        t_out = f_out.read().split('\n')
+
+    # Make sure output file lines match ref lines
+    assert t_ref == t_out
 
 
 def test_end_to_end_no_anonymization(tmpdir):
