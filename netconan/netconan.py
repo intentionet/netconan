@@ -64,9 +64,12 @@ def _parse_args(argv):
                         help='List of comma separated keywords to anonymize')
     parser.add_argument('--preserve-prefixes',
                         default=','.join(IpAnonymizer.DEFAULT_PRESERVED_PREFIXES),
-                        help='List of comma separated IPv4 prefixes to preserve')
+                        help='List of comma separated IPv4 prefixes to preserve (do not anonymize the specified prefixes, but host bits are still anonymized)')
     parser.add_argument('--preserve-networks', default=None,
-                        help='List of comma separated IPv4 networks to preserve')
+                        help='List of comma separated IPv4 networks to preserve (do not anonymize the prefix or host bits in the specified blocks)')
+    parser.add_argument('--preserve-private-networks', '--preserve-rfc-1918',
+                        action='store_true', default=False,
+                        help='Preserve private-use IPv4 networks (do not anonymize the prefix or host bits for addresses in 192.168.0.0/16, 172.16.0.0/12, and 10.0.0.0/8)')
     return parser.parse_args(argv)
 
 
@@ -115,6 +118,13 @@ def main(argv=sys.argv[1:]):
     preserve_networks = None
     if args.preserve_networks is not None:
         preserve_networks = args.preserve_networks.split(',')
+
+    if args.preserve_private_networks:
+        private_networks = list(IpAnonymizer.RFC_1918_NETWORKS)
+        # Merge private networks with explicitly preserved networks
+        preserve_networks = private_networks if preserve_networks is None else (
+            preserve_networks + private_networks
+        )
 
     if not any([
         as_numbers,

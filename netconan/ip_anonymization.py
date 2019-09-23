@@ -146,15 +146,21 @@ class _BaseIpAnonymizer(object):
 class IpAnonymizer(_BaseIpAnonymizer):
     """An anonymizer for IPv4 addresses."""
 
-    DEFAULT_PRESERVED_PREFIXES = (
-        '0.0.0.0/1',        # Class A
-        '128.0.0.0/2',      # Class B
-        '192.0.0.0/3',      # Class C
-        '224.0.0.0/4',      # Class D (implies class E)
-        '10.0.0.0/8',       # Private-use subnet
-        '172.16.0.0/12',    # Private-use subnet
-        '192.168.0.0/16',   # Private-use subnet
+    IPV4_CLASSES = (
+        '0.0.0.0/1',  # Class A
+        '128.0.0.0/2',  # Class B
+        '192.0.0.0/3',  # Class C
+        '224.0.0.0/4',  # Class D (implies class E)
     )
+
+    RFC_1918_NETWORKS = (
+        '10.0.0.0/8',  # Private-use subnet
+        '172.16.0.0/12',  # Private-use subnet
+        '192.168.0.0/16',  # Private-use subnet
+    )
+
+    DEFAULT_PRESERVED_PREFIXES = IPV4_CLASSES + RFC_1918_NETWORKS
+
     _DROP_ZEROS_PATTERN = regex.compile(r'0*(\d+)\.0*(\d+)\.0*(\d+)\.0*(\d+)')
 
     def __init__(self, salt, preserve_prefixes=None, preserve_networks=None, **kwargs):

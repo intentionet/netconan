@@ -72,7 +72,7 @@ Netconan attempts to *preserve useful structure*. For example,
 
 * IPv4 classes and private-use prefixes (see `IANA IPv4 assignments <https://www.iana.org/assignments/iana-ipv4-special-registry/iana-ipv4-special-registry.xhtml>`_) are preserved by default, but can be overriden (with ``--preserve-prefixes`` e.g. ``--preserve-prefixes 12.0.0.0/8`` will preserve a leading octet ``12`` of IP addresses encountered but anonymize octets after the ``12``).
 
-* IPv4 networks can optionally be preserved, e.g. ``--preserve-networks 192.168.0.0/16,172.16.0.0/12,10.0.0.0/8`` preserves all addresses and subnets enclosed in those private-use blocks.
+* IPv4 networks can optionally be preserved, e.g. ``--preserve-private-networks`` or ``--preserve-rfc-1918`` preserves address that fall under `private-use IPv4 blocks defined in RFC 1918 <https://tools.ietf.org/html/rfc1918#section-3>`_.  Alternatively, a specific block can be preserved with ``--preserve-networks`` e.g. ``--preserve-networks 12.0.0.0/8`` will preserve prefixes and host bits for any address in the ``12.0.0.0/8`` block.
 
 * AS number blocks are preserved (i.e. an anonymized public AS number will still be in the public AS number range after anonymization).
 
@@ -128,7 +128,15 @@ For more information about less commonly-used features, see the Netconan help (`
       -u, --undo            Undo reversible anonymization (must specify salt)
       -w SENSITIVE_WORDS, --sensitive-words SENSITIVE_WORDS
                             List of comma separated keywords to anonymize
-      --preserve-prefixes PRESERVE_PREFIXES
-                            List of comma separated IPv4 prefixes to preserve
-      --preserve-networks PRESERVE_NETWORKS
-                            List of comma separated IPv4 networks to preserve
+  --preserve-prefixes PRESERVE_PREFIXES
+                        List of comma separated IPv4 prefixes to preserve (do
+                        not anonymize the specified prefixes, but host bits
+                        are still anonymized)
+  --preserve-networks PRESERVE_NETWORKS
+                        List of comma separated IPv4 networks to preserve (do
+                        not anonymize the prefix or host bits in the specified
+                        blocks)
+  --preserve-private-networks, --preserve-rfc-1918
+                        Preserve private-use IPv4 networks (do not anonymize
+                        the prefix or host bits for addresses in
+                        192.168.0.0/16, 172.16.0.0/12, and 10.0.0.0/8)
