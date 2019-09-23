@@ -147,15 +147,15 @@ class IpAnonymizer(_BaseIpAnonymizer):
     """An anonymizer for IPv4 addresses."""
 
     IPV4_CLASSES = (
-        '0.0.0.0/1',  # Class A
+        '0.0.0.0/1',    # Class A
         '128.0.0.0/2',  # Class B
         '192.0.0.0/3',  # Class C
         '224.0.0.0/4',  # Class D (implies class E)
     )
 
     RFC_1918_NETWORKS = (
-        '10.0.0.0/8',  # Private-use subnet
-        '172.16.0.0/12',  # Private-use subnet
+        '10.0.0.0/8',      # Private-use subnet
+        '172.16.0.0/12',   # Private-use subnet
         '192.168.0.0/16',  # Private-use subnet
     )
 
