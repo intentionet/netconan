@@ -66,6 +66,7 @@ def test_end_to_end(tmpdir):
     main(args)
 
     with open(str(ref_file)) as f_ref, open(str(output_file)) as f_out:
+        # Compare lines for more readable failed assertion message
         t_ref = f_ref.read().split('\n')
         t_out = f_out.read().split('\n')
 
