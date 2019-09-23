@@ -182,7 +182,7 @@ class IpAnonymizer(_BaseIpAnonymizer):
 
         # Preserve relevant prefixes
         for subnet_str in preserve_prefixes:
-            subnet = ipaddress.ip_network(subnet_str)
+            subnet = ipaddress.ip_network(_ensure_unicode(subnet_str))
             prefix_bits = self.fmt.format(int(subnet.network_address))[:subnet.prefixlen]
             for position in range(len(prefix_bits)):
                 value = prefix_bits[:position]
