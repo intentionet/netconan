@@ -76,7 +76,7 @@ Netconan attempts to *preserve useful structure*. For example,
 
   - ``--preserve-private-addresses`` or ``--preserve-rfc-1918`` skips anonymizing addresses that fall under `private-use IPv4 blocks defined in RFC 1918 <https://tools.ietf.org/html/rfc1918#section-3>`_.
 
-  - Alternatively, a specific block of addresses can be preserved with ``--preserve-addresses`` e.g. ``--preserve-addresses 12.0.0.0/8,13.12.11.10`` will skip anonymization for any address in the ``12.0.0.0/8`` block and skip anonymizing ``13.12.11.10``.
+  - ``--preserve-addresses`` skips anonymizing the specified network or address e.g. ``--preserve-addresses 12.0.0.0/8,13.12.11.10`` will skip anonymization for any address in the ``12.0.0.0/8`` network and skip anonymizing ``13.12.11.10``.
 
 * AS number blocks are preserved (i.e. an anonymized public AS number will still be in the public AS number range after anonymization).
 
