@@ -65,7 +65,7 @@ def test_end_to_end(tmpdir):
     ]
     main(args)
 
-    with open(ref_file) as f_ref, open(output_file) as f_out:
+    with open(str(ref_file)) as f_ref, open(str(output_file)) as f_out:
         t_ref = f_ref.read().split('\n')
         t_out = f_out.read().split('\n')
 
