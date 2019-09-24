@@ -257,6 +257,44 @@ def test_preserve_custom_addresses():
     assert anonymizer.should_anonymize(ip_outside)
 
 
+def test_preserve_address_preserves_prefix():
+    """Test that common prefixes are still preserved when addresses are preserved."""
+    addr_str = '11.11.11.11'
+    addr = ipaddress.ip_address(addr_str)
+    addr_int = int(addr)
+
+    anonymizer = IpAnonymizer(SALT, preserve_addresses=[addr_str])
+
+    addr_len = addr.max_prefixlen
+    for i in range(addr_len):
+        # Anonymize an address similar to the original, with 1 bit flipped
+        similar_addr = ipaddress.ip_address(addr_int ^ (1 << i))
+        similar_anon = ipaddress.ip_address(
+            anonymizer.anonymize(int(similar_addr))
+        )
+        # Confirm cpl before anonymization matches cpl after anonymization
+        assert _cpl_v4(similar_anon, addr) == _cpl_v4(similar_addr, addr)
+
+
+def _cpl_v4(left, right):
+    """
+    Return the common prefix length for two IPv4 addresses.
+
+    e.g.
+    _cpl_v4(1.0.0.1, 1.0.0.1) == 32
+    _cpl_v4(1.0.0.1, 1.0.128.1) == 16
+    _cpl_v4(1.0.0.1, 128.0.0.1) == 0
+    """
+    l = int(left)
+    r = int(right)
+    xor = l ^ r
+    max_shift = 32
+    for i in reversed(range(max_shift)):
+        if xor & (0x1 << i):
+            return max_shift - 1 - i
+    return max_shift
+
+
 @pytest.mark.parametrize('start, end, subnet', private_blocks)
 def test_preserve_private_prefixes(anonymizer_v4, start, end, subnet):
     """Test that private-use prefixes are preserved by default."""
