@@ -168,7 +168,7 @@ class IpAnonymizer(_BaseIpAnonymizer):
         super(IpAnonymizer, self).__init__(salt, 32, **kwargs)
 
         if preserve_prefixes is None:
-            preserve_prefixes = self.DEFAULT_PRESERVED_PREFIXES
+            preserve_prefixes = list(self.DEFAULT_PRESERVED_PREFIXES)
 
         self._preserve_addresses = []
         if preserve_addresses is not None:
@@ -178,7 +178,7 @@ class IpAnonymizer(_BaseIpAnonymizer):
             ]
             # Make sure the prefixes are also preserved for preserved blocks, so
             # anonymized addresses outside the block don't accidentally collide
-            preserve_addresses.extend(preserve_addresses)
+            preserve_prefixes.extend(preserve_addresses)
 
         # Preserve relevant prefixes
         for subnet_str in preserve_prefixes:

@@ -35,7 +35,7 @@ REF_CONTENTS = """
 # 1cbbc2's fd8607 test file
 ip address 192.168.2.13 255.255.255.255
 ip address 111.111.111.111
-ip address 77.86.28.249 0.0.0.0
+ip address 5.86.28.249 0.0.0.0
 my hash is $1$0000$CxUUGIrqPb7GaB5midrQZ.
 AS num 8625 and 64818 should be changed
 password netconanRemoved1
