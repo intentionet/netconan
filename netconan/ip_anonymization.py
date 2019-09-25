@@ -146,23 +146,39 @@ class _BaseIpAnonymizer(object):
 class IpAnonymizer(_BaseIpAnonymizer):
     """An anonymizer for IPv4 addresses."""
 
-    DEFAULT_PRESERVED_PREFIXES = (
-        '0.0.0.0/1',        # Class A
-        '128.0.0.0/2',      # Class B
-        '192.0.0.0/3',      # Class C
-        '224.0.0.0/4',      # Class D (implies class E)
-        '10.0.0.0/8',       # Private-use subnet
-        '172.16.0.0/12',    # Private-use subnet
-        '192.168.0.0/16',   # Private-use subnet
+    IPV4_CLASSES = (
+        '0.0.0.0/1',    # Class A
+        '128.0.0.0/2',  # Class B
+        '192.0.0.0/3',  # Class C
+        '224.0.0.0/4',  # Class D (implies class E)
     )
+
+    RFC_1918_NETWORKS = (
+        '10.0.0.0/8',      # Private-use subnet
+        '172.16.0.0/12',   # Private-use subnet
+        '192.168.0.0/16',  # Private-use subnet
+    )
+
+    DEFAULT_PRESERVED_PREFIXES = IPV4_CLASSES + RFC_1918_NETWORKS
+
     _DROP_ZEROS_PATTERN = regex.compile(r'0*(\d+)\.0*(\d+)\.0*(\d+)\.0*(\d+)')
 
-    def __init__(self, salt, preserve_prefixes=None, **kwargs):
+    def __init__(self, salt, preserve_prefixes=None, preserve_addresses=None, **kwargs):
         """Create an anonymizer using the specified salt."""
         super(IpAnonymizer, self).__init__(salt, 32, **kwargs)
 
         if preserve_prefixes is None:
-            preserve_prefixes = self.DEFAULT_PRESERVED_PREFIXES
+            preserve_prefixes = list(self.DEFAULT_PRESERVED_PREFIXES)
+
+        self._preserve_addresses = []
+        if preserve_addresses is not None:
+            self._preserve_addresses = [
+                ipaddress.ip_network(_ensure_unicode(n))
+                for n in preserve_addresses
+            ]
+            # Make sure the prefixes are also preserved for preserved blocks, so
+            # anonymized addresses outside the block don't accidentally collide
+            preserve_prefixes.extend(preserve_addresses)
 
         # Preserve relevant prefixes
         for subnet_str in preserve_prefixes:
@@ -211,7 +227,11 @@ class IpAnonymizer(_BaseIpAnonymizer):
 
     def should_anonymize(self, ip_int):
         """Check if a given address should be anonymized (e.g. is it a mask or address?)."""
-        return not self._is_mask(ip_int)
+        ip = ipaddress.ip_address(ip_int)
+        return not (
+            self._is_mask(ip_int) or
+            any([ip in n for n in self._preserve_addresses])
+        )
 
 
 class IpV6Anonymizer(_BaseIpAnonymizer):

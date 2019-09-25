@@ -64,7 +64,12 @@ def _parse_args(argv):
                         help='List of comma separated keywords to anonymize')
     parser.add_argument('--preserve-prefixes',
                         default=','.join(IpAnonymizer.DEFAULT_PRESERVED_PREFIXES),
-                        help='List of comma separated IPv4 prefixes to preserve')
+                        help='List of comma separated IP prefixes to preserve. Specified prefixes are preserved, but the host bits within those prefixes are still anonymized. To preserve prefixes and host bits in specified blocks, use --preserve-addresses instead')
+    parser.add_argument('--preserve-addresses', default=None,
+                        help='List of comma separated IP addresses or networks to preserve. Prefixes and host bits within those networks are preserved.  To preserve just prefixes and anonymize host bits, use --preserve-prefixes')
+    parser.add_argument('--preserve-private-addresses',
+                        action='store_true', default=False,
+                        help='Preserve private-use IP addresses. Prefixes and host bits within the private-use IP networks are preserved. To preserve specific addresses or networks, use --preserve-addresses instead. To preserve just prefixes and anonymize host bits, use --preserve-prefixes')
     return parser.parse_args(argv)
 
 
@@ -110,6 +115,17 @@ def main(argv=sys.argv[1:]):
     if args.preserve_prefixes is not None:
         preserve_prefixes = args.preserve_prefixes.split(',')
 
+    preserve_addresses = None
+    if args.preserve_addresses is not None:
+        preserve_addresses = args.preserve_addresses.split(',')
+
+    if args.preserve_private_addresses:
+        addrs = list(IpAnonymizer.RFC_1918_NETWORKS)
+        # Merge private addresses with explicitly preserved addresses
+        preserve_addresses = addrs if preserve_addresses is None else (
+            preserve_addresses + addrs
+        )
+
     if not any([
         as_numbers,
         sensitive_words,
@@ -123,7 +139,7 @@ def main(argv=sys.argv[1:]):
         anonymize_files(args.input, args.output, args.anonymize_passwords,
                         args.anonymize_ips, args.salt, args.dump_ip_map,
                         sensitive_words, args.undo, as_numbers, reserved_words,
-                        preserve_prefixes)
+                        preserve_prefixes, preserve_addresses)
 
 
 if __name__ == '__main__':

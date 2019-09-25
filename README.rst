@@ -72,6 +72,12 @@ Netconan attempts to *preserve useful structure*. For example,
 
 * IPv4 classes and private-use prefixes (see `IANA IPv4 assignments <https://www.iana.org/assignments/iana-ipv4-special-registry/iana-ipv4-special-registry.xhtml>`_) are preserved by default, but can be overriden (with ``--preserve-prefixes`` e.g. ``--preserve-prefixes 12.0.0.0/8`` will preserve a leading octet ``12`` of IP addresses encountered but anonymize octets after the ``12``).
 
+* Specific addresses can optionally be preserved, e.g.
+
+  - ``--preserve-addresses`` skips anonymizing the specified network or address e.g. ``--preserve-addresses 12.0.0.0/8,13.12.11.10`` will skip anonymization for any address in the ``12.0.0.0/8`` network and skip anonymizing ``13.12.11.10``.
+
+  - ``--preserve-private-addresses`` skips anonymizing addresses that fall under private-use blocks.
+
 * AS number blocks are preserved (i.e. an anonymized public AS number will still be in the public AS number range after anonymization).
 
 * Standard password and hash formats (salted md5, Cisco Type 7, Juniper Type 9) are recognized and substituted with format-compliant replacements.
@@ -127,4 +133,20 @@ For more information about less commonly-used features, see the Netconan help (`
       -w SENSITIVE_WORDS, --sensitive-words SENSITIVE_WORDS
                             List of comma separated keywords to anonymize
       --preserve-prefixes PRESERVE_PREFIXES
-                            List of comma separated IPv4 prefixes to preserve
+                            List of comma separated IP prefixes to preserve.
+                            Specified prefixes are preserved, but the host bits
+                            within those prefixes are still anonymized. To
+                            preserve prefixes and host bits in specified blocks,
+                            use --preserve-addresses instead
+      --preserve-addresses PRESERVE_ADDRESSES
+                            List of comma separated IP addresses or networks to
+                            preserve. Prefixes and host bits within those networks
+                            are preserved. To preserve just prefixes and anonymize
+                            host bits, use --preserve-prefixes
+      --preserve-private-addresses
+                            Preserve private-use IP addresses. Prefixes and host
+                            bits within the private-use IP networks are preserved.
+                            To preserve specific addresses or networks, use
+                            --preserve-addresses instead. To preserve just
+                            prefixes and anonymize host bits, use --preserve-
+                            prefixes
