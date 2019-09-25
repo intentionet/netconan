@@ -64,12 +64,12 @@ def _parse_args(argv):
                         help='List of comma separated keywords to anonymize')
     parser.add_argument('--preserve-prefixes',
                         default=','.join(IpAnonymizer.DEFAULT_PRESERVED_PREFIXES),
-                        help='List of comma separated IP prefixes to preserve. Specified prefixes are preserved, but the host bits within those prefixes are still anonymized. To preserve the entire network block, use --preserve-addresses instead')
+                        help='List of comma separated IP prefixes to preserve. Specified prefixes are preserved, but the host bits within those prefixes are still anonymized. To preserve prefixes and host bits in specified blocks, use --preserve-addresses instead')
     parser.add_argument('--preserve-addresses', default=None,
-                        help='List of comma separated IP addresses or networks to preserve (skip anonymizing the specified addresses)')
+                        help='List of comma separated IP addresses or networks to preserve. Prefixes and host bits within those networks are preserved.  To preserve just prefixes and anonymize host bits, use --preserve-prefixes')
     parser.add_argument('--preserve-private-addresses',
                         action='store_true', default=False,
-                        help='Preserve private-use IP addresses (skip anonymizing addresses in 192.168.0.0/16, 172.16.0.0/12, and 10.0.0.0/8)')
+                        help='Preserve private-use IP addresses. Prefixes and host bits within the private-use IP networks are preserved. To preserve specific addresses or networks, use --preserve-addresses instead. To preserve just prefixes and anonymize host bits, use --preserve-prefixes')
     return parser.parse_args(argv)
 
 
