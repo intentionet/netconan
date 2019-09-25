@@ -285,9 +285,7 @@ def _cpl_v4(left, right):
     _cpl_v4(1.0.0.1, 1.0.128.1) == 16
     _cpl_v4(1.0.0.1, 128.0.0.1) == 0
     """
-    l = int(left)
-    r = int(right)
-    xor = l ^ r
+    xor = int(left) ^ int(right)
     max_shift = 32
     for i in reversed(range(max_shift)):
         if xor & (0x1 << i):
