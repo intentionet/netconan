@@ -31,8 +31,8 @@ from six import b
 # A regex matching any of the characters that are allowed to precede a password
 # regex (e.g. sensitive line is allowed to be in quotes or after a colon)
 # This is an ignored group, so it does not muck with the password regex indicies
-# And the \K means it is not part of the regex match text/sub text
-_ALLOWED_REGEX_PREFIX = r'(?:[^-_a-zA-Z\d] ?|^ ?)\K'
+# And the ?<= means it is a look-around, not part of regex match text/sub text
+_ALLOWED_REGEX_PREFIX = r'(?:(?<=[^-_a-zA-Z\d])|(?<=^)|(?<= ))'
 
 # Number of digits to extract from hash for sensitive keyword replacement
 _ANON_SENSITIVE_WORD_LEN = 6
