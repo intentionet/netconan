@@ -19,7 +19,6 @@ from abc import ABCMeta, abstractmethod
 from bidict import bidict
 import ipaddress
 import logging
-# Need regex instead of re for variable look behind
 import re
 
 from hashlib import md5
