@@ -14,8 +14,6 @@
 #   limitations under the License.
 
 from __future__ import absolute_import
-# Need regex here instead of re for variable length lookbehinds
-import regex
 import re
 import logging
 
@@ -163,7 +161,7 @@ class SensitiveWordAnonymizer(object):
     @classmethod
     def _generate_sensitive_word_regex(cls, sensitive_words):
         """Compile and return regex for the specified list of sensitive words."""
-        return regex.compile('({})'.format('|'.join(sensitive_words)), regex.IGNORECASE)
+        return re.compile('({})'.format('|'.join(sensitive_words)), re.IGNORECASE)
 
     @classmethod
     def _generate_sensitive_word_replacements(cls, sensitive_words, salt):
@@ -276,17 +274,17 @@ def _check_sensitive_item_format(val):
 
     # Order is important here (e.g. type 7 looks like hex or text, but has a
     # specific format so it should override hex or text)
-    if regex.match(r'^\$9\$[\S]+$', val):
+    if re.match(r'^\$9\$[\S]+$', val):
         item_format = _sensitive_item_formats.juniper_type9
-    if regex.match(r'^\$6\$[\S]+$', val):
+    if re.match(r'^\$6\$[\S]+$', val):
         item_format = _sensitive_item_formats.sha512
-    if regex.match(r'^\$1\$[\S]+\$[\S]+$', val):
+    if re.match(r'^\$1\$[\S]+\$[\S]+$', val):
         item_format = _sensitive_item_formats.md5
-    if regex.match(r'^[0-9a-fA-F]+$', val):
+    if re.match(r'^[0-9a-fA-F]+$', val):
         item_format = _sensitive_item_formats.hexadecimal
-    if regex.match(r'^[01][0-9]([0-9a-fA-F]{2})+$', val):
+    if re.match(r'^[01][0-9]([0-9a-fA-F]{2})+$', val):
         item_format = _sensitive_item_formats.cisco_type7
-    if regex.match(r'^[0-9]+$', val):
+    if re.match(r'^[0-9]+$', val):
         item_format = _sensitive_item_formats.numeric
     return item_format
 
@@ -312,7 +310,7 @@ def generate_default_sensitive_item_regexes():
     """Compile and return the default password and community line regexes."""
     combined_regexes = default_pwd_line_regexes + default_com_line_regexes + \
         extra_password_regexes
-    return [[(regex.compile(_ALLOWED_REGEX_PREFIX + regex_), num) for regex_, num in group]
+    return [[(re.compile(_ALLOWED_REGEX_PREFIX + regex_), num) for regex_, num in group]
             for group in combined_regexes]
 
 
@@ -349,7 +347,8 @@ def replace_matching_item(compiled_regexes, input_line, pwd_lookup, reserved_wor
                     _LINE_SCRUBBED_MESSAGE, output_line)
                 break
 
-            anon_val = _anonymize_value(match.group(sensitive_item_num), pwd_lookup, reserved_words)
+            prefix = match.group('prefix') if 'prefix' in match.groupdict() else ""
+            anon_val = prefix + _anonymize_value(match.group(sensitive_item_num), pwd_lookup, reserved_words)
             output_line = compiled_re.sub(anon_val, output_line)
 
         # If any matches existed in this regex group, stop processing more regexes
