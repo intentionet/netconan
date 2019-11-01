@@ -16,6 +16,7 @@
 from __future__ import absolute_import
 # Need regex here instead of re for variable length lookbehinds
 import regex
+import re
 import logging
 
 from binascii import b2a_hex
@@ -65,18 +66,18 @@ _PASSWORD_ENCLOSING_TAIL_TEXT = _PASSWORD_ENCLOSING_TEXT + [']', '}', ';', ',']
 # These are extra regexes to find lines that seem like they might contain
 # sensitive info (these are not already caught by RANCID default regexes)
 extra_password_regexes = [
-    [(r'encrypted-password \K(\S+)', None)],
-    [(r'key "\K([^"]+)', 1)],
-    [(r'key-hash sha256 \K(\S+)', 1)],
+    [(r'(?<=encrypted-password )(\S+)', None)],
+    [(r'(?<=key ")([^"]+)', 1)],
+    [(r'(?<=key-hash sha256 )(\S+)', 1)],
     # Replace communities that do not look like well-known BGP communities
     # i.e. snmp communities
-    [(r'set community \K((?!{ignore})\S+)'
+    [(r'(?<=set community )((?!{ignore})\S+)'
       .format(ignore=_IGNORED_COMMUNITIES), 1)],
-    [(r'snmp-server mib community-map \K([^ :]+)', 1)],
-    [(r'snmp-community \K(\S+)', 1)],
+    [(r'(?<=snmp-server mib community-map )([^ :]+)', 1)],
+    [(r'(?<=snmp-community )(\S+)', 1)],
     # Catch-all's matching what looks like hashed passwords
-    [(r'\K("?\$9\$[^\s;"]+)', 1)],
-    [(r'\K("?\$1\$[^\s;"]+)', 1)],
+    [(r'("?\$9\$[^\s;"]+)', 1)],
+    [(r'("?\$1\$[^\s;"]+)', 1)],
 ]
 
 
@@ -101,7 +102,7 @@ class AsNumberAnonymizer(object):
         """Generate regex for finding AS number."""
         # Match a non-digit, any of the AS numbers and another non-digit
         # Using lookahead and lookbehind to match on context but not include that context in the match
-        self.as_num_regex = regex.compile(r'(\D|^)\K({})(?=\D|$)'.format(
+        self.as_num_regex = re.compile(r'(?:(?<=\D)|(?<=^))({})(?=\D|$)'.format(
             '|'.join(as_numbers)))
 
     def _generate_as_number_replacement(self, as_number):
