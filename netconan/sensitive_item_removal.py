@@ -32,7 +32,7 @@ from six import b
 # A regex matching any of the characters that are allowed to precede a password
 # regex (e.g. sensitive line is allowed to be in quotes or after a colon)
 # This is an ignored group, so it does not muck with the password regex indicies
-# And the ?<= means it is a look-around, not part of regex match text/sub text
+# And the ?<= is a lookbehind, not part of regex match text/sub text
 _ALLOWED_REGEX_PREFIX = r'(?:(?<=[^-_a-zA-Z\d])|(?<=^)|(?<= ))'
 
 # Number of digits to extract from hash for sensitive keyword replacement
@@ -163,7 +163,7 @@ class SensitiveWordAnonymizer(object):
     @classmethod
     def _generate_sensitive_word_regex(cls, sensitive_words):
         """Compile and return regex for the specified list of sensitive words."""
-        return regex.compile('({})'.format('|'.join(sensitive_words)), regex.IGNORECASE)
+        return re.compile('({})'.format('|'.join(sensitive_words)), regex.IGNORECASE)
 
     @classmethod
     def _generate_sensitive_word_replacements(cls, sensitive_words, salt):
@@ -276,17 +276,17 @@ def _check_sensitive_item_format(val):
 
     # Order is important here (e.g. type 7 looks like hex or text, but has a
     # specific format so it should override hex or text)
-    if regex.match(r'^\$9\$[\S]+$', val):
+    if re.match(r'^\$9\$[\S]+$', val):
         item_format = _sensitive_item_formats.juniper_type9
-    if regex.match(r'^\$6\$[\S]+$', val):
+    if re.match(r'^\$6\$[\S]+$', val):
         item_format = _sensitive_item_formats.sha512
-    if regex.match(r'^\$1\$[\S]+\$[\S]+$', val):
+    if re.match(r'^\$1\$[\S]+\$[\S]+$', val):
         item_format = _sensitive_item_formats.md5
-    if regex.match(r'^[0-9a-fA-F]+$', val):
+    if re.match(r'^[0-9a-fA-F]+$', val):
         item_format = _sensitive_item_formats.hexadecimal
-    if regex.match(r'^[01][0-9]([0-9a-fA-F]{2})+$', val):
+    if re.match(r'^[01][0-9]([0-9a-fA-F]{2})+$', val):
         item_format = _sensitive_item_formats.cisco_type7
-    if regex.match(r'^[0-9]+$', val):
+    if re.match(r'^[0-9]+$', val):
         item_format = _sensitive_item_formats.numeric
     return item_format
 
