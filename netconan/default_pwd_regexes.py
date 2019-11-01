@@ -39,8 +39,9 @@
 #
 # Format for these tuples are:
 #  1. sensitive line regex
-#       note that the regexes use lookbehinds and lookaheads so we can easily
-#       extract and replace just the sensitive information
+#       note that the regexes use a named `prefix` group and lookaheads so we
+#       can easily extract and replace just the sensitive information; whatever
+#       text matches the `prefix` group is kept in the anonymized line
 #  2. sensitive item regex-match-index
 #       note that if this is None, any matching config line will be removed
 #
