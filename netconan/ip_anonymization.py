@@ -28,6 +28,7 @@ from six import add_metaclass, iteritems, text_type, u
 _IPv4_OCTET_PATTERN = r'(25[0-5]|(2[0-4]|1?[0-9])?[0-9])'
 
 # Deliberately allowing leading zeros and will remove them later
+# Match address starting at beginning of line or surrounded by appropriate enclosing chars
 IPv4_PATTERN = re.compile(
     r'(?:(?<=^)|(?<=[\s:<>/\'",=\(]))'
     r'((0*{octet}\.){{3}}0*{octet})'
