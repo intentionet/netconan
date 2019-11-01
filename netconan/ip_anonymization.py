@@ -291,4 +291,4 @@ def anonymize_ip_addr(anonymizer, line, undo_ip_anon=False):
     will be replaced with the unanonymized address.
     """
     pattern = anonymizer.get_addr_pattern()
-    return pattern.sub(lambda match: _anonymize_match(anonymizer, match[0], undo_ip_anon), line)
+    return pattern.sub(lambda match: _anonymize_match(anonymizer, match.group(0), undo_ip_anon), line)
