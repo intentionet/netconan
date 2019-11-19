@@ -348,7 +348,10 @@ def replace_matching_item(compiled_regexes, input_line, pwd_lookup, reserved_wor
                     _LINE_SCRUBBED_MESSAGE, output_line)
                 break
 
+            # This is text preceding the password and shouldn't be anonymized
             prefix = match.group('prefix') if 'prefix' in match.groupdict() else ""
+            # re.sub replaces the entire matching string, which includes prefix
+            # Therefore, anon_val should have prefix prepended if applicable
             anon_val = prefix + _anonymize_value(match.group(sensitive_item_num), pwd_lookup, reserved_words)
             output_line = compiled_re.sub(anon_val, output_line)
 
