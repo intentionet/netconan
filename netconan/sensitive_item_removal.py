@@ -14,8 +14,6 @@
 #   limitations under the License.
 
 from __future__ import absolute_import
-# Need regex here instead of re for variable length lookbehinds
-import regex
 import re
 import logging
 
@@ -164,7 +162,7 @@ class SensitiveWordAnonymizer(object):
     @classmethod
     def _generate_sensitive_word_regex(cls, sensitive_words):
         """Compile and return regex for the specified list of sensitive words."""
-        return re.compile('({})'.format('|'.join(sensitive_words)), regex.IGNORECASE)
+        return re.compile('({})'.format('|'.join(sensitive_words)), re.IGNORECASE)
 
     @classmethod
     def _generate_sensitive_word_replacements(cls, sensitive_words, salt):
@@ -313,7 +311,7 @@ def generate_default_sensitive_item_regexes():
     """Compile and return the default password and community line regexes."""
     combined_regexes = default_pwd_line_regexes + default_com_line_regexes + \
         extra_password_regexes
-    return [[(regex.compile(_ALLOWED_REGEX_PREFIX + regex_), num) for regex_, num in group]
+    return [[(re.compile(_ALLOWED_REGEX_PREFIX + regex_), num) for regex_, num in group]
             for group in combined_regexes]
 
 
@@ -350,7 +348,11 @@ def replace_matching_item(compiled_regexes, input_line, pwd_lookup, reserved_wor
                     _LINE_SCRUBBED_MESSAGE, output_line)
                 break
 
-            anon_val = _anonymize_value(match.group(sensitive_item_num), pwd_lookup, reserved_words)
+            # This is text preceding the password and shouldn't be anonymized
+            prefix = match.group('prefix') if 'prefix' in match.groupdict() else ""
+            # re.sub replaces the entire matching string, which includes prefix
+            # Therefore, anon_val should have prefix prepended if applicable
+            anon_val = prefix + _anonymize_value(match.group(sensitive_item_num), pwd_lookup, reserved_words)
             output_line = compiled_re.sub(anon_val, output_line)
 
         # If any matches existed in this regex group, stop processing more regexes
