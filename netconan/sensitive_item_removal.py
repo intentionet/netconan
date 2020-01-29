@@ -14,8 +14,7 @@
 #   limitations under the License.
 
 from __future__ import absolute_import
-# Need regex here instead of re for variable length lookbehinds
-import regex
+import re
 import logging
 
 from binascii import b2a_hex
@@ -31,8 +30,9 @@ from six import b
 # A regex matching any of the characters that are allowed to precede a password
 # regex (e.g. sensitive line is allowed to be in quotes or after a colon)
 # This is an ignored group, so it does not muck with the password regex indicies
-# And the \K means it is not part of the regex match text/sub text
-_ALLOWED_REGEX_PREFIX = r'(?:[^-_a-zA-Z\d] ?|^ ?)\K'
+# And the ?<= is a lookbehind, not part of regex match text/sub text
+_ALLOWED_REGEX_PREFIX = (r'(?:(?<={prefix})|(?<={prefix} )|(?<=^)|(?<=^ ))'
+                         .format(prefix=r'[^-_a-zA-Z\d]'))
 
 # Number of digits to extract from hash for sensitive keyword replacement
 _ANON_SENSITIVE_WORD_LEN = 6
@@ -65,18 +65,18 @@ _PASSWORD_ENCLOSING_TAIL_TEXT = _PASSWORD_ENCLOSING_TEXT + [']', '}', ';', ',']
 # These are extra regexes to find lines that seem like they might contain
 # sensitive info (these are not already caught by RANCID default regexes)
 extra_password_regexes = [
-    [(r'encrypted-password \K(\S+)', None)],
-    [(r'key "\K([^"]+)', 1)],
-    [(r'key-hash sha256 \K(\S+)', 1)],
+    [(r'(?<=encrypted-password )(\S+)', None)],
+    [(r'(?<=key ")([^"]+)', 1)],
+    [(r'(?<=key-hash sha256 )(\S+)', 1)],
     # Replace communities that do not look like well-known BGP communities
     # i.e. snmp communities
-    [(r'set community \K((?!{ignore})\S+)'
+    [(r'(?<=set community )((?!{ignore})\S+)'
       .format(ignore=_IGNORED_COMMUNITIES), 1)],
-    [(r'snmp-server mib community-map \K([^ :]+)', 1)],
-    [(r'snmp-community \K(\S+)', 1)],
+    [(r'(?<=snmp-server mib community-map )([^ :]+)', 1)],
+    [(r'(?<=snmp-community )(\S+)', 1)],
     # Catch-all's matching what looks like hashed passwords
-    [(r'\K("?\$9\$[^\s;"]+)', 1)],
-    [(r'\K("?\$1\$[^\s;"]+)', 1)],
+    [(r'("?\$9\$[^\s;"]+)', 1)],
+    [(r'("?\$1\$[^\s;"]+)', 1)],
 ]
 
 
@@ -101,7 +101,7 @@ class AsNumberAnonymizer(object):
         """Generate regex for finding AS number."""
         # Match a non-digit, any of the AS numbers and another non-digit
         # Using lookahead and lookbehind to match on context but not include that context in the match
-        self.as_num_regex = regex.compile(r'(\D|^)\K({})(?=\D|$)'.format(
+        self.as_num_regex = re.compile(r'(?:(?<=\D)|(?<=^))({})(?=\D|$)'.format(
             '|'.join(as_numbers)))
 
     def _generate_as_number_replacement(self, as_number):
@@ -162,7 +162,7 @@ class SensitiveWordAnonymizer(object):
     @classmethod
     def _generate_sensitive_word_regex(cls, sensitive_words):
         """Compile and return regex for the specified list of sensitive words."""
-        return regex.compile('({})'.format('|'.join(sensitive_words)), regex.IGNORECASE)
+        return re.compile('({})'.format('|'.join(sensitive_words)), re.IGNORECASE)
 
     @classmethod
     def _generate_sensitive_word_replacements(cls, sensitive_words, salt):
@@ -275,17 +275,17 @@ def _check_sensitive_item_format(val):
 
     # Order is important here (e.g. type 7 looks like hex or text, but has a
     # specific format so it should override hex or text)
-    if regex.match(r'^\$9\$[\S]+$', val):
+    if re.match(r'^\$9\$[\S]+$', val):
         item_format = _sensitive_item_formats.juniper_type9
-    if regex.match(r'^\$6\$[\S]+$', val):
+    if re.match(r'^\$6\$[\S]+$', val):
         item_format = _sensitive_item_formats.sha512
-    if regex.match(r'^\$1\$[\S]+\$[\S]+$', val):
+    if re.match(r'^\$1\$[\S]+\$[\S]+$', val):
         item_format = _sensitive_item_formats.md5
-    if regex.match(r'^[0-9a-fA-F]+$', val):
+    if re.match(r'^[0-9a-fA-F]+$', val):
         item_format = _sensitive_item_formats.hexadecimal
-    if regex.match(r'^[01][0-9]([0-9a-fA-F]{2})+$', val):
+    if re.match(r'^[01][0-9]([0-9a-fA-F]{2})+$', val):
         item_format = _sensitive_item_formats.cisco_type7
-    if regex.match(r'^[0-9]+$', val):
+    if re.match(r'^[0-9]+$', val):
         item_format = _sensitive_item_formats.numeric
     return item_format
 
@@ -311,7 +311,7 @@ def generate_default_sensitive_item_regexes():
     """Compile and return the default password and community line regexes."""
     combined_regexes = default_pwd_line_regexes + default_com_line_regexes + \
         extra_password_regexes
-    return [[(regex.compile(_ALLOWED_REGEX_PREFIX + regex_), num) for regex_, num in group]
+    return [[(re.compile(_ALLOWED_REGEX_PREFIX + regex_), num) for regex_, num in group]
             for group in combined_regexes]
 
 
@@ -348,7 +348,11 @@ def replace_matching_item(compiled_regexes, input_line, pwd_lookup, reserved_wor
                     _LINE_SCRUBBED_MESSAGE, output_line)
                 break
 
-            anon_val = _anonymize_value(match.group(sensitive_item_num), pwd_lookup, reserved_words)
+            # This is text preceding the password and shouldn't be anonymized
+            prefix = match.group('prefix') if 'prefix' in match.groupdict() else ""
+            # re.sub replaces the entire matching string, which includes prefix
+            # Therefore, anon_val should have prefix prepended if applicable
+            anon_val = prefix + _anonymize_value(match.group(sensitive_item_num), pwd_lookup, reserved_words)
             output_line = compiled_re.sub(anon_val, output_line)
 
         # If any matches existed in this regex group, stop processing more regexes

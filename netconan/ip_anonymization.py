@@ -19,8 +19,7 @@ from abc import ABCMeta, abstractmethod
 from bidict import bidict
 import ipaddress
 import logging
-# Need regex instead of re for variable look behind
-import regex
+import re
 
 from hashlib import md5
 from six import add_metaclass, iteritems, text_type, u
@@ -29,13 +28,16 @@ from six import add_metaclass, iteritems, text_type, u
 _IPv4_OCTET_PATTERN = r'(25[0-5]|(2[0-4]|1?[0-9])?[0-9])'
 
 # Deliberately allowing leading zeros and will remove them later
-IPv4_PATTERN = regex.compile(
-    r'(?<=^|[\s:<>/\'",=\(])((0*{octet}\.){{3}}0*{octet})'
+# Match address starting at beginning of line or surrounded by appropriate enclosing chars
+IPv4_PATTERN = re.compile(
+    r'(?:(?<=^)|(?<=[\s:<>/\'",=\(]))'
+    r'((0*{octet}\.){{3}}0*{octet})'
     r'(?=/(\d{{1,3}}))?(?=[-\s:<>/\'",=\]\)]|$)'.format(octet=_IPv4_OCTET_PATTERN))
 
 # Modified from https://stackoverflow.com/a/17871737/1715495
-IPv6_PATTERN = regex.compile(
-    r'(?<=^|[\s<>/\'",=\(])(([0-9a-f]{1,4}:){7,7}[0-9a-f]{1,4}'
+IPv6_PATTERN = re.compile(
+    r'(?:(?<=^)|(?<=[\s<>/\'",=\(]))'
+    r'(([0-9a-f]{1,4}:){7,7}[0-9a-f]{1,4}'
     r'|([0-9a-f]{1,4}:){1,7}:'
     r'|([0-9a-f]{1,4}:){1,6}:[0-9a-f]{1,4}'
     r'|([0-9a-f]{1,4}:){1,5}(:[0-9a-f]{1,4}){1,2}'
@@ -49,7 +51,7 @@ IPv6_PATTERN = regex.compile(
     r'|([0-9a-f]{{1,4}}:){{1,4}}:({octet}\.){{3}}{octet})'.format(
         octet=_IPv4_OCTET_PATTERN) +
     r'(?=[-\s<>/\'",=\]\)]|$)',
-    regex.IGNORECASE)
+    re.IGNORECASE)
 
 
 def _generate_bit_from_hash(salt, string):
@@ -161,7 +163,7 @@ class IpAnonymizer(_BaseIpAnonymizer):
 
     DEFAULT_PRESERVED_PREFIXES = IPV4_CLASSES + RFC_1918_NETWORKS
 
-    _DROP_ZEROS_PATTERN = regex.compile(r'0*(\d+)\.0*(\d+)\.0*(\d+)\.0*(\d+)')
+    _DROP_ZEROS_PATTERN = re.compile(r'0*(\d+)\.0*(\d+)\.0*(\d+)\.0*(\d+)')
 
     def __init__(self, salt, preserve_prefixes=None, preserve_addresses=None, **kwargs):
         """Create an anonymizer using the specified salt."""
@@ -289,4 +291,4 @@ def anonymize_ip_addr(anonymizer, line, undo_ip_anon=False):
     will be replaced with the unanonymized address.
     """
     pattern = anonymizer.get_addr_pattern()
-    return pattern.sub(lambda match: _anonymize_match(anonymizer, match[0], undo_ip_anon), line)
+    return pattern.sub(lambda match: _anonymize_match(anonymizer, match.group(0), undo_ip_anon), line)

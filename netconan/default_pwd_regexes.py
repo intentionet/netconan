@@ -39,8 +39,9 @@
 #
 # Format for these tuples are:
 #  1. sensitive line regex
-#       note that the regexes use lookbehinds and lookaheads so we can easily
-#       extract and replace just the sensitive information
+#       note that the regexes use a named `prefix` group and lookaheads so we
+#       can easily extract and replace just the sensitive information; whatever
+#       text matches the `prefix` group is kept in the anonymized line
 #  2. sensitive item regex-match-index
 #       note that if this is None, any matching config line will be removed
 #
@@ -48,32 +49,32 @@
 # Some of these regexes need to be updated to support quote enclosed passwords
 # which is allowed for at least some syntax on Juniper devices
 default_pwd_line_regexes = [
-    [(r'((password|passwd)( level \d+)?( \d+)?) \K(\S+)', 5)],
-    [(r'(username( \S+)+ (password|secret)( \d| sha512)?) \K(\S+)', 5)],
-    [(r'((enable )?secret( \d)?) \K(\S+)', 4)],
-    [(r'(ip ftp password( \d)?) \K(\S+)', 3)],
-    [(r'(ip ospf authentication-key( \d)?) \K(\S+)', 3)],
-    [(r'(isis password) \K(\S+)(?=( level-\d)?)', 2)],
-    [(r'((domain-password|area-password)) \K(\S+)', 3)],
-    [(r'(ip ospf message-digest-key \d+ md5( \d)?) \K(\S+)', 3)],
-    [(r'(standby( \d*)? authentication( text| md5 key-string( \d)?)?) \K(\S+)', 5)],
-    [(r'(l2tp tunnel( \S+)? password( \d)?) \K(\S+)', 4)],
-    [(r'(digest secret( \d)?) \K(\S+)', 3)],
-    [(r'(ppp .* hostname) \K(\S+)', 2)],
-    [(r'(ppp .* password( \d)?) \K(\S+)', 3)],
-    [(r'((ikev2 )?(local|remote)-authentication pre-shared-key) \K(\S+)', 4)],
-    [(r'((\S )*pre-shared-key( remote| local)?( hex| hexadecimal| ascii-text| \d)?) \K(\S+)', 5)],
-    [(r'((tacacs|radius)-server (\S+ )*key)( \d)? \K(\S+)', 5)],
-    [(r'(key( \d| hexadecimal)?) \K(\S+)', 3)],
-    [(r'(ntp authentication-key \d+ md5) \K(\S+)', 2)],
-    [(r'(syscon( password| address \S+)) \K(\S+)', 3)],
-    [(r'(snmp-server user( \S+)+ (auth (md5|sha))) \K(\S+)', 5),
-     (r'(snmp-server user( \S+)+ priv( 3des| aes( \d+)?| des)?) \K(\S+)', 5)],
-    [(r'((crypto )?isakmp key( \d)?) \K(\S+)', 4)],
-    [(r'(set session-key (in|out)bound ah \d+) \K(\S+)', 3)],
-    [(r'(set session-key (in|out)bound esp \d+ cipher?) \K(\S+)', 3),
-     (r'(set session-key (in|out)bound esp \d+(( cipher \S+)? authenticator)) \K(\S+)', 5)],
-    [(r'(hello-)?authentication-key \K([^;]+)', 2)],
+    [(r'(?P<prefix>(password|passwd)( level \d+)?( \d+)? )(\S+)', 5)],
+    [(r'(?P<prefix>username( \S+)+ (password|secret)( \d| sha512)? )(\S+)', 5)],
+    [(r'(?P<prefix>(enable )?secret( \d)? )(\S+)', 4)],
+    [(r'(?P<prefix>ip ftp password( \d)? )(\S+)', 3)],
+    [(r'(?P<prefix>ip ospf authentication-key( \d)? )(\S+)', 3)],
+    [(r'(?P<prefix>isis password )(\S+)(?=( level-\d)?)', 2)],
+    [(r'(?P<prefix>(domain-password|area-password) )(\S+)', 3)],
+    [(r'(?P<prefix>ip ospf message-digest-key \d+ md5( \d)? )(\S+)', 3)],
+    [(r'(?P<prefix>standby( \d*)? authentication( text| md5 key-string( \d)?)? )(\S+)', 5)],
+    [(r'(?P<prefix>l2tp tunnel( \S+)? password( \d)? )(\S+)', 4)],
+    [(r'(?P<prefix>digest secret( \d)? )(\S+)', 3)],
+    [(r'(?P<prefix>ppp .* hostname )(\S+)', 2)],
+    [(r'(?P<prefix>ppp .* password( \d)? )(\S+)', 3)],
+    [(r'(?P<prefix>(ikev2 )?(local|remote)-authentication pre-shared-key )(\S+)', 4)],
+    [(r'(?P<prefix>(\S )*pre-shared-key( remote| local)?( hex| hexadecimal| ascii-text| \d)? )(\S+)', 5)],
+    [(r'(?P<prefix>(tacacs|radius)-server (\S+ )*key( \d)? )(\S+)', 5)],
+    [(r'(?P<prefix>key( \d| hexadecimal)? )(\S+)', 3)],
+    [(r'(?P<prefix>ntp authentication-key \d+ md5 )(\S+)', 2)],
+    [(r'(?P<prefix>syscon( password| address \S+) )(\S+)', 3)],
+    [(r'(?P<prefix>snmp-server user( \S+)+ (auth (md5|sha)) )(\S+)', 5),
+     (r'(?P<prefix>snmp-server user( \S+)+ priv( 3des| aes( \d+)?| des)? )(\S+)', 5)],
+    [(r'(?P<prefix>(crypto )?isakmp key( \d)? )(\S+)', 4)],
+    [(r'(?P<prefix>set session-key (in|out)bound ah \d+ )(\S+)', 3)],
+    [(r'(?P<prefix>set session-key (in|out)bound esp \d+ cipher? )(\S+)', 3),
+     (r'(?P<prefix>set session-key (in|out)bound esp \d+(( cipher \S+)? authenticator) )(\S+)', 5)],
+    [(r'(?P<prefix>(hello-)?authentication-key )([^;]+)', 3)],
     # TODO(https://github.com/intentionet/netconan/issues/3):
     # Follow-up on these.  They were just copied from RANCID so currently:
     #   They are untested in general and need cases added for unit tests
@@ -104,15 +105,15 @@ default_pwd_line_regexes = [
 ]
 # Taken from RANCID community scrubbing regexes
 default_com_line_regexes = [
-    [(r'((snmp-server (\S+ )*community)( [08])?) \K(\S+)', 5)],
+    [(r'(?P<prefix>(snmp-server (\S+ )*community)( [08])? )(\S+)', 5)],
     # TODO(https://github.com/intentionet/netconan/issues/5):
     # Confirm this catches all community possibilities for snmp-server
-    [(r'(snmp-server host (\S+)( informs| traps| version '
-     r'(?:1|2c|3 \S+)| vrf \S+)*) \K(\S+)', 4)],
+    [(r'(?P<prefix>snmp-server host (\S+)( informs| traps| version '
+     r'(?:1|2c|3 \S+)| vrf \S+)* )(\S+)', 4)],
     # This is from JUNOS
     # TODO(https://github.com/intentionet/netconan/issues/4):
     # See if we need to make the snmp keyword optional for Juniper
     # Also, this needs to be tested against config lines generated on a JUNOS router
     #     (to make sure the regex handles different syntaxes allowed in the line)
-    [(r'((\S* )*snmp( \S+)* (community|trap-group)) \K([^ ;]+)', 5)]
+    [(r'(?P<prefix>(\S* )*snmp( \S+)* (community|trap-group) )([^ ;]+)', 5)]
 ]
