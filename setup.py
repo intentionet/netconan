@@ -94,8 +94,8 @@ setup(
         'pytest-cov<3.0.0',
         'requests_mock<2.0.0',
         'testfixtures<7.0.0',
-        # zipp 2.2 does not work w/ Python 3.5
-        'zipp<2.2; python_version < "3.6"',
+        # zipp 2.2 does not work w/ Python < 3.6
+        'zipp<2.2',
     ],
 
     # If there are data files included in your packages that need to be
