@@ -2,6 +2,8 @@
 set -x -e
 
 if [ -n "$TRAVIS_BUILD_DIR" ]; then
+   # Upgrade pip
+   pip install -U pip
    # Build and install netconan
    pip install -e .[dev]
 fi
