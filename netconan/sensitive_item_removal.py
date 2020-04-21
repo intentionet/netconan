@@ -179,6 +179,50 @@ class SensitiveWordAnonymizer(object):
         return self.sens_word_replacements[match.group(0).lower()]
 
 
+class LineRemover(object):
+    """A line remover for interface descriptions, BGP neighbor descriptions, remarks in ACLs etc."""
+
+    def __init__(self, keywords, reserved_words=default_reserved_words, remove=False):
+        """Create an anonymizer for specified list of sensitive words and set of reserved words to leave alone."""
+        self.reserved_words = reserved_words
+        self.keywords = keywords
+        # Figure out which reserved words may clash with the keywords, so they can be preserved in removing
+        self.conflicting_words = self._generate_conflicting_reserved_word_list(keywords)
+        self.line_regex = self._generate_keyword_regex(keywords)
+        self.remove = remove
+
+    def get_remove(self):
+        """Return remove value."""
+        return self.remove
+
+    def _generate_conflicting_reserved_word_list(self, keywords):
+        """Return a set of keywords that may conflict with the specified default reserved words."""
+        conflicting_words = set()
+        for keyword in keywords:
+            conflicting_words.update(set([w for w in self.reserved_words if keyword in w]))
+        if conflicting_words:
+            logging.warning('Specified keywords overlap with reserved words. '
+                            'The following reserved words will be preserved: %s', conflicting_words)
+        return conflicting_words
+
+    @classmethod
+    def _generate_keyword_regex(self, keywords):
+        """Compile and return regex for the specified list of keywords."""
+        return re.compile('({})'.format('|'.join(keywords)), re.IGNORECASE)
+
+    def remove_line(self, line):
+        """Remove the input line."""
+        leading, words, trailing = _split_line(line)
+        for w in words:
+            if w in self.reserved_words:
+                return line
+        if (self.line_regex.search(line) is not None):
+            self.remove = True
+            return 'remove line'
+        else:
+            return line
+
+
 class _sensitive_item_formats(Enum):
     """Enum for recognized sensitive item formats (e.g. type7, md5, text)."""
 
