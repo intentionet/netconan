@@ -18,6 +18,7 @@ from netconan.sensitive_item_removal import (
     _LINE_SCRUBBED_MESSAGE, _sensitive_item_formats,
     generate_default_sensitive_item_regexes, replace_matching_item,
     SensitiveWordAnonymizer)
+from netconan.default_reserved_words import default_reserved_words
 import pytest
 
 # Tuple format is config_line, sensitive_text (should not be in output line)
@@ -115,8 +116,6 @@ juniper_password_lines = [
     ('set system login user admin authentication encrypted-password "{}"', '$1$67Q0XA3z$YqiBW/xxKWr74oHPXEkIv1'),
     ('set system login user someone authenitcation "{}"', '$1$CNANTest$xAfu6Am1d5D/.6OVICuOu/'),
     ('set system license keys key "{}"', 'SOMETHING'),
-    # Does not pass yet, see TODO(https://github.com/intentionet/netconan/issues/107)
-    pytest.param('set system license keys key "{}"', 'SOMETHING sensitive', marks=pytest.mark.skip()),
     ('set snmp community {} authorization read-only', 'SECRETTEXT'),
     ('set snmp trap-group {} otherstuff', 'SECRETTEXT'),
     ('key hexadecimal {}', 'ABCDEF123456'),
@@ -124,6 +123,26 @@ juniper_password_lines = [
     ('hello-authentication-key {}', '$9$i.m5OBEevLz3RSevx7-VwgZj5TFCA0Tz9p'),
 ]
 
+# Config lines where passwords are quoted phrases with spaces
+juniper_password_with_spaces_lines = [
+    ('set system license keys key "{}"', 'SOMETHING sensitive'),
+    ('secret "{}"', 'paSSword5 sensitIVE'),
+    ('set system tacplus-server 1.2.3.4 secret "{}"', 'paSSword5se nsitIVE'),
+    ('set ip ospf authentication-key "{}"', 'Pass 5'),
+    ('enable password "{}"', 'paSSw ordsensItIVE'),
+    ('authentication-key "{}"', 'paSSword 5 sensitIVE'),
+    ('hello-authentication-key "{}"', 'PaSS worD'),
+    ('edit security ike policy pre-shared-key ascii-text "{}"', 'PaSS worD'),
+    ('ip ospf message-digest-key 2 md5 "{}"', 'paSSworD sensitIVE'),
+    ('set snmp trap-group "{}"', 'SeCRET TEXT'),
+    ('set snmp community "{}" authorization read-only', 'Pass WOrd'),
+    ('set interfaces irb unit 5 family inet address 1.2.3.0/24 vrrp-group 5 authentication-key "{}"', 'SentTiVe INfo2')
+]
+
+passwords_with_spaces = [
+    ('"passWorD senSitiVe"', '"netconanRemoved0"'),
+    ('"passWorD senSitiVe', '"netconanRemoved0')
+]
 # TODO(https://github.com/intentionet/netconan/issues/3):
 # Add more Arista config lines
 arista_password_lines = [
@@ -138,7 +157,7 @@ misc_password_lines = [
 ]
 
 sensitive_lines = (cisco_password_lines +
-                   cisco_snmp_community_lines + juniper_password_lines +
+                   cisco_snmp_community_lines + juniper_password_lines + juniper_password_with_spaces_lines +
                    arista_password_lines + misc_password_lines)
 
 sensitive_items_and_formats = [
@@ -172,6 +191,7 @@ sensitive_items_and_formats = [
     ('text_here', _sensitive_item_formats.text),
     ('more-text-here0', _sensitive_item_formats.text),
     ('ABCDEFG', _sensitive_item_formats.text),
+    ('PaSS worD', _sensitive_item_formats.text),
     ('$9$HqfQ1IcrK8n/t0IcvM24aZGi6/t', _sensitive_item_formats.juniper_type9),
     ('$9$YVgoZk.5n6AHq9tORlegoJGDkPfQCtOP5Qn9pRE', _sensitive_item_formats.juniper_type9),
     ('$6$RMxgK5ALGIf.nWEC$tHuKCyfNtJMCY561P52dTzHUmYMmLxb/Mxik.j3vMUs8lMCPocM00/NAS.SN6GCWx7d/vQIgxnClyQLAb7n3x0', _sensitive_item_formats.sha512)
@@ -301,6 +321,15 @@ def test__anonymize_value_unique():
         unique_anon_vals.add(anon_val)
 
 
+@pytest.mark.parametrize('value, anon_value', passwords_with_spaces)
+def test_anonymize_value_quoted_with_spaces(value, anon_value):
+    """Test anonymization value of quoted phrases with is a single word."""
+    lookup = {}
+    anon_val = _anonymize_value(value, lookup, default_reserved_words)
+
+    assert(anon_val == anon_value)
+
+
 @pytest.mark.parametrize('val, format_', sensitive_items_and_formats)
 def test__check_sensitive_item_format(val, format_):
     """Test sensitive item format detection."""
@@ -356,6 +385,15 @@ def test__extract_enclosing_text_tail(raw_val, tail_text):
     # Confirm the trailing text matches the appended text
     assert (tail == tail_text)
     assert (not head)
+
+
+@pytest.mark.parametrize('raw_config_line, sensitive_text', juniper_password_with_spaces_lines)
+def test_replace_matching_items_with_spaces(regexes, raw_config_line, sensitive_text):
+    """Test anonymization value of quoted phrases with spaces is as a single word in a line."""
+    config_line = raw_config_line.format(sensitive_text)
+    pwd_lookup = {}
+    annon_line = replace_matching_item(regexes, config_line, pwd_lookup)
+    assert(annon_line == raw_config_line.format('netconanRemoved0'))
 
 
 @pytest.mark.parametrize('val', unique_passwords)

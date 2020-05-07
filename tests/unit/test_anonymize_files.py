@@ -26,6 +26,7 @@ _INPUT_CONTENTS = """
 ip address 192.168.2.1 255.255.255.255
 my hash is $1$salt$ABCDEFGHIJKLMNOPQRS
 password foobar
+set license keys key "foo bar"
 
 """
 _REF_CONTENTS = """
@@ -33,6 +34,7 @@ _REF_CONTENTS = """
 ip address 192.168.139.13 255.255.255.255
 my hash is $1$0000$CxUUGIrqPb7GaB5midrQZ.
 password netconanRemoved1
+set license keys key "netconanRemoved2"
 
 """
 _SALT = "TESTSALT"
