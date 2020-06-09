@@ -70,8 +70,8 @@ def _parse_args(argv):
     parser.add_argument('--preserve-private-addresses',
                         action='store_true', default=False,
                         help='Preserve private-use IP addresses. Prefixes and host bits within the private-use IP networks are preserved. To preserve specific addresses or networks, use --preserve-addresses instead. To preserve just prefixes and anonymize host bits, use --preserve-prefixes')
-    parser.add_argument('-k', '--keyword-remover', default=None,
-                        help='List of comma seperated keywords to remove.')
+    parser.add_argument('--remove-lines', default=None,
+                        help='List of comma separated words which should trigger removing a line entirely.')
     return parser.parse_args(argv)
 
 
@@ -129,8 +129,8 @@ def main(argv=sys.argv[1:]):
         )
 
     keywords = None
-    if args.keyword_remover is not None:
-        keywords = args.keyword_remover.split(',')
+    if args.remove_lines is not None:
+        keywords = args.remove_lines.split(',')
 
     if not any([
         as_numbers,

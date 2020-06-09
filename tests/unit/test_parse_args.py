@@ -30,7 +30,7 @@ def test_defaults():
     assert args.salt is None
     assert not args.undo
     assert args.sensitive_words is None
-    assert args.keyword_remover is None
+    assert args.remove_lines is None
 
 
 def test_no_config_file():
@@ -45,7 +45,7 @@ def test_no_config_file():
         "--salt=salty",
         "--undo",
         "--sensitive-words=secret,password",
-        "--keyword-remover=BGP neighbors,interface decriptions",
+        "--remove-lines=BGP neighbors,interface decriptions",
     ])
 
     assert "in" == args.input
@@ -57,7 +57,7 @@ def test_no_config_file():
     assert "salty" == args.salt
     assert args.undo
     assert "secret,password" == args.sensitive_words
-    assert "BGP neighbors,interface decriptions" == args.keyword_remover
+    assert "BGP neighbors,interface decriptions" == args.remove_lines
 
 
 def test_config_file(tmpdir):
@@ -79,7 +79,7 @@ def test_config_file(tmpdir):
     assert args.salt is None
     assert not args.undo
     assert args.sensitive_words is None
-    assert args.keyword_remover is None
+    assert args.remove_lines is None
 
 
 def test_config_file_and_override(tmpdir):
