@@ -129,9 +129,13 @@ class AsNumberAnonymizer(object):
 class SensitiveWordAnonymizer(object):
     """An anonymizer for sensitive keywords."""
 
-    def __init__(self, sensitive_words, salt, reserved_words=default_reserved_words):
+    def __init__(self, sensitive_words_in, salt, reserved_words=default_reserved_words):
         """Create an anonymizer for specified list of sensitive words and set of reserved words to leave alone."""
-        self.reserved_words = reserved_words
+        # Canonicalize reserved and sensitive words so case doesn't matter for
+        # internal comparisons
+        self.reserved_words = [w.lower() for w in reserved_words]
+        sensitive_words = [w.lower() for w in sensitive_words_in]
+
         self.sens_regex = self._generate_sensitive_word_regex(sensitive_words)
         self.sens_word_replacements = self._generate_sensitive_word_replacements(sensitive_words, salt)
         # Figure out which reserved words may clash with sensitive words, so they can be preserved in anonymization

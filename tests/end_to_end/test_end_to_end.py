@@ -28,6 +28,7 @@ password foobar
 password reservedword
 ip address 11.11.11.11 0.0.0.0
 ip address 11.11.197.79 0.0.0.0
+# Sensitive word Addr here
 
 """
 
@@ -42,6 +43,7 @@ password netconanRemoved1
 password reservedword
 ip address 11.11.11.11 0.0.0.0
 ip address 11.11.197.79 0.0.0.0
+# fd8607 word e77b71 here
 
 """
 
@@ -64,7 +66,7 @@ def test_end_to_end(tmpdir):
         '-s', 'TESTSALT',
         '-a',
         '-p',
-        '-w', 'intentionet,sensitive',
+        '-w', 'intentionet,sensitive,ADDR',
         '-r', 'reservedword',
         '-n', '65432,12345',
         '--preserve-addresses', '11.11.0.0/16,111.111.111.111',
