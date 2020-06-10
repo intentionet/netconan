@@ -135,8 +135,20 @@ juniper_password_with_spaces_lines = [
     ('edit security ike policy pre-shared-key ascii-text "{}"', 'PaSS worD'),
     ('ip ospf message-digest-key 2 md5 "{}"', 'paSSworD sensitIVE'),
     ('set snmp trap-group "{}"', 'SeCRET TEXT'),
+    ('set interfaces irb unit 5 family inet address 1.2.3.0/24 vrrp-group 5 authentication-key "{}"', 'SentTiVe INfo2'),
     ('set snmp community "{}" authorization read-only', 'Pass WOrd'),
-    ('set interfaces irb unit 5 family inet address 1.2.3.0/24 vrrp-group 5 authentication-key "{}"', 'SentTiVe INfo2')
+    # Cases to make sure that the patterns
+    # only consume and match two double quotes ""
+    # to anonymize
+    ('set system license keys key "{}" and "another quoted value"', 'SOMETHING sensitive'),
+    ('set system tacplus-server 1.2.3.4 secret "{}" and "anotherValue"', 'paSSword5se'),
+    ('set ip ospf authentication-key "{}" and "Quoted value"', 'Pass 5'),
+    ('enable password "{}" and "something else"', 'paSSw ordsensItIVE'),
+    ('authentication-key "{}" and "something else"', 'paSSword 5 sensitIVE'),
+    ('hello-authentication-key "{}" #""', 'PaSS worD'),
+    ('edit security ike policy pre-shared-key ascii-text "{}" more "quotes"', 'PaSS worD'),
+    ('ip ospf message-digest-key 2 md5 "{}" and "quoted"', 'paSSworD sensitIVE'),
+    ('set snmp community "{}" description "qfabric0 switch"', 'Pass WOrd'),
 ]
 
 passwords_with_spaces = [
