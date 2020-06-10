@@ -133,8 +133,8 @@ class SensitiveWordAnonymizer(object):
         """Create an anonymizer for specified list of sensitive words and set of reserved words to leave alone."""
         # Canonicalize reserved and sensitive words so case doesn't matter for
         # internal comparisons
-        self.reserved_words = [w.lower() for w in reserved_words]
-        sensitive_words_ = [w.lower() for w in sensitive_words]
+        self.reserved_words = {w.lower() for w in reserved_words}
+        sensitive_words_ = {w.lower() for w in sensitive_words}
 
         self.sens_regex = self._generate_sensitive_word_regex(sensitive_words_)
         self.sens_word_replacements = self._generate_sensitive_word_replacements(sensitive_words_, salt)
