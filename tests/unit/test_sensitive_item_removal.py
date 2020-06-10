@@ -308,37 +308,34 @@ def test_generate_keyword_regex_return_None(line, keywords, expected):
 
 def test_remove_line():
     """Test if the line is removed."""
-    line = "This is a sentence with a keyword"
-    keywords = ['keyword']
+    line = "set interfaces interface-name description sensitive"
+    keywords = ['interface-name']
     reserved_word = 'reserved'
     remover = LineRemover(keywords, [reserved_word])
     result = remover.remove_line(line)
 
-    assert(result == 'remove line')
-    assert(remover.remove is True)
+    assert(result == '')
 
 
 def test_remove_line_with_no_keywords():
     """Test if the line is not removed."""
-    line = "This is a neighbor"
-    keywords = ['keyword']
+    line = "ip address 192.168.2.1 255.255.255.255"
+    keywords = ['neighbor']
     remover = LineRemover(keywords)
     result = remover.remove_line(line)
 
     assert(result == line)
-    assert(remover.remove is False)
 
 
 def test_remove_line_with_reseved_words():
     """Test if the line removed when there are reserved words."""
-    line = "This is a BGP neighbor"
-    keywords = ['neighbor']
-    reserved_word = 'BGP'
+    line = "set interfaces interface-name description sensitive"
+    keywords = ['interface-name']
+    reserved_word = 'description'
     remover = LineRemover(keywords, [reserved_word])
     result = remover.remove_line(line)
 
     assert(result == line)
-    assert(remover.remove is False)
 
 
 @pytest.mark.parametrize('val', unique_passwords)

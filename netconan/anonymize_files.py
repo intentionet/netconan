@@ -129,7 +129,6 @@ def anonymize_file(filename_in, filename_out, compiled_regexes=None,
     with open(filename_out, 'w') as f_out, open(filename_in, 'r') as f_in:
         for line in f_in:
             output_line = line
-            remove_l = False
             if compiled_regexes is not None and pwd_lookup is not None:
                 output_line = replace_matching_item(compiled_regexes,
                                                     output_line, pwd_lookup)
@@ -146,16 +145,13 @@ def anonymize_file(filename_in, filename_out, compiled_regexes=None,
                 output_line = anonymize_as_numbers(anonymizer_as_num, output_line)
 
             if line_remover is not None:
-                line_remover.remove = False
                 output_line = line_remover.remove_line(output_line)
-                remove_l = line_remover.get_remove()
 
             if line != output_line:
                 logging.debug("Input line:  %s", line.rstrip())
                 logging.debug("Output line: %s", output_line.rstrip())
 
-            if (remove_l is False):
-                f_out.write(output_line)
+            f_out.write(output_line)
 
 
 def _mkdirs(file_path):

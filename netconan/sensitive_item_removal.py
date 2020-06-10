@@ -182,18 +182,13 @@ class SensitiveWordAnonymizer(object):
 class LineRemover(object):
     """A line remover for interface descriptions, BGP neighbor descriptions, remarks in ACLs etc."""
 
-    def __init__(self, keywords, reserved_words=default_reserved_words, remove=False):
+    def __init__(self, keywords, reserved_words=default_reserved_words):
         """Create an anonymizer for specified list of sensitive words and set of reserved words to leave alone."""
         self.reserved_words = reserved_words
         self.keywords = keywords
         # Figure out which reserved words may clash with the keywords, so they can be preserved in removing
         self.conflicting_words = self._generate_conflicting_reserved_word_list(keywords)
         self.line_regex = self._generate_keyword_regex(keywords)
-        self.remove = remove
-
-    def get_remove(self):
-        """Return remove value."""
-        return self.remove
 
     def _generate_conflicting_reserved_word_list(self, keywords):
         """Return a set of keywords that may conflict with the specified default reserved words."""
@@ -217,8 +212,7 @@ class LineRemover(object):
             if w in self.reserved_words:
                 return line
         if (self.line_regex.search(line) is not None):
-            self.remove = True
-            return 'remove line'
+            return ''
         else:
             return line
 

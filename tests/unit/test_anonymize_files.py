@@ -28,7 +28,6 @@ _INPUT_CONTENTS = """
 ip address 192.168.2.1 255.255.255.255
 my hash is $1$salt$ABCDEFGHIJKLMNOPQRS
 password foobar
-This sentence contains a keyword
 
 """
 _REF_CONTENTS = """
@@ -42,9 +41,6 @@ _SALT = "TESTSALT"
 _SENSITIVE_WORDS = [
     "intentionet",
     "sensitive",
-]
-_KEYWORDS = [
-    "keyword",
 ]
 
 
@@ -86,7 +82,7 @@ def test_anonymize_files_bad_output_file(tmpdir):
     with LogCapture() as log_capture:
         anonymize_files(str(input_file), str(output_file), True, True,
                         salt=_SALT,
-                        sensitive_words=_SENSITIVE_WORDS, keywords=_KEYWORDS)
+                        sensitive_words=_SENSITIVE_WORDS)
         # Confirm the correct message is logged
         log_capture.check_present(
             ('root', 'ERROR', 'Failed to anonymize file {}'.format(str(input_file)))
@@ -121,7 +117,7 @@ def test_anonymize_files_dir(tmpdir):
     output_file = output_dir.join(filename)
 
     anonymize_files(str(input_dir), str(output_dir), True, True, salt=_SALT,
-                    sensitive_words=_SENSITIVE_WORDS, keywords=_KEYWORDS)
+                    sensitive_words=_SENSITIVE_WORDS)
 
     # Make sure output file exists and matches the ref
     assert(os.path.isfile(str(output_file)))
@@ -157,7 +153,7 @@ def test_anonymize_files_dir_nested(tmpdir):
     output_file_2 = output_dir.join("subdir2").join("subsubdir").join(filename)
 
     anonymize_files(str(input_dir), str(output_dir), True, True, salt=_SALT,
-                    sensitive_words=_SENSITIVE_WORDS, keywords=_KEYWORDS)
+                    sensitive_words=_SENSITIVE_WORDS)
 
     # Make sure both output files exists and match the ref
     assert(os.path.isfile(str(output_file_1)))
@@ -176,7 +172,7 @@ def test_anonymize_files_file(tmpdir):
     output_file = tmpdir.mkdir("out").join(filename)
 
     anonymize_files(str(input_file), str(output_file), True, True, salt=_SALT,
-                    sensitive_words=_SENSITIVE_WORDS, keywords=_KEYWORDS)
+                    sensitive_words=_SENSITIVE_WORDS)
 
     # Make sure output file exists and matches the ref
     assert(os.path.isfile(str(output_file)))
@@ -199,7 +195,7 @@ def test_anonymize_file_with_line_remover(tmpdir):
 
     with patch('netconan.sensitive_item_removal.LineRemover') as mock:
         line_remover = mock.return_value
-        line_remover.get_remove.return_value = True
+        line_remover.remove_line.return_value = ''
 
     anonymize_file(str(input_file), str(output_file), None,
                    None, None, None, None, None, False, line_remover)
@@ -218,7 +214,6 @@ def test_anonymize_file_without_line_remover(tmpdir):
     with patch('netconan.sensitive_item_removal.LineRemover') as mock:
         line_remover = mock.return_value
         line_remover.remove_line.return_value = 'Regular sentence'
-        line_remover.get_remove.return_value = False
 
     anonymize_file(str(input_file), str(output_file), None,
                    None, None, None, None, None, False, line_remover)
