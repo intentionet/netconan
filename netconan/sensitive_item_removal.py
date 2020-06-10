@@ -131,11 +131,15 @@ class SensitiveWordAnonymizer(object):
 
     def __init__(self, sensitive_words, salt, reserved_words=default_reserved_words):
         """Create an anonymizer for specified list of sensitive words and set of reserved words to leave alone."""
-        self.reserved_words = reserved_words
-        self.sens_regex = self._generate_sensitive_word_regex(sensitive_words)
-        self.sens_word_replacements = self._generate_sensitive_word_replacements(sensitive_words, salt)
+        # Canonicalize reserved and sensitive words so case doesn't matter for
+        # internal comparisons
+        self.reserved_words = {w.lower() for w in reserved_words}
+        sensitive_words_ = {w.lower() for w in sensitive_words}
+
+        self.sens_regex = self._generate_sensitive_word_regex(sensitive_words_)
+        self.sens_word_replacements = self._generate_sensitive_word_replacements(sensitive_words_, salt)
         # Figure out which reserved words may clash with sensitive words, so they can be preserved in anonymization
-        self.conflicting_words = self._generate_conflicting_reserved_word_list(sensitive_words)
+        self.conflicting_words = self._generate_conflicting_reserved_word_list(sensitive_words_)
 
     def anonymize(self, line):
         """Anonymize sensitive words from the input line."""
