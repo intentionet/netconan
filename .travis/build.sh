@@ -2,8 +2,10 @@
 set -x -e
 
 if [ -n "$TRAVIS_BUILD_DIR" ]; then
+   # Upgrade pip
+   pip install -U pip
    # Build and install netconan
-   pip install -e .[dev]
+   pip install -e .[dev,test]
 fi
 
 echo -e "\n  ..... Running flake8 on netconan to check style and docstrings"

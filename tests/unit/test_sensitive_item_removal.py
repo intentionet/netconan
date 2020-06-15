@@ -248,7 +248,8 @@ def test_anonymize_sensitive_words(raw_line, sensitive_words):
 def test_anonymize_sensitive_words_preserve_reserved_word():
     """Test preservation of reserved words when anonymizing sensitive words."""
     reserved_word = 'search'
-    keyword = 'sea'
+    # Intentionally use different case than reserved word
+    keyword = 'SEA'
     keyword_plural = 'seas'
     line = '{reserved_word} {keyword} {keyword_plural}'\
         .format(reserved_word=reserved_word, keyword=keyword, keyword_plural=keyword_plural)
