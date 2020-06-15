@@ -83,14 +83,23 @@ setup(
             'flake8-docstrings<2.0.0',
             'pydocstyle<4.0.0'
         ],
-        # 'test': ['coverage', 'pytz'],
+        # Duplicated test deps here for now, since dependency resolution is
+        # failing for python2.7 in CI
+        'test': [
+            'pytest>=4.6.0,<5.0.0',
+            'pytest-cov<3.0.0',
+            'requests_mock<2.0.0',
+            'testfixtures<7.0.0',
+            # zipp 2.2 does not work w/ Python < 3.6
+            'zipp<2.2',
+        ],
     },
 
     # List pytest requirements for running unit tests
     setup_requires=['pytest-runner<6.0'],
     # pytest 5+ does not support Python 2
     tests_require=[
-        'pytest>=4.2.0,<5.0.0',
+        'pytest>=4.6.0,<5.0.0',
         'pytest-cov<3.0.0',
         'requests_mock<2.0.0',
         'testfixtures<7.0.0',
