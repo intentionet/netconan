@@ -28,6 +28,7 @@ password foobar
 password reservedword
 ip address 11.11.11.11 0.0.0.0
 ip address 11.11.197.79 0.0.0.0
+set interfaces interface-name description
 
 """
 
@@ -67,6 +68,7 @@ def test_end_to_end(tmpdir):
         '-w', 'intentionet,sensitive',
         '-r', 'reservedword',
         '-n', '65432,12345',
+        '--remove-line', 'interfaces',
         '--preserve-addresses', '11.11.0.0/16,111.111.111.111',
         '--preserve-prefixes', '192.168.2.0/24',
     ]

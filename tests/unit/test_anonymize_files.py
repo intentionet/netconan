@@ -28,6 +28,7 @@ _INPUT_CONTENTS = """
 ip address 192.168.2.1 255.255.255.255
 my hash is $1$salt$ABCDEFGHIJKLMNOPQRS
 password foobar
+set interfaces interface-name description
 
 """
 _REF_CONTENTS = """
@@ -43,6 +44,10 @@ _SENSITIVE_WORDS = [
     "sensitive",
 ]
 
+_KEYWORDS = [
+    "interfaces",
+]
+
 
 def test_anonymize_files_bad_input_empty(tmpdir):
     """Test anonymize_files with empty input dir."""
@@ -51,7 +56,7 @@ def test_anonymize_files_bad_input_empty(tmpdir):
 
     with pytest.raises(ValueError, match='Input directory is empty'):
         anonymize_files(str(input_dir), str(output_dir), True, True, salt=_SALT,
-                        sensitive_words=_SENSITIVE_WORDS)
+                        sensitive_words=_SENSITIVE_WORDS, keywords=_KEYWORDS)
 
 
 def test_anonymize_files_bad_input_missing(tmpdir):
@@ -117,7 +122,7 @@ def test_anonymize_files_dir(tmpdir):
     output_file = output_dir.join(filename)
 
     anonymize_files(str(input_dir), str(output_dir), True, True, salt=_SALT,
-                    sensitive_words=_SENSITIVE_WORDS)
+                    sensitive_words=_SENSITIVE_WORDS, keywords=_KEYWORDS)
 
     # Make sure output file exists and matches the ref
     assert(os.path.isfile(str(output_file)))
@@ -153,7 +158,7 @@ def test_anonymize_files_dir_nested(tmpdir):
     output_file_2 = output_dir.join("subdir2").join("subsubdir").join(filename)
 
     anonymize_files(str(input_dir), str(output_dir), True, True, salt=_SALT,
-                    sensitive_words=_SENSITIVE_WORDS)
+                    sensitive_words=_SENSITIVE_WORDS, keywords=_KEYWORDS)
 
     # Make sure both output files exists and match the ref
     assert(os.path.isfile(str(output_file_1)))
@@ -172,7 +177,7 @@ def test_anonymize_files_file(tmpdir):
     output_file = tmpdir.mkdir("out").join(filename)
 
     anonymize_files(str(input_file), str(output_file), True, True, salt=_SALT,
-                    sensitive_words=_SENSITIVE_WORDS)
+                    sensitive_words=_SENSITIVE_WORDS, keywords=_KEYWORDS)
 
     # Make sure output file exists and matches the ref
     assert(os.path.isfile(str(output_file)))

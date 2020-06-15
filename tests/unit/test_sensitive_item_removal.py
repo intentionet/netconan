@@ -264,22 +264,6 @@ def test_anonymize_sensitive_words_preserve_reserved_word():
     assert(reserved_word in anon_line.split())
 
 
-def test_generate_conflicting_reserved_word_list():
-    """Test if the set of conflicting reserved words is formed correctly."""
-    reserved_word = 'reserved'
-    keywords = ['reserved', 'keyword1', 'keyword2']
-    remover = LineRemover(keywords, [reserved_word])
-    result = remover._generate_conflicting_reserved_word_list(keywords)
-
-    # Confirm the reserved word is in the set
-    assert(reserved_word in result)
-
-    keywords = ['keyword', 'keyword1', 'keyword2']
-    result = remover._generate_conflicting_reserved_word_list(keywords)
-    # Confirm the reserved word is not in the set
-    assert(reserved_word not in result)
-
-
 @pytest.mark.parametrize("line, keywords, expected", [
         ('other other keyword', ['keyword'], ('keyword',)),
         ('other keyword other', ['keyword'], ('keyword',)),
@@ -310,8 +294,7 @@ def test_remove_line():
     """Test if the line is removed."""
     line = "set interfaces interface-name description sensitive"
     keywords = ['interface-name']
-    reserved_word = 'reserved'
-    remover = LineRemover(keywords, [reserved_word])
+    remover = LineRemover(keywords)
     result = remover.remove_line(line)
 
     assert(result == '')
@@ -322,17 +305,6 @@ def test_remove_line_with_no_keywords():
     line = "ip address 192.168.2.1 255.255.255.255"
     keywords = ['neighbor']
     remover = LineRemover(keywords)
-    result = remover.remove_line(line)
-
-    assert(result == line)
-
-
-def test_remove_line_with_reseved_words():
-    """Test if the line removed when there are reserved words."""
-    line = "set interfaces interface-name description sensitive"
-    keywords = ['interface-name']
-    reserved_word = 'description'
-    remover = LineRemover(keywords, [reserved_word])
     result = remover.remove_line(line)
 
     assert(result == line)
