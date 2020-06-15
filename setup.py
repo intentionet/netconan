@@ -86,7 +86,7 @@ setup(
         # Duplicated test deps here for now, since dependency resolution is
         # failing for python2.7 in CI
         'test': [
-            'pytest>=4.2.0,<5.0.0',
+            'pytest>=4.6.0,<5.0.0',
             'pytest-cov<3.0.0',
             'requests_mock<2.0.0',
             'testfixtures<7.0.0',
@@ -99,7 +99,7 @@ setup(
     setup_requires=['pytest-runner<6.0'],
     # pytest 5+ does not support Python 2
     tests_require=[
-        'pytest>=4.2.0,<5.0.0',
+        'pytest>=4.6.0,<5.0.0',
         'pytest-cov<3.0.0',
         'requests_mock<2.0.0',
         'testfixtures<7.0.0',
