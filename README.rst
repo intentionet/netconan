@@ -134,7 +134,8 @@ For more information about less commonly-used features, see the Netconan help (`
                             List of comma separated keywords to anonymize
       --remove-lines REMOVE_LINES
                             List of comma separated words which should trigger
-                            removing a line entirely
+                            removing a line entirely. The line will be removed 
+							even if it contains a reserved word
       --preserve-prefixes PRESERVE_PREFIXES
                             List of comma separated IP prefixes to preserve.
                             Specified prefixes are preserved, but the host bits

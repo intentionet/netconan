@@ -63,6 +63,7 @@ def anonymize_files(input_path, output_path, anon_pwd, anon_ip,
         anonymizer_as_num = AsNumberAnonymizer(as_numbers, salt)
     if keywords is not None:
         line_remover = LineRemover(keywords)
+        logging.warning('The line will be removed even if it contains a reserved word')
 
     if not os.path.exists(input_path):
         raise ValueError("Input does not exist")
