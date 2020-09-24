@@ -45,24 +45,27 @@
 #  2. sensitive item regex-match-index
 #       note that if this is None, any matching config line will be removed
 default_pwd_line_regexes = [
-    [(r'(?P<prefix>(password|passwd)( level \d+)?( \d+)? )([\"][^\"]+[\"]|[\"].+|\S+)', 5)],
+    # Since quotation marks placed at the the end of a config line are removed
+    # before anonymizing, the |[\"][^\"]+| is used to match passwords
+    # that are enclosed in quotation marks and, also, placed at the end of a config line.
+    [(r'(?P<prefix>(password|passwd)( level \d+)?( \d+)? )([\"][^\"]+[\"]|[\"][^\"]+|\S+)', 5)],
     [(r'(?P<prefix>username( \S+)+ (password|secret)( \d| sha512)? )(\S+)', 5)],
-    [(r'(?P<prefix>(enable )?secret( \d)? )([\"][^\"]+[\"]|[\"].+|\S+)', 4)],
+    [(r'(?P<prefix>(enable )?secret( \d)? )([\"][^\"]+[\"]|[\"][^\"]+|\S+)', 4)],
     [(r'(?P<prefix>ip ftp password( \d)? )(\S+)', 3)],
     [(r'(?P<prefix>ip ospf authentication-key( \d)? )([\"][^\"]+[\"]|[\"].+|\S+)', 3)],
     [(r'(?P<prefix>isis password )(\S+)(?=( level-\d)?)', 2)],
     [(r'(?P<prefix>(domain-password|area-password) )(\S+)', 3)],
-    [(r'(?P<prefix>ip ospf message-digest-key \d+ md5( \d)? )([\"][^\"]+[\"]|[\"].+|\S+)', 3)],
+    [(r'(?P<prefix>ip ospf message-digest-key \d+ md5( \d)? )([\"][^\"]+[\"]|[\"][^\"]+|\S+)', 3)],
     [(r'(?P<prefix>standby( \d*)? authentication( text| md5 key-string( \d)?)? )(\S+)', 5)],
     [(r'(?P<prefix>l2tp tunnel( \S+)? password( \d)? )(\S+)', 4)],
     [(r'(?P<prefix>digest secret( \d)? )(\S+)', 3)],
     [(r'(?P<prefix>ppp .* hostname )(\S+)', 2)],
     [(r'(?P<prefix>ppp .* password( \d)? )(\S+)', 3)],
     [(r'(?P<prefix>(ikev2 )?(local|remote)-authentication pre-shared-key )(\S+)', 4)],
-    [(r'(?P<prefix>(\S )*pre-shared-key( remote| local)?( hex| hexadecimal| ascii-text| \d)? )([\"][^\"]+[\"]|[\"].+|\S+)', 5)],
+    [(r'(?P<prefix>(\S )*pre-shared-key( remote| local)?( hex| hexadecimal| ascii-text| \d)? )([\"][^\"]+[\"]|[\"][^\"]+|\S+)', 5)],
     [(r'(?P<prefix>(tacacs|radius)-server (\S+ )*key( \d)? )(\S+)', 5)],
-    [(r'(?P<prefix>key( \d| hexadecimal)? )([\"][^\"]+[\"]|[\"].+|\S+)', 3)],
-    [(r'(?P<prefix>ntp authentication-key \d+ md5 )([\"][^\"]+[\"]|[\"].+|\S+)', 2)],
+    [(r'(?P<prefix>key( \d| hexadecimal)? )([\"][^\"]+[\"]|[\"][^\"]+|\S+)', 3)],
+    [(r'(?P<prefix>ntp authentication-key \d+ md5 )([\"][^\"]+[\"]|[\"][^\"]+|\S+)', 2)],
     [(r'(?P<prefix>syscon( password| address \S+) )(\S+)', 3)],
     [(r'(?P<prefix>snmp-server user( \S+)+ (auth (md5|sha)) )(\S+)', 5),
      (r'(?P<prefix>snmp-server user( \S+)+ priv( 3des| aes( \d+)?| des)? )(\S+)', 5)],
@@ -111,5 +114,5 @@ default_com_line_regexes = [
     # See if we need to make the snmp keyword optional for Juniper
     # Also, this needs to be tested against config lines generated on a JUNOS router
     #     (to make sure the regex handles different syntaxes allowed in the line)
-    [(r'(?P<prefix>(\S* )*snmp( \S+)* (community|trap-group) )([\"][^\"]+[\"]|[\"].+|[^ ;]+)', 5)]
+    [(r'(?P<prefix>(\S* )*snmp( \S+)* (community|trap-group) )([\"][^\"]+[\"]|[\"][^\"]+|[^ ;]+)', 5)]
 ]
