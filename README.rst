@@ -82,14 +82,14 @@ Netconan attempts to *preserve useful structure*. For example,
 
 * Standard password and hash formats (salted md5, Cisco Type 7, Juniper Type 9) are recognized and substituted with format-compliant replacements.
 
-Netconan is *deterministic* when provided the same user-controllable salt (``--salt``, ``-s``). Files processed using the same salt are compatible (e.g., IP addresses anonymized the same way) whether anonymized together or separately.
+Netconan is *deterministic* when provided the same user-controllable salt (``--salt``, ``-s``). Files processed using the same salt are compatible (e.g., IP addresses anonymized the same way) whether anonymized together or separately. Setting the salt in a configuration file is recommended, so that you can get compatible anonymization each time you use netconan.
 
 For *reversible operations* (specifically, IP address anonymization), Netconan can produce a de-anonymized file (``--undo``, ``-u``) when provided with the same salt used in anonymization (``--salt``, ``-s``).
 
 Running netconan
 ================
 
-Netconan processes the ``input`` file or recursively processes files in the ``input`` directory (skipping files starting with ``.``) and saves processed files at the specified ``output``.
+Netconan processes the ``input`` file or recursively processes files in the ``input`` directory (skipping files starting with ``.``) and saves processed files at the specified ``output``. 
 
 For more information about less commonly-used features, see the Netconan help (``-h``).  For more information on config file syntax, see `here <https://goo.gl/R74nmi>`_.
 
