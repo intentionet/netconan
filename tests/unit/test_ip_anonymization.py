@@ -150,6 +150,14 @@ def test_v4_anonymize_line(anonymizer_v4, line, ip_addrs):
     anonymize_line_general(anonymizer_v4, line, ip_addrs)
 
 
+@pytest.mark.parametrize('enclosing', ":;[]$~!@#$%^&*()-+=[]|<>?")
+def test_v4_anonymize_enclosed_addr(anonymizer_v4, enclosing):
+    """Test IPv4 address removal from config lines with different enclosing characters."""
+    ip_addr = '1.2.3.4'
+    line = enclosing + "{}" + enclosing
+    anonymize_line_general(anonymizer_v4, line, [ip_addr])
+
+
 @pytest.mark.parametrize('line, ip_addrs', [
                          ('ip address {} something::something', ['1234::5678']),
                          ('ip address {} blah {}', ['1234::', '1234:5678::9abc:def0']),
@@ -162,6 +170,14 @@ def test_v4_anonymize_line(anonymizer_v4, line, ip_addrs):
 def test_v6_anonymize_line(anonymizer_v6, line, ip_addrs):
     """Test IPv6 address removal from config lines."""
     anonymize_line_general(anonymizer_v6, line, ip_addrs)
+
+
+@pytest.mark.parametrize('enclosing', ".;[]$~!@#$%^&*()-+=[]|<>?")
+def test_v6_anonymize_enclosed_addr(anonymizer_v6, enclosing):
+    """Test IPv6 address removal from config lines with different enclosing characters."""
+    ip_addr = '1::1'
+    line = enclosing + "{}" + enclosing
+    anonymize_line_general(anonymizer_v6, line, [ip_addr])
 
 
 def get_ip_v4_class(ip_int):
@@ -414,6 +430,7 @@ def test_dump_iptree(tmpdir, anonymizer_v4):
                          '01:02:03:04:05:06:07:08:09',
                          '01:02:03:04::05:06:07:08',
                          '1.2.3.4.example.net',
+                         '1.2.3.4something.example.net',
                          'a.1.2.3.4',
                          '1.2.3',
                          '1.2.3.4.5',
@@ -422,7 +439,6 @@ def test_dump_iptree(tmpdir, anonymizer_v4):
                          '1.2.333.4',
                          '1.2.0333.4',
                          '1.256.3.4',
-                         '-1.2.3.4',
                          ])
 def test_false_positives(anonymizer_v4, anonymizer_v6, line):
     """Test that text without a valid address is not anonymized."""
