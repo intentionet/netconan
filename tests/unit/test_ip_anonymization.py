@@ -144,27 +144,18 @@ def anonymize_line_general(anonymizer, line, ip_addrs):
                          ('something={}', ['1.2.3.45']),
                          ('something <{}>', ['1.2.3.45']),
                          ('something \'{}\'', ['1.2.3.45']),
-                         ('ip addresses:{};{};{}', ['1.2.3.4', '2.3.4.5', '3.4.5.6']),
-                         ('my ip[{}]', ['1.2.3.4']),
-                         ('ips: {}${}', ['1.2.3.4', '2.3.4.5']),
-                         ('ips: {}~{}', ['1.2.3.4', '2.3.4.5']),
-                         ('ips: {}!{}', ['1.2.3.4', '2.3.4.5']),
-                         ('ips: {}@{}', ['1.2.3.4', '2.3.4.5']),
-                         ('ips: {}#{}', ['1.2.3.4', '2.3.4.5']),
-                         ('ips: {}%{}', ['1.2.3.4', '2.3.4.5']),
-                         ('ips: {}^{}', ['1.2.3.4', '2.3.4.5']),
-                         ('ips: {}&{}', ['1.2.3.4', '2.3.4.5']),
-                         ('ips: {}*{}', ['1.2.3.4', '2.3.4.5']),
-                         ('ips: {}+{}', ['1.2.3.4', '2.3.4.5']),
-                         ('ip range: {}-{}', ['1.2.3.4', '2.3.4.5']),
-                         ('ips: {}|{}', ['1.2.3.4', '2.3.4.5']),
-                         ('ips: {}+{}', ['1.2.3.4', '2.3.4.5']),
-                         ('ips: {}?{}', ['1.2.3.4', '2.3.4.5']),
-                         ('ips: {}:{}', ['1.2.3.4', '2.3.4.5']),
                          ])
 def test_v4_anonymize_line(anonymizer_v4, line, ip_addrs):
     """Test IPv4 address removal from config lines."""
     anonymize_line_general(anonymizer_v4, line, ip_addrs)
+
+
+@pytest.mark.parametrize('enclosing', ":;[]$~!@#$%^&*()-+=[]|<>?")
+def test_v4_anonymize_enclosed_addr(anonymizer_v4, enclosing):
+    """Test IPv4 address removal from config lines with different enclosing characters."""
+    ip_addr = '1.2.3.4'
+    line = enclosing + "{}" + enclosing
+    anonymize_line_general(anonymizer_v4, line, [ip_addr])
 
 
 @pytest.mark.parametrize('line, ip_addrs', [
@@ -175,27 +166,18 @@ def test_v4_anonymize_line(anonymizer_v4, line, ip_addrs):
                          ('ip address {}/16 blah', ['1::']),
                          ('ip address {}/16 blah', ['1::1']),
                          ('ip address {}/16 blah', ['ffff:ffff::ffff:ffff']),
-                         ('ip addresses: {};{};{}', ['1::1', '1::2', '1::3']),
-                         ('my ip[{}]', ['1::1']),
-                         ('ip {}${}', ['1::1', '1::2']),
-                         ('ip {}~{}', ['1::1', '1::2']),
-                         ('ip {}!{}', ['1::1', '1::2']),
-                         ('ip {}@{}', ['1::1', '1::2']),
-                         ('ip {}#{}', ['1::1', '1::2']),
-                         ('ip {}%{}', ['1::1', '1::2']),
-                         ('ip {}^{}', ['1::1', '1::2']),
-                         ('ip {}&{}', ['1::1', '1::2']),
-                         ('ip {}*{}', ['1::1', '1::2']),
-                         ('ip {}+{}]', ['1::1', '1::2']),
-                         ('ip {}?{}', ['1::1', '1::2']),
-                         ('ip range {}-{}', ['1::1', '1::2']),
-                         ('ip {}|{}', ['1::1', '1::2']),
-                         ('ip {}+{}', ['1::1', '1::2']),
-                         ('ip {}.{}', ['1::1', '1::2']),
                          ])
 def test_v6_anonymize_line(anonymizer_v6, line, ip_addrs):
     """Test IPv6 address removal from config lines."""
     anonymize_line_general(anonymizer_v6, line, ip_addrs)
+
+
+@pytest.mark.parametrize('enclosing', ".;[]$~!@#$%^&*()-+=[]|<>?")
+def test_v6_anonymize_enclosed_addr(anonymizer_v6, enclosing):
+    """Test IPv6 address removal from config lines with different enclosing characters."""
+    ip_addr = '1::1'
+    line = enclosing + "{}" + enclosing
+    anonymize_line_general(anonymizer_v6, line, [ip_addr])
 
 
 def get_ip_v4_class(ip_int):
