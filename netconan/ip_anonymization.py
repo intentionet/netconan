@@ -28,24 +28,21 @@ from six import add_metaclass, iteritems, text_type, u
 _IPv4_OCTET_PATTERN = r'(25[0-5]|(2[0-4]|1?[0-9])?[0-9])'
 
 # Match address starting at beginning of line or surrounded by these, appropriate enclosing chars
-_IPv4_LEADING = r'[\s:<>/\'",=\(]'
-_IPv4_TRAILING = r'[-\s:<>/\'",=\]\)]'
-_IPv6_LEADING = r'[\s<>/\'",=\(]'
-_IPv6_TRAILING = r'[-\s<>/\'",=\]\)]'
+_IPv4_ENCLOSING = r'[^\w.]'  # Match anything but "word" chars or `.`
+_IPv6_ENCLOSING = r'[^\w:]'  # Match anything but "word" chars or `:`
 
 # Deliberately allowing leading zeros and will remove them later
 IPv4_PATTERN = re.compile((
-    r'(?:(?<=^)|(?<={leading}))'
+    r'(?:(?<=^)|(?<={enclosing}))'
     r'((0*{octet}\.){{3}}0*{octet})'
-    r'(?=/(\d{{1,3}}))?(?={trailing}|$)').format(
-        leading=_IPv4_LEADING,
-        trailing=_IPv4_TRAILING,
+    r'(?=/(\d{{1,3}}))?(?={enclosing}|$)').format(
+        enclosing=_IPv4_ENCLOSING,
         octet=_IPv4_OCTET_PATTERN,
     ))
 
 # Modified from https://stackoverflow.com/a/17871737/1715495
 IPv6_PATTERN = re.compile(
-    r'(?:(?<=^)|(?<={leading}))'.format(leading=_IPv6_LEADING) +
+    r'(?:(?<=^)|(?<={enclosing}))'.format(enclosing=_IPv6_ENCLOSING) +
     r'(([0-9a-f]{1,4}:){7,7}[0-9a-f]{1,4}'
     r'|([0-9a-f]{1,4}:){1,7}:'
     r'|([0-9a-f]{1,4}:){1,6}:[0-9a-f]{1,4}'
@@ -58,8 +55,8 @@ IPv6_PATTERN = re.compile(
     r'|fe80:(:[0-9a-f]{0,4}){0,4}%[0-9a-z]{1,}' +
     r'|::(ffff(:0{{1,4}})?:)?({octet}\.){{3}}{octet}'
     r'|([0-9a-f]{{1,4}}:){{1,4}}:({octet}\.){{3}}{octet})'
-    r'(?={trailing}|$)'.format(
-        trailing=_IPv6_TRAILING,
+    r'(?={enclosing}|$)'.format(
+        enclosing=_IPv6_ENCLOSING,
         octet=_IPv4_OCTET_PATTERN),
     re.IGNORECASE)
 
