@@ -14,8 +14,10 @@
 #   limitations under the License.
 
 import os.path
+import pytest
 
 from netconan.netconan import main
+from netconan._version import __version__
 
 INPUT_CONTENTS = """
 # Intentionet's sensitive test file
@@ -103,3 +105,11 @@ def test_end_to_end_no_anonymization(tmpdir):
     # Make sure no output file was generated
     # when no anonymization args are supplied
     assert(not os.path.exists(str(output_file)))
+
+
+def test_version(capsys):
+    """Test that version info is printed."""
+    with pytest.raises(SystemExit):
+        main(['--version'])
+    captured = capsys.readouterr()
+    assert __version__ in captured.out
