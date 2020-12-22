@@ -28,9 +28,8 @@ about = {}
 with open(path.join(here, 'netconan', '__init__.py'), 'r') as f:
     exec(f.read(), about)
 
-version = {}
 with open(path.join(here, 'netconan', '_version.py'), 'r') as f:
-    exec(f.read(), version)
+    exec(f.read(), about)
 
 with open(path.join(here, 'README.rst')) as f:
     readme = f.read()
@@ -40,7 +39,7 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version=version['__version__'],
+    version=about['__version__'],
     description=about['__desc__'],
     long_description=readme,
     # The project's main homepage.
