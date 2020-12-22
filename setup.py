@@ -28,9 +28,6 @@ about = {}
 with open(path.join(here, 'netconan', '__init__.py'), 'r') as f:
     exec(f.read(), about)
 
-with open(path.join(here, 'netconan', '_version.py'), 'r') as f:
-    exec(f.read(), about)
-
 with open(path.join(here, 'README.rst')) as f:
     readme = f.read()
 

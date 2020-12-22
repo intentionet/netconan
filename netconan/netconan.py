@@ -20,7 +20,7 @@ import sys
 
 from .ip_anonymization import IpAnonymizer
 from .anonymize_files import anonymize_files
-from ._version import __version__
+from . import __version__
 
 
 def _parse_args(argv):

@@ -17,7 +17,7 @@ import os.path
 import pytest
 
 from netconan.netconan import main
-from netconan._version import __version__
+from netconan import __version__
 
 INPUT_CONTENTS = """
 # Intentionet's sensitive test file
@@ -112,4 +112,5 @@ def test_version(capsys):
     with pytest.raises(SystemExit):
         main(['--version'])
     captured = capsys.readouterr()
-    assert __version__ in captured.out
+    # Python2 prints version info in err instead of out
+    assert __version__ in captured.out + captured.err
