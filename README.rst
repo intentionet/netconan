@@ -95,7 +95,7 @@ For more information about less commonly-used features, see the Netconan help (`
 
 .. code-block:: bash
 
-    usage: netconan [-h] [-a] [-c CONFIG] [-d DUMP_IP_MAP] -i INPUT
+    usage: netconan [-h] [--version] [-a] [-c CONFIG] [-d DUMP_IP_MAP] -i INPUT
                     [-l {DEBUG,INFO,WARNING,ERROR,CRITICAL}] [-n AS_NUMBERS] -o
                     OUTPUT [-p] [-r RESERVED_WORDS] [-s SALT] [-u]
                     [-w SENSITIVE_WORDS] [--preserve-prefixes PRESERVE_PREFIXES]
@@ -108,6 +108,7 @@ For more information about less commonly-used features, see the Netconan help (`
 
     optional arguments:
       -h, --help            show this help message and exit
+      --version             Print version number and exit
       -a, --anonymize-ips   Anonymize IP addresses
       -c CONFIG, --config CONFIG
                             Netconan configuration file with defaults for these
