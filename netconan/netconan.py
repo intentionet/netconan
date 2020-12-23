@@ -20,6 +20,7 @@ import sys
 
 from .ip_anonymization import IpAnonymizer
 from .anonymize_files import anonymize_files
+from . import __version__
 
 
 def _parse_args(argv):
@@ -37,6 +38,8 @@ def _parse_args(argv):
         """
     )
 
+    parser.add_argument('--version', action='version', version=__version__,
+                        help='Print version number and exit')
     parser.add_argument('-a', '--anonymize-ips', action='store_true', default=False,
                         help='Anonymize IP addresses')
     parser.add_argument('-c', '--config', is_config_file=True,

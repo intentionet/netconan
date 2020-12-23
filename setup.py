@@ -25,7 +25,7 @@ from os import path
 here = path.abspath(path.dirname(__file__))
 
 about = {}
-with open(path.join(here, 'netconan', '__version__.py'), 'r') as f:
+with open(path.join(here, 'netconan', '__init__.py'), 'r') as f:
     exec(f.read(), about)
 
 with open(path.join(here, 'README.rst')) as f:
