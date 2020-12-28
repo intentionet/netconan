@@ -201,18 +201,6 @@ def anonymize_as_numbers(anonymizer, line):
     return as_number_regex.sub(lambda match: anonymizer.anonymize(match.group(0)), line)
 
 
-def anonymize_sensitive_words(sensitive_word_regexes, line, salt):
-    """Anonymize words from specified sensitive words list in the input line."""
-    for sens_word_regex in sensitive_word_regexes:
-        if sens_word_regex.search(line) is not None:
-            sens_word = sens_word_regex.pattern
-            # Only using part of the hash result as the anonymized replacement
-            # to cut down on the size of the replacements
-            anon_word = md5((salt + sens_word).encode()).hexdigest()[:_ANON_SENSITIVE_WORD_LEN]
-            line = sens_word_regex.sub(anon_word, line)
-    return line
-
-
 def _anonymize_value(raw_val, lookup, reserved_words):
     """Generate an anonymized replacement for the input value.
 
