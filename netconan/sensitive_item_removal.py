@@ -172,7 +172,8 @@ class SensitiveWordAnonymizer(object):
     def _get_or_generate_sensitive_word_replacement(self, sensitive_word):
         """Return the replacement string for the given sensitive word.
 
-        Generates the replacement if necessary."""
+        Generates the replacement if necessary.
+        """
         replacement = self.sens_word_replacements.get(sensitive_word)
         if replacement is None:
             # Only using part of the md5 hash result as the anonymized replacement
