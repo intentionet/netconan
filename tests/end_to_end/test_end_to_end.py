@@ -36,7 +36,7 @@ ip address 11.11.197.79 0.0.0.0
 """
 
 REF_CONTENTS = """
-# 1cbbc2's fd8607 test file
+# a4daba's fd8607 test file
 ip address 192.168.2.13 255.255.255.255
 ip address 111.111.111.111
 ip address 5.86.28.249 0.0.0.0
@@ -46,7 +46,7 @@ password netconanRemoved1
 password reservedword
 ip address 11.11.11.11 0.0.0.0
 ip address 11.11.197.79 0.0.0.0
-# fd8607 word e77b71 here
+# 3b836f word 10b348 here
 
 """
 

@@ -136,8 +136,9 @@ class SensitiveWordAnonymizer(object):
         self.reserved_words = {w.lower() for w in reserved_words}
         sensitive_words_ = {w.lower() for w in sensitive_words}
 
+        self.salt = salt
         self.sens_regex = self._generate_sensitive_word_regex(sensitive_words_)
-        self.sens_word_replacements = self._generate_sensitive_word_replacements(sensitive_words_, salt)
+        self.sens_word_replacements = {}
         # Figure out which reserved words may clash with sensitive words, so they can be preserved in anonymization
         self.conflicting_words = self._generate_conflicting_reserved_word_list(sensitive_words_)
 
@@ -168,19 +169,22 @@ class SensitiveWordAnonymizer(object):
         """Compile and return regex for the specified list of sensitive words."""
         return re.compile('({})'.format('|'.join(sensitive_words)), re.IGNORECASE)
 
-    @classmethod
-    def _generate_sensitive_word_replacements(cls, sensitive_words, salt):
-        """Compile and return a dict of sensitive word replacements."""
-        # Only using part of the md5 hash result as the anonymized replacement
-        # to cut down on the size of the replacements
-        return {
-            sens_word.lower(): md5((salt + sens_word.lower()).encode()).hexdigest()[:_ANON_SENSITIVE_WORD_LEN]
-            for sens_word in sensitive_words
-        }
+    def _get_or_generate_sensitive_word_replacement(self, sensitive_word):
+        """Return the replacement string for the given sensitive word.
+
+        Generates the replacement if necessary.
+        """
+        replacement = self.sens_word_replacements.get(sensitive_word)
+        if replacement is None:
+            # Only using part of the md5 hash result as the anonymized replacement
+            # to cut down on the size of the replacements
+            replacement = md5((self.salt + sensitive_word).encode()).hexdigest()[:_ANON_SENSITIVE_WORD_LEN]
+            self.sens_word_replacements[sensitive_word] = replacement
+        return replacement
 
     def _lookup_anon_word(self, match):
         """Lookup anonymized word for the given sensitive word regex match."""
-        return self.sens_word_replacements[match.group(0).lower()]
+        return self._get_or_generate_sensitive_word_replacement(match.group(0))
 
 
 class _sensitive_item_formats(Enum):
