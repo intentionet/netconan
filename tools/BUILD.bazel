@@ -1,0 +1,47 @@
+load("@rules_python//python:defs.bzl", "py_binary")
+
+filegroup(
+    name = "tokens",
+    srcs = [
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/arista:AristaLexer.tokens",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/cisco:CiscoLexer.tokens",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/cisco_nxos:CiscoNxosLexer.tokens",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/cisco_xr:CiscoXrLexer.tokens",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/cumulus_concatenated:CumulusConcatenatedLexer.tokens",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/cumulus_frr:CumulusFrrLexer.tokens",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/cumulus_interfaces:CumulusInterfacesLexer.tokens",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/cumulus_nclu:CumulusNcluLexer.tokens",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/cumulus_ports:CumulusPortsLexer.tokens",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/f5_bigip_imish:F5BigipImishLexer.tokens",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/f5_bigip_structured:F5BigipStructuredLexer.tokens",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/flatjuniper:FlatJuniperLexer.tokens",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/flatvyos:FlatVyosLexer.tokens",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/iptables:IptablesLexer.tokens",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/juniper:JuniperLexer.tokens",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/mrv:MrvLexer.tokens",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/palo_alto:PaloAltoLexer.tokens",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/palo_alto_nested:PaloAltoNestedLexer.tokens",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/routing_table/eos:EosRoutingTableLexer.tokens",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/routing_table/ios:IosRoutingTableLexer.tokens",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/routing_table/nxos:NxosRoutingTableLexer.tokens",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/vyos:VyosLexer.tokens",
+    ],
+)
+
+genrule(
+    name = "concat_all_files",
+    srcs = [
+        ":tokens",
+    ],
+    outs = ["concatenated.tokens"],
+    cmd = "cat $(locations :tokens) > $@",
+)
+
+py_binary(
+    name = "generate_reserved_tokens",
+    srcs = ["generate_reserved_tokens.py"],
+    data = [
+        ":concatenated.tokens",
+    ],
+    deps = ["@rules_python//python/runfiles"],
+)
