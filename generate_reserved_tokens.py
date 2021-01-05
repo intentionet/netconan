@@ -31,7 +31,8 @@ def get_token(line):
 def write_tokens_to_file(filename, token_set, prefix):
     """Write specified token set to the specified file.
 
-    Each token is quote enclosed on a separate line with specified prefix prepended."""
+    Each token is quote enclosed on a separate line with specified prefix prepended.
+    """
     with open(filename, 'w') as file:
         for token in sorted(token_set):
             file.write('{}"{}",\n'.format(prefix, token))
