@@ -75,16 +75,21 @@ def _ensure_unicode(str):
 
 @add_metaclass(ABCMeta)
 class _BaseIpAnonymizer(object):
-    def __init__(self, salt, length, salter=_generate_bit_from_hash):
+    def __init__(self, salt, length, salter=_generate_bit_from_hash, preserve_suffix=None):
         self.salt = salt
         self.cache = bidict({'': ''})
         self.length = length
         self.fmt = '{{:0{length}b}}'.format(length=length)
         self.salter = salter
+        self.preserve_suffix = 0 if preserve_suffix is None else preserve_suffix
 
     def anonymize(self, ip_int):
         bits = self.fmt.format(ip_int)
-        anon_bits = self._anonymize_bits(bits)
+        if self.preserve_suffix == 0:
+            anon_bits = self._anonymize_bits(bits)
+        else:
+            to_anon, to_preserve = bits[:-self.preserve_suffix], bits[-self.preserve_suffix:]
+            anon_bits = self._anonymize_bits(to_anon) + to_preserve
         return int(anon_bits, 2)
 
     def _anonymize_bits(self, bits):

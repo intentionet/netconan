@@ -75,12 +75,6 @@ def anonymizer_v4():
 
 
 @pytest.fixture(scope='module')
-def anonymizer_v4_anonymize_everything():
-    """Some tests in this module use an IPv4 anonymizer that anonymizes everything (class bits, private-use prefixes)."""
-    return IpAnonymizer(SALT, [])
-
-
-@pytest.fixture(scope='module')
 def anonymizer_v6():
     """All tests in this module use a single IPv6 anonymizer."""
     return IpV6Anonymizer(SALT)
@@ -323,6 +317,32 @@ def test_preserve_private_prefixes(anonymizer_v4, start, end, subnet):
     # Make sure addresses in the block stay in the block
     assert (ipaddress.ip_address(ip_int_start_anon) in network)
     assert (ipaddress.ip_address(ip_int_end_anon) in network)
+
+
+@pytest.mark.parametrize('length', range(0, 32))
+def test_preserve_host_bits(length):
+    """Test that host bits are preserved, for every length."""
+    # This test is a little weird. We want to make sure that preserved bits are never flipped and that
+    # all bits that can be flipped actually are. To do this, we
+    #
+    # 1. use anonymizers that don't preserve anything (even IPv4 classes)
+    # 2. anonymize 100 different times, so that each might flip any particular bit.
+    # 3. accumulate (or together) all bits that are ever flipped. This accumulator should be
+    #    1111111...0000 where the number of zeros equals the length to be preserved.
+    #
+    # 100 trials is good: the changes of it not flipping any bit is ~0. To get uniform randomness, we
+    # create different anonymizers with different seeds; individual anonymizers preserve prefixes and
+    # are not uniformly distributed.
+
+    flips = 0
+    for seed in range(100):
+        anonymizer = IpAnonymizer(SALT + str(seed), preserve_prefixes=[], preserve_suffix=length)
+        randomized = anonymizer.anonymize(0)
+        flips = flips | randomized   # since we're anonymizing 0, randomized is the bits that flip
+
+    # The first <32-length> bits are 1, the last <length> bits are all 0
+    expected = '1' * (32 - length) + '0' * length
+    assert '{:032b}'.format(flips) == expected
 
 
 @pytest.mark.parametrize('anonymizer,ip_addr',

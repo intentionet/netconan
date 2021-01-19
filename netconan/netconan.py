@@ -73,6 +73,9 @@ def _parse_args(argv):
     parser.add_argument('--preserve-private-addresses',
                         action='store_true', default=False,
                         help='Preserve private-use IP addresses. Prefixes and host bits within the private-use IP networks are preserved. To preserve specific addresses or networks, use --preserve-addresses instead. To preserve just prefixes and anonymize host bits, use --preserve-prefixes')
+    parser.add_argument('--preserve-host-bits',
+                        type=int, default=8,
+                        help='Preserve the trailing bits of IP addresses, aka the host bits of a network. Set this value large enough to represent the largest interface network (e.g., 8 for a /24 or 12 for a /20) or NAT pool.')
     return parser.parse_args(argv)
 
 
@@ -142,7 +145,9 @@ def main(argv=sys.argv[1:]):
         anonymize_files(args.input, args.output, args.anonymize_passwords,
                         args.anonymize_ips, args.salt, args.dump_ip_map,
                         sensitive_words, args.undo, as_numbers, reserved_words,
-                        preserve_prefixes, preserve_addresses)
+                        preserve_prefixes, preserve_addresses,
+                        preserve_suffix_v4=args.preserve_host_bits,
+                        preserve_suffix_v6=args.preserve_host_bits)
 
 
 if __name__ == '__main__':
