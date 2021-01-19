@@ -75,12 +75,6 @@ def anonymizer_v4():
 
 
 @pytest.fixture(scope='module')
-def anonymizer_v4_anonymize_everything():
-    """Some tests in this module use an IPv4 anonymizer that anonymizes everything (class bits, private-use prefixes)."""
-    return IpAnonymizer(SALT, [])
-
-
-@pytest.fixture(scope='module')
 def anonymizer_v6():
     """All tests in this module use a single IPv6 anonymizer."""
     return IpV6Anonymizer(SALT)
@@ -323,6 +317,17 @@ def test_preserve_private_prefixes(anonymizer_v4, start, end, subnet):
     # Make sure addresses in the block stay in the block
     assert (ipaddress.ip_address(ip_int_start_anon) in network)
     assert (ipaddress.ip_address(ip_int_end_anon) in network)
+
+
+@pytest.mark.parametrize('length', range(0, 33))
+def test_preserve_host_bits(length):
+    """Test that host bits are preserved, for every length."""
+    anonymizer = IpAnonymizer(salt=SALT, salter=lambda a, b: 1, preserve_suffix=length, preserve_prefixes=[])
+    randomized = anonymizer.anonymize(0)
+
+    # The first <32-length> bits are 1, the last <length> bits are all 0
+    expected = '1' * (32 - length) + '0' * length
+    assert '{:032b}'.format(randomized) == expected
 
 
 @pytest.mark.parametrize('anonymizer,ip_addr',

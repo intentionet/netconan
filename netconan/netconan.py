@@ -14,6 +14,9 @@
 #   limitations under the License.
 
 from __future__ import absolute_import
+
+import argparse
+
 import configargparse
 import logging
 import sys
@@ -21,6 +24,15 @@ import sys
 from .ip_anonymization import IpAnonymizer
 from .anonymize_files import anonymize_files
 from . import __version__
+
+
+def host_bits(x):
+    """Argparse type function for --preserve-host-bits."""
+    # the name of this function is used for error message, apparently.
+    val = int(x)
+    if val < 0 or val > 32:
+        raise argparse.ArgumentError('valid values are [0, 32]')
+    return val
 
 
 def _parse_args(argv):
@@ -73,6 +85,9 @@ def _parse_args(argv):
     parser.add_argument('--preserve-private-addresses',
                         action='store_true', default=False,
                         help='Preserve private-use IP addresses. Prefixes and host bits within the private-use IP networks are preserved. To preserve specific addresses or networks, use --preserve-addresses instead. To preserve just prefixes and anonymize host bits, use --preserve-prefixes')
+    parser.add_argument('--preserve-host-bits',
+                        type=host_bits, default=8,
+                        help='Preserve the trailing bits of IP addresses, aka the host bits of a network. Set this value large enough to represent the largest interface network (e.g., 8 for a /24 or 12 for a /20) or NAT pool.')
     return parser.parse_args(argv)
 
 
@@ -142,7 +157,9 @@ def main(argv=sys.argv[1:]):
         anonymize_files(args.input, args.output, args.anonymize_passwords,
                         args.anonymize_ips, args.salt, args.dump_ip_map,
                         sensitive_words, args.undo, as_numbers, reserved_words,
-                        preserve_prefixes, preserve_addresses)
+                        preserve_prefixes, preserve_addresses,
+                        preserve_suffix_v4=args.preserve_host_bits,
+                        preserve_suffix_v6=args.preserve_host_bits)
 
 
 if __name__ == '__main__':

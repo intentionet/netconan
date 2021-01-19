@@ -70,13 +70,15 @@ Netconan attempts to *preserve useful structure*. For example,
 
 * Netconan preserves prefixes when anonymizing IPv4 and IPv6 addresses: IP addresses with a common prefix before anonymization will share the same prefix length after anonymization. For more information, see J. Xu et al., *On the Design and Performance of Prefix-Preserving IP Traffic Trace Anonymization*, ACM SIGCOMM Workshop on Internet Measurement, 2001 [`link <https://smartech.gatech.edu/bitstream/handle/1853/6573/GIT-CC-01-22.pdf>`_].
 
-* IPv4 classes and private-use prefixes (see `IANA IPv4 assignments <https://www.iana.org/assignments/iana-ipv4-special-registry/iana-ipv4-special-registry.xhtml>`_) are preserved by default, but can be overriden (with ``--preserve-prefixes`` e.g. ``--preserve-prefixes 12.0.0.0/8`` will preserve a leading octet ``12`` of IP addresses encountered but anonymize octets after the ``12``).
+* IPv4 classes and private-use prefixes (see `IANA IPv4 assignments <https://www.iana.org/assignments/iana-ipv4-special-registry/iana-ipv4-special-registry.xhtml>`_) are preserved by default, but can be overridden (with ``--preserve-prefixes`` e.g. ``--preserve-prefixes 12.0.0.0/8`` will preserve a leading octet ``12`` of IP addresses encountered but anonymize octets after the ``12``).
+
+* By default, the last ``8`` bits of each IP address are preserved. This prevents IP anonymization from breaking important network structure such as point-to-point IPv4 /30 links or NAT pools. This can be overridden to a new number ``B`` using ``--preserve-host-bits B``, and it can be disabled entirely using ``--preserve-host-bits 0``.
 
 * Specific addresses can optionally be preserved, e.g.
 
-  - ``--preserve-addresses`` skips anonymizing the specified network or address e.g. ``--preserve-addresses 12.0.0.0/8,13.12.11.10`` will skip anonymization for any address in the ``12.0.0.0/8`` network and skip anonymizing ``13.12.11.10``.
+  - ``--preserve-addresses`` skips anonymizing the specified network or address. For example, ``--preserve-addresses 12.0.0.0/8,13.12.11.10`` will skip anonymization for any address in the ``12.0.0.0/8`` network and skip anonymizing ``13.12.11.10``.
 
-  - ``--preserve-private-addresses`` skips anonymizing addresses that fall under private-use blocks.
+  - ``--preserve-private-addresses`` skips anonymizing all addresses that fall under private-use blocks.
 
 * AS number blocks are preserved (i.e. an anonymized public AS number will still be in the public AS number range after anonymization).
 
@@ -99,6 +101,9 @@ For more information about less commonly-used features, see the Netconan help (`
                     [-l {DEBUG,INFO,WARNING,ERROR,CRITICAL}] [-n AS_NUMBERS] -o
                     OUTPUT [-p] [-r RESERVED_WORDS] [-s SALT] [-u]
                     [-w SENSITIVE_WORDS] [--preserve-prefixes PRESERVE_PREFIXES]
+                    [--preserve-addresses PRESERVE_ADDRESSES]
+                    [--preserve-private-addresses]
+                    [--preserve-host-bits PRESERVE_HOST_BITS]
 
     Args that can start with '--' can also be set in a config file (specified via
     -c). If an arg is specified in more than one place, then command line values
@@ -151,3 +156,8 @@ For more information about less commonly-used features, see the Netconan help (`
                             --preserve-addresses instead. To preserve just
                             prefixes and anonymize host bits, use --preserve-
                             prefixes
+      --preserve-host-bits PRESERVE_HOST_BITS
+                            Preserve the trailing bits of IP addresses, aka the
+                            host bits of a network. Set this value large enough to
+                            represent the largest interface network (e.g., 8 for a
+                            /24 or 12 for a /20) or NAT pool.

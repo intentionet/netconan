@@ -37,9 +37,9 @@ ip address 11.11.197.79 0.0.0.0
 
 REF_CONTENTS = """
 # a4daba's fd8607 test file
-ip address 192.168.2.13 255.255.255.255
+ip address 192.168.2.1 255.255.255.255
 ip address 111.111.111.111
-ip address 5.86.28.249 0.0.0.0
+ip address 5.86.3.4 0.0.0.0
 my hash is $1$0000$CxUUGIrqPb7GaB5midrQZ.
 AS num 8625 and 64818 should be changed
 password netconanRemoved1
@@ -74,6 +74,7 @@ def test_end_to_end(tmpdir):
         '-n', '65432,12345',
         '--preserve-addresses', '11.11.0.0/16,111.111.111.111',
         '--preserve-prefixes', '192.168.2.0/24',
+        '--preserve-host-bits', '17',
     ]
     main(args)
 
