@@ -319,30 +319,15 @@ def test_preserve_private_prefixes(anonymizer_v4, start, end, subnet):
     assert (ipaddress.ip_address(ip_int_end_anon) in network)
 
 
-@pytest.mark.parametrize('length', range(0, 32))
+@pytest.mark.parametrize('length', range(0, 33))
 def test_preserve_host_bits(length):
     """Test that host bits are preserved, for every length."""
-    # This test is a little weird. We want to make sure that preserved bits are never flipped and that
-    # all bits that can be flipped actually are. To do this, we
-    #
-    # 1. use anonymizers that don't preserve anything (even IPv4 classes)
-    # 2. anonymize 100 different times, so that each might flip any particular bit.
-    # 3. accumulate (or together) all bits that are ever flipped. This accumulator should be
-    #    1111111...0000 where the number of zeros equals the length to be preserved.
-    #
-    # 100 trials is good: the changes of it not flipping any bit is ~0. To get uniform randomness, we
-    # create different anonymizers with different seeds; individual anonymizers preserve prefixes and
-    # are not uniformly distributed.
-
-    flips = 0
-    for seed in range(100):
-        anonymizer = IpAnonymizer(SALT + str(seed), preserve_prefixes=[], preserve_suffix=length)
-        randomized = anonymizer.anonymize(0)
-        flips = flips | randomized   # since we're anonymizing 0, randomized is the bits that flip
+    anonymizer = IpAnonymizer(salt=SALT, salter=lambda a, b: 1, preserve_suffix=length, preserve_prefixes=[])
+    randomized = anonymizer.anonymize(0)
 
     # The first <32-length> bits are 1, the last <length> bits are all 0
     expected = '1' * (32 - length) + '0' * length
-    assert '{:032b}'.format(flips) == expected
+    assert '{:032b}'.format(randomized) == expected
 
 
 @pytest.mark.parametrize('anonymizer,ip_addr',
