@@ -10,6 +10,7 @@ repos:
     rev: v5.7.0
     hooks:
     -   id: isort
+        # args from https://black.readthedocs.io/en/stable/compatible_configs.html#isort
         args: ["--multi-line=3", "--trailing-comma", "--force-grid-wrap=0", "--use-parentheses", "--ensure-newline-before-comments", "--line-length=88"]
         exclude: netconan/default_reserved_words.py
 -   repo: git@github.com:humitos/mirrors-autoflake.git
