@@ -96,7 +96,7 @@ def anonymize_files(
             raise ValueError("Input directory is empty")
         if os.path.isfile(output_path):
             raise ValueError(
-                "Output path must be a directory if input path is " "a directory"
+                "Output path must be a directory if input path is a directory"
             )
 
         for root, dirs, files in os.walk(input_path):

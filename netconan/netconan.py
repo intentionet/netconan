@@ -173,18 +173,17 @@ def main(argv=sys.argv[1:]):
     if args.undo:
         if args.anonymize_ips:
             raise ValueError(
-                "Cannot anonymize and undo anonymization, select " "only one."
+                "Cannot anonymize and undo anonymization, select only one."
             )
         if args.salt is None:
             raise ValueError(
-                "Salt used for anonymization must be specified in "
-                "order to undo anonymization."
+                "Salt used for anonymization must be specified in order to undo anonymization."
             )
 
     if args.dump_ip_map is not None:
         if not args.anonymize_ips:
             raise ValueError(
-                "Can only dump IP address map when anonymizing IP " "addresses."
+                "Can only dump IP address map when anonymizing IP addresses."
             )
 
     as_numbers = None
