@@ -21,6 +21,12 @@ from netconan.sensitive_item_removal import (
 import pytest
 
 # Tuple format is config_line, sensitive_text (should not be in output line)
+
+# TODO(https://github.com/intentionet/netconan/issues/3):
+# Add more Arista config lines
+arista_password_lines = [
+    ('username noc secret sha512 {}', '$6$RMxgK5ALGIf.nWEC$tHuKCyfNtJMCY561P52dTzHUmYMmLxb/Mxik.j3vMUs8lMCPocM00/NAS.SN6GCWx7d/vQIgxnClyQLAb7n3x0')
+]
 # TODO(https://github.com/intentionet/netconan/issues/3):
 # Add in additional test lines (these are just first pass from IOS)
 cisco_password_lines = [
@@ -103,6 +109,11 @@ cisco_snmp_community_lines = [
     ('rf-switch snmp-community {}', 'RemoveMe')
 ]
 
+# TODO(https://github.com/intentionet/netconan/issues/3):
+fortinet_password_lines = [
+    ('password ENC {}', 'SH2nlSm9QL9tapcHPXIqAXvX7vBJuuqu22hpa0JX0sBuKIo7z2g0Kz/+0KyH4E=')
+]
+
 # TODO(https://github.com/intentionet/netconan/issues/4):
 # Add more Juniper config lines
 juniper_password_lines = [
@@ -124,12 +135,6 @@ juniper_password_lines = [
     ('hello-authentication-key {}', '$9$i.m5OBEevLz3RSevx7-VwgZj5TFCA0Tz9p'),
 ]
 
-# TODO(https://github.com/intentionet/netconan/issues/3):
-# Add more Arista config lines
-arista_password_lines = [
-    ('username noc secret sha512 {}', '$6$RMxgK5ALGIf.nWEC$tHuKCyfNtJMCY561P52dTzHUmYMmLxb/Mxik.j3vMUs8lMCPocM00/NAS.SN6GCWx7d/vQIgxnClyQLAb7n3x0')
-]
-
 misc_password_lines = [
     ('my password is ', '$1$salt$abcdefghijklmnopqrs'),
     ('set community {} trailing text', 'RemoveMe'),
@@ -137,9 +142,12 @@ misc_password_lines = [
     ('set community {}', 'a1234')
 ]
 
-sensitive_lines = (cisco_password_lines +
-                   cisco_snmp_community_lines + juniper_password_lines +
-                   arista_password_lines + misc_password_lines)
+sensitive_lines = (arista_password_lines +
+                   cisco_password_lines +
+                   cisco_snmp_community_lines +
+                   fortinet_password_lines +
+                   juniper_password_lines +
+                   misc_password_lines)
 
 sensitive_items_and_formats = [
     ('094F4107180B', _sensitive_item_formats.cisco_type7),

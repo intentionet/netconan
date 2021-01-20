@@ -49,7 +49,7 @@
 # Some of these regexes need to be updated to support quote enclosed passwords
 # which is allowed for at least some syntax on Juniper devices
 default_pwd_line_regexes = [
-    [(r'(?P<prefix>(password|passwd)( level \d+)?( \d+)? )(\S+)', 5)],
+    [(r'(?P<prefix>(password|passwd)( level \d+)?( \d+)?( ENC)? )(\S+)', 6)],
     [(r'(?P<prefix>username( \S+)+ (password|secret)( \d| sha512)? )(\S+)', 5)],
     [(r'(?P<prefix>(enable )?secret( \d)? )(\S+)', 4)],
     [(r'(?P<prefix>ip ftp password( \d)? )(\S+)', 3)],
