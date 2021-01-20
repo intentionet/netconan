@@ -14,11 +14,12 @@
 #   limitations under the License.
 
 import os.path
+
 import pytest
 import six
 
-from netconan.netconan import main
 from netconan import __version__
+from netconan.netconan import main
 
 INPUT_CONTENTS = """
 # Intentionet's sensitive test file
@@ -64,24 +65,33 @@ def test_end_to_end(tmpdir):
     ref_file.write(REF_CONTENTS)
 
     args = [
-        '-i', str(input_dir),
-        '-o', str(output_dir),
-        '-s', 'TESTSALT',
-        '-a',
-        '-p',
-        '-w', 'intentionet,sensitive,ADDR',
-        '-r', 'reservedword',
-        '-n', '65432,12345',
-        '--preserve-addresses', '11.11.0.0/16,111.111.111.111',
-        '--preserve-prefixes', '192.168.2.0/24',
-        '--preserve-host-bits', '17',
+        "-i",
+        str(input_dir),
+        "-o",
+        str(output_dir),
+        "-s",
+        "TESTSALT",
+        "-a",
+        "-p",
+        "-w",
+        "intentionet,sensitive,ADDR",
+        "-r",
+        "reservedword",
+        "-n",
+        "65432,12345",
+        "--preserve-addresses",
+        "11.11.0.0/16,111.111.111.111",
+        "--preserve-prefixes",
+        "192.168.2.0/24",
+        "--preserve-host-bits",
+        "17",
     ]
     main(args)
 
     with open(str(ref_file)) as f_ref, open(str(output_file)) as f_out:
         # Compare lines for more readable failed assertion message
-        t_ref = f_ref.read().split('\n')
-        t_out = f_out.read().split('\n')
+        t_ref = f_ref.read().split("\n")
+        t_out = f_out.read().split("\n")
 
     # Make sure output file lines match ref lines
     assert t_ref == t_out
@@ -97,22 +107,26 @@ def test_end_to_end_no_anonymization(tmpdir):
     output_file = output_dir.join(filename)
 
     args = [
-        '-i', str(input_dir),
-        '-o', str(output_dir),
-        '-s', 'TESTSALT',
-        '-r', 'reservedword',
+        "-i",
+        str(input_dir),
+        "-o",
+        str(output_dir),
+        "-s",
+        "TESTSALT",
+        "-r",
+        "reservedword",
     ]
     main(args)
 
     # Make sure no output file was generated
     # when no anonymization args are supplied
-    assert(not os.path.exists(str(output_file)))
+    assert not os.path.exists(str(output_file))
 
 
 def test_version(capsys):
     """Test that version info is printed."""
     with pytest.raises(SystemExit):
-        main(['--version'])
+        main(["--version"])
     captured = capsys.readouterr()
     # Python2 prints version info in err instead of out
     if six.PY2:
