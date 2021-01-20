@@ -12,10 +12,11 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from rules_python.python.runfiles import runfiles
-from pathlib import Path
 import os
 import re
+from pathlib import Path
+
+from rules_python.python.runfiles import runfiles
 
 DEFAULT_PREFIX = "    "
 TOKEN_REGEX = re.compile(r"'([^']+)'=\d+")
@@ -56,10 +57,10 @@ def get_token(line):
 
 def write_reserved_words_file(filename, token_set):
     """Writes a reserved words file with the given token set."""
-    with open(filename, 'w') as file:
+    with open(filename, "w") as file:
         file.write(PREAMBLE)
         for token in sorted(token_set):
-            file.write('{}\'{}\',\n'.format(DEFAULT_PREFIX, token))
+            file.write("{}'{}',\n".format(DEFAULT_PREFIX, token))
         file.write(POSTAMBLE)
 
 
@@ -70,14 +71,12 @@ if __name__ == "__main__":
     output_path = Path(workspace_dir) / "netconan" / "default_reserved_words.py"
 
     rf = runfiles.Create()
-    tokens_path = rf.Rlocation(
-        "netconan/tools/concatenated.tokens"
-    )
+    tokens_path = rf.Rlocation("netconan/tools/concatenated.tokens")
     if not tokens_path:
         raise RuntimeError("Cannot resolve tokens file")
 
     tokens = set()
-    with open(tokens_path, 'r') as f_in:
+    with open(tokens_path, "r") as f_in:
         for line in f_in:
             token = get_token(line)
             if token:

@@ -14,51 +14,52 @@
 #   limitations under the License.
 
 from __future__ import unicode_literals
-from abc import ABCMeta, abstractmethod
 
-from bidict import bidict
 import ipaddress
 import logging
 import re
-
+from abc import ABCMeta, abstractmethod
 from hashlib import md5
+
+from bidict import bidict
 from six import add_metaclass, iteritems, text_type, u
 
-
-_IPv4_OCTET_PATTERN = r'(25[0-5]|(2[0-4]|1?[0-9])?[0-9])'
+_IPv4_OCTET_PATTERN = r"(25[0-5]|(2[0-4]|1?[0-9])?[0-9])"
 
 # Match address starting at beginning of line or surrounded by these, appropriate enclosing chars
-_IPv4_ENCLOSING = r'[^\w.]'  # Match anything but "word" chars or `.`
-_IPv6_ENCLOSING = r'[^\w:]'  # Match anything but "word" chars or `:`
+_IPv4_ENCLOSING = r"[^\w.]"  # Match anything but "word" chars or `.`
+_IPv6_ENCLOSING = r"[^\w:]"  # Match anything but "word" chars or `:`
 
 # Deliberately allowing leading zeros and will remove them later
-IPv4_PATTERN = re.compile((
-    r'(?:(?<=^)|(?<={enclosing}))'
-    r'((0*{octet}\.){{3}}0*{octet})'
-    r'(?=/(\d{{1,3}}))?(?={enclosing}|$)').format(
+IPv4_PATTERN = re.compile(
+    (
+        r"(?:(?<=^)|(?<={enclosing}))"
+        r"((0*{octet}\.){{3}}0*{octet})"
+        r"(?=/(\d{{1,3}}))?(?={enclosing}|$)"
+    ).format(
         enclosing=_IPv4_ENCLOSING,
         octet=_IPv4_OCTET_PATTERN,
-    ))
+    )
+)
 
 # Modified from https://stackoverflow.com/a/17871737/1715495
 IPv6_PATTERN = re.compile(
-    r'(?:(?<=^)|(?<={enclosing}))'.format(enclosing=_IPv6_ENCLOSING) +
-    r'(([0-9a-f]{1,4}:){7,7}[0-9a-f]{1,4}'
-    r'|([0-9a-f]{1,4}:){1,7}:'
-    r'|([0-9a-f]{1,4}:){1,6}:[0-9a-f]{1,4}'
-    r'|([0-9a-f]{1,4}:){1,5}(:[0-9a-f]{1,4}){1,2}'
-    r'|([0-9a-f]{1,4}:){1,4}(:[0-9a-f]{1,4}){1,3}'
-    r'|([0-9a-f]{1,4}:){1,3}(:[0-9a-f]{1,4}){1,4}'
-    r'|([0-9a-f]{1,4}:){1,2}(:[0-9a-f]{1,4}){1,5}'
-    r'|[0-9a-f]{1,4}:((:[0-9a-f]{1,4}){1,6})'
-    r'|:((:[0-9a-f]{1,4}){1,7}|:)'
-    r'|fe80:(:[0-9a-f]{0,4}){0,4}%[0-9a-z]{1,}' +
-    r'|::(ffff(:0{{1,4}})?:)?({octet}\.){{3}}{octet}'
-    r'|([0-9a-f]{{1,4}}:){{1,4}}:({octet}\.){{3}}{octet})'
-    r'(?={enclosing}|$)'.format(
-        enclosing=_IPv6_ENCLOSING,
-        octet=_IPv4_OCTET_PATTERN),
-    re.IGNORECASE)
+    r"(?:(?<=^)|(?<={enclosing}))".format(enclosing=_IPv6_ENCLOSING)
+    + r"(([0-9a-f]{1,4}:){7,7}[0-9a-f]{1,4}"
+    r"|([0-9a-f]{1,4}:){1,7}:"
+    r"|([0-9a-f]{1,4}:){1,6}:[0-9a-f]{1,4}"
+    r"|([0-9a-f]{1,4}:){1,5}(:[0-9a-f]{1,4}){1,2}"
+    r"|([0-9a-f]{1,4}:){1,4}(:[0-9a-f]{1,4}){1,3}"
+    r"|([0-9a-f]{1,4}:){1,3}(:[0-9a-f]{1,4}){1,4}"
+    r"|([0-9a-f]{1,4}:){1,2}(:[0-9a-f]{1,4}){1,5}"
+    r"|[0-9a-f]{1,4}:((:[0-9a-f]{1,4}){1,6})"
+    r"|:((:[0-9a-f]{1,4}){1,7}|:)"
+    r"|fe80:(:[0-9a-f]{0,4}){0,4}%[0-9a-z]{1,}"
+    + r"|::(ffff(:0{{1,4}})?:)?({octet}\.){{3}}{octet}"
+    r"|([0-9a-f]{{1,4}}:){{1,4}}:({octet}\.){{3}}{octet})"
+    r"(?={enclosing}|$)".format(enclosing=_IPv6_ENCLOSING, octet=_IPv4_OCTET_PATTERN),
+    re.IGNORECASE,
+)
 
 
 def _generate_bit_from_hash(salt, string):
@@ -75,11 +76,13 @@ def _ensure_unicode(str):
 
 @add_metaclass(ABCMeta)
 class _BaseIpAnonymizer(object):
-    def __init__(self, salt, length, salter=_generate_bit_from_hash, preserve_suffix=None):
+    def __init__(
+        self, salt, length, salter=_generate_bit_from_hash, preserve_suffix=None
+    ):
         self.salt = salt
-        self.cache = bidict({'': ''})
+        self.cache = bidict({"": ""})
         self.length = length
-        self.fmt = '{{:0{length}b}}'.format(length=length)
+        self.fmt = "{{:0{length}b}}".format(length=length)
         self.salter = salter
         self.preserve_suffix = 0 if preserve_suffix is None else preserve_suffix
 
@@ -88,7 +91,10 @@ class _BaseIpAnonymizer(object):
         if self.preserve_suffix == 0:
             anon_bits = self._anonymize_bits(bits)
         else:
-            to_anon, to_preserve = bits[:-self.preserve_suffix], bits[-self.preserve_suffix:]
+            to_anon, to_preserve = (
+                bits[: -self.preserve_suffix],
+                bits[-self.preserve_suffix :],
+            )
             anon_bits = self._anonymize_bits(to_anon) + to_preserve
         return int(anon_bits, 2)
 
@@ -125,13 +131,15 @@ class _BaseIpAnonymizer(object):
         return ret
 
     def dump_to_file(self, file_out):
-        ips = ((bits, anon_bits)
-               for bits, anon_bits in iteritems(self.cache)
-               if len(bits) == self.length)
+        ips = (
+            (bits, anon_bits)
+            for bits, anon_bits in iteritems(self.cache)
+            if len(bits) == self.length
+        )
         for bits, anon_bits in ips:
             ip = self._ip_to_str(bits)
             anon = self._ip_to_str(anon_bits)
-            file_out.write('{}\t{}\n'.format(ip, anon))
+            file_out.write("{}\t{}\n".format(ip, anon))
 
     @classmethod
     def _ip_to_str(cls, bits):
@@ -161,21 +169,21 @@ class IpAnonymizer(_BaseIpAnonymizer):
     """An anonymizer for IPv4 addresses."""
 
     IPV4_CLASSES = (
-        '0.0.0.0/1',    # Class A
-        '128.0.0.0/2',  # Class B
-        '192.0.0.0/3',  # Class C
-        '224.0.0.0/4',  # Class D (implies class E)
+        "0.0.0.0/1",  # Class A
+        "128.0.0.0/2",  # Class B
+        "192.0.0.0/3",  # Class C
+        "224.0.0.0/4",  # Class D (implies class E)
     )
 
     RFC_1918_NETWORKS = (
-        '10.0.0.0/8',      # Private-use subnet
-        '172.16.0.0/12',   # Private-use subnet
-        '192.168.0.0/16',  # Private-use subnet
+        "10.0.0.0/8",  # Private-use subnet
+        "172.16.0.0/12",  # Private-use subnet
+        "192.168.0.0/16",  # Private-use subnet
     )
 
     DEFAULT_PRESERVED_PREFIXES = IPV4_CLASSES + RFC_1918_NETWORKS
 
-    _DROP_ZEROS_PATTERN = re.compile(r'0*(\d+)\.0*(\d+)\.0*(\d+)\.0*(\d+)')
+    _DROP_ZEROS_PATTERN = re.compile(r"0*(\d+)\.0*(\d+)\.0*(\d+)\.0*(\d+)")
 
     def __init__(self, salt, preserve_prefixes=None, preserve_addresses=None, **kwargs):
         """Create an anonymizer using the specified salt."""
@@ -187,8 +195,7 @@ class IpAnonymizer(_BaseIpAnonymizer):
         self._preserve_addresses = []
         if preserve_addresses is not None:
             self._preserve_addresses = [
-                ipaddress.ip_network(_ensure_unicode(n))
-                for n in preserve_addresses
+                ipaddress.ip_network(_ensure_unicode(n)) for n in preserve_addresses
             ]
             # Make sure the prefixes are also preserved for preserved blocks, so
             # anonymized addresses outside the block don't accidentally collide
@@ -197,11 +204,13 @@ class IpAnonymizer(_BaseIpAnonymizer):
         # Preserve relevant prefixes
         for subnet_str in preserve_prefixes:
             subnet = ipaddress.ip_network(_ensure_unicode(subnet_str))
-            prefix_bits = self.fmt.format(int(subnet.network_address))[:subnet.prefixlen]
+            prefix_bits = self.fmt.format(int(subnet.network_address))[
+                : subnet.prefixlen
+            ]
             for position in range(len(prefix_bits)):
                 value = prefix_bits[:position]
-                self.cache[value + '0'] = value + '0'
-                self.cache[value + '1'] = value + '1'
+                self.cache[value + "0"] = value + "0"
+                self.cache[value + "1"] = value + "1"
 
     def _is_mask(self, possible_mask_int):
         """Return True if the input int can be used as a 32-bit prefix mask.
@@ -231,7 +240,7 @@ class IpAnonymizer(_BaseIpAnonymizer):
         those zeros will be ignored (1.2.3.40) -- they will NOT be interpreted
         as octal (1.2.3.32).
         """
-        addr_str = IpAnonymizer._DROP_ZEROS_PATTERN.sub(r'\1.\2.\3.\4', addr_str)
+        addr_str = IpAnonymizer._DROP_ZEROS_PATTERN.sub(r"\1.\2.\3.\4", addr_str)
         return ipaddress.IPv4Address(_ensure_unicode(addr_str))
 
     @classmethod
@@ -243,8 +252,7 @@ class IpAnonymizer(_BaseIpAnonymizer):
         """Check if a given address should be anonymized (e.g. is it a mask or address?)."""
         ip = ipaddress.ip_address(ip_int)
         return not (
-            self._is_mask(ip_int) or
-            any([ip in n for n in self._preserve_addresses])
+            self._is_mask(ip_int) or any([ip in n for n in self._preserve_addresses])
         )
 
 
@@ -303,4 +311,6 @@ def anonymize_ip_addr(anonymizer, line, undo_ip_anon=False):
     will be replaced with the unanonymized address.
     """
     pattern = anonymizer.get_addr_pattern()
-    return pattern.sub(lambda match: _anonymize_match(anonymizer, match.group(0), undo_ip_anon), line)
+    return pattern.sub(
+        lambda match: _anonymize_match(anonymizer, match.group(0), undo_ip_anon), line
+    )

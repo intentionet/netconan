@@ -26,7 +26,7 @@ def test_defaults():
     assert not args.anonymize_passwords
     assert not args.anonymize_ips
     assert args.dump_ip_map is None
-    assert 'INFO' == args.log_level
+    assert "INFO" == args.log_level
     assert args.salt is None
     assert not args.undo
     assert args.sensitive_words is None
@@ -34,17 +34,19 @@ def test_defaults():
 
 def test_no_config_file():
     """Test command line args are parsed."""
-    args = _parse_args([
-        "--input=in",
-        "--output=out",
-        "--anonymize-passwords",
-        "--anonymize-ips",
-        "--dump-ip-map=dump",
-        "--log-level=CRITICAL",
-        "--salt=salty",
-        "--undo",
-        "--sensitive-words=secret,password",
-    ])
+    args = _parse_args(
+        [
+            "--input=in",
+            "--output=out",
+            "--anonymize-passwords",
+            "--anonymize-ips",
+            "--dump-ip-map=dump",
+            "--log-level=CRITICAL",
+            "--salt=salty",
+            "--undo",
+            "--sensitive-words=secret,password",
+        ]
+    )
 
     assert "in" == args.input
     assert "out" == args.output
@@ -59,12 +61,14 @@ def test_no_config_file():
 
 def test_config_file(tmpdir):
     """Test config file args are parsed."""
-    cfg_file = str(tmpdir.mkdir('config_file').join('config.cfg'))
-    with open(cfg_file, 'w') as f:
-        f.write("""[Defaults]
+    cfg_file = str(tmpdir.mkdir("config_file").join("config.cfg"))
+    with open(cfg_file, "w") as f:
+        f.write(
+            """[Defaults]
         input=in
         output=out
-        log-level=CRITICAL""")
+        log-level=CRITICAL"""
+        )
     args = _parse_args(["-c={}".format(cfg_file)])
 
     assert "in" == args.input
@@ -80,12 +84,14 @@ def test_config_file(tmpdir):
 
 def test_config_file_and_override(tmpdir):
     """Test command line args override config file args."""
-    cfg_file = str(tmpdir.mkdir('config_file').join('config.cfg'))
-    with open(cfg_file, 'w') as f:
-        f.write("""[Defaults]
+    cfg_file = str(tmpdir.mkdir("config_file").join("config.cfg"))
+    with open(cfg_file, "w") as f:
+        f.write(
+            """[Defaults]
         input=in
         output=out
-        log-level=CRITICAL""")
+        log-level=CRITICAL"""
+        )
     args = _parse_args(["-c={}".format(cfg_file), "--input=override"])
 
     assert "override" == args.input
