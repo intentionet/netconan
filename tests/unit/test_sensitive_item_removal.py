@@ -121,9 +121,21 @@ cisco_snmp_community_lines = [
 # TODO(https://github.com/intentionet/netconan/issues/3):
 fortinet_password_lines = [
     (
-        "password ENC {}",
+        "set password ENC {}",
         "SH2nlSm9QL9tapcHPXIqAXvX7vBJuuqu22hpa0JX0sBuKIo7z2g0Kz/+0KyH4E=",
-    )
+    ),
+    (
+        "set password {}",
+        "mysecret",
+    ),
+    (
+        "set pksecret ENC {}",
+        "SH2nlSm9QL9tapcHPXIqAXvX7vBJuuqu22hpa0JX0sBuKIo7z2g0Kz/+0KyH4E=",
+    ),
+    (
+        "set pksecret {}",
+        "mysecret",
+    ),
 ]
 
 # TODO(https://github.com/intentionet/netconan/issues/4):
