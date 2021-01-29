@@ -153,7 +153,7 @@ def test_v4_anonymize_line(anonymizer_v4, line, ip_addrs):
     anonymize_line_general(anonymizer_v4, line, ip_addrs)
 
 
-@pytest.mark.parametrize("enclosing", ":;[]$~!@#$%^&*()-+=[]|<>?")
+@pytest.mark.parametrize("enclosing", "_:;[]$~!@#$%^&*()-+=[]|<>?")
 def test_v4_anonymize_enclosed_addr(anonymizer_v4, enclosing):
     """Test IPv4 address removal from config lines with different enclosing characters."""
     ip_addr = "1.2.3.4"
