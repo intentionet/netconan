@@ -27,8 +27,8 @@ from six import add_metaclass, iteritems, text_type, u
 _IPv4_OCTET_PATTERN = r"(25[0-5]|(2[0-4]|1?[0-9])?[0-9])"
 
 # Match address starting at beginning of line or surrounded by these, appropriate enclosing chars
-_IPv4_ENCLOSING = r"[^\w.]"  # Match anything but "word" chars or `.`
-_IPv6_ENCLOSING = r"[^\w:]"  # Match anything but "word" chars or `:`
+_IPv4_ENCLOSING = r"[^a-zA-Z0-9.]"  # Match anything but "word" chars (minus underscore) or `.`
+_IPv6_ENCLOSING = r"[^a-zA-Z0-9:]"  # Match anything but "word" chars (minus underscore) or `:`
 
 # Deliberately allowing leading zeros and will remove them later
 IPv4_PATTERN = re.compile(
