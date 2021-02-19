@@ -19,3 +19,8 @@ repos:
     -   id: autoflake
         args: ["--in-place", "--remove-all-unused-imports", "--remove-unused-variables"]
         exclude: netconan/default_reserved_words.py
+-   repo: https://gitlab.com/pycqa/flake8
+    rev: 3.8.4
+    hooks:
+    -   id: flake8
+        additional_dependencies: [flake8-docstrings]
