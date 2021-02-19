@@ -68,6 +68,7 @@ ip address 11.11.197.79 0.0.0.0
 
 
 def run_test(input_dir, output_dir, filename, ref, args):
+    """Executes a test that the given filename is netconan-ified to ref."""
     used_args = args + ["-i", str(input_dir), "-o", str(output_dir)]
     main(used_args)
 
