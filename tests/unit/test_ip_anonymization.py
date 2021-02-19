@@ -343,11 +343,15 @@ def test_preserve_host_bits(length):
     anonymizer = IpAnonymizer(
         salt=SALT, salter=lambda a, b: 1, preserve_suffix=length, preserve_prefixes=[]
     )
-    randomized = anonymizer.anonymize(0)
+    anonymized = anonymizer.anonymize(0)
 
     # The first <32-length> bits are 1, the last <length> bits are all 0
     expected = "1" * (32 - length) + "0" * length
-    assert "{:032b}".format(randomized) == expected
+    assert "{:032b}".format(anonymized) == expected
+
+    # Deanonymization flips the bits back
+    deanonymized = anonymizer.deanonymize(anonymized)
+    assert deanonymized == 0
 
 
 @pytest.mark.parametrize(
