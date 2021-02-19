@@ -27,8 +27,12 @@ from six import add_metaclass, iteritems, text_type, u
 _IPv4_OCTET_PATTERN = r"(25[0-5]|(2[0-4]|1?[0-9])?[0-9])"
 
 # Match address starting at beginning of line or surrounded by these, appropriate enclosing chars
-_IPv4_ENCLOSING = r"[^a-zA-Z0-9.]"  # Match anything but "word" chars (minus underscore) or `.`
-_IPv6_ENCLOSING = r"[^a-zA-Z0-9:]"  # Match anything but "word" chars (minus underscore) or `:`
+_IPv4_ENCLOSING = (
+    r"[^a-zA-Z0-9.]"  # Match anything but "word" chars (minus underscore) or `.`
+)
+_IPv6_ENCLOSING = (
+    r"[^a-zA-Z0-9:]"  # Match anything but "word" chars (minus underscore) or `:`
+)
 
 # Deliberately allowing leading zeros and will remove them later
 IPv4_PATTERN = re.compile(
@@ -113,8 +117,16 @@ class _BaseIpAnonymizer(object):
 
     def deanonymize(self, ip_int):
         bits = self.fmt.format(ip_int)
-        anon_bits = self._deanonymize_bits(bits)
-        return int(anon_bits, 2)
+        if self.preserve_suffix == 0:
+            deanon_bits = self._deanonymize_bits(bits)
+        else:
+            to_deanon, to_preserve = (
+                bits[: -self.preserve_suffix],
+                bits[-self.preserve_suffix :],
+            )
+            deanon_bits = self._deanonymize_bits(to_deanon) + to_preserve
+
+        return int(deanon_bits, 2)
 
     def _deanonymize_bits(self, bits):
         ret = self.cache.inv.get(bits)
