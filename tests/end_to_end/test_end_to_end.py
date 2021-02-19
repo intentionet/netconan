@@ -36,7 +36,7 @@ ip address 11.11.197.79 0.0.0.0
 
 """
 
-REF_CONTENTS = """
+ANON_REF_CONTENTS = """
 # a4daba's fd8607 test file
 ip address 192.168.2.1 255.255.255.255
 ip address 111.111.111.111
@@ -51,27 +51,41 @@ ip address 11.11.197.79 0.0.0.0
 
 """
 
+DEANON_REF_CONTENTS = """
+# a4daba's fd8607 test file
+ip address 192.168.2.1 255.255.255.255
+ip address 111.111.111.111
+ip address 1.2.3.4 0.0.0.0
+my hash is $1$0000$CxUUGIrqPb7GaB5midrQZ.
+AS num 8625 and 64818 should be changed
+password netconanRemoved1
+password reservedword
+ip address 11.11.11.11 0.0.0.0
+ip address 11.11.197.79 0.0.0.0
+# 3b836f word 10b348 here
+
+"""
+
+
+def run_test(input_dir, output_dir, filename, ref, args):
+    used_args = args + ["-i", str(input_dir), "-o", str(output_dir)]
+    main(used_args)
+
+    # Compare lines for more readable failed assertion message
+    t_ref = ref.split("\n")
+    with open(str(output_dir.join(filename))) as f_out:
+        t_out = f_out.read().split("\n")
+
+    # Make sure output file lines match ref lines
+    assert t_ref == t_out
+
 
 def test_end_to_end(tmpdir):
     """Test Netconan main with simulated input file and commandline args."""
     filename = "test.txt"
-    input_dir = tmpdir.mkdir("input")
-    input_dir.join(filename).write(INPUT_CONTENTS)
-
-    output_dir = tmpdir.mkdir("output")
-    output_file = output_dir.join(filename)
-
-    ref_file = tmpdir.join(filename)
-    ref_file.write(REF_CONTENTS)
-
     args = [
-        "-i",
-        str(input_dir),
-        "-o",
-        str(output_dir),
         "-s",
         "TESTSALT",
-        "-a",
         "-p",
         "-w",
         "intentionet,sensitive,ADDR",
@@ -86,15 +100,15 @@ def test_end_to_end(tmpdir):
         "--preserve-host-bits",
         "17",
     ]
-    main(args)
 
-    with open(str(ref_file)) as f_ref, open(str(output_file)) as f_out:
-        # Compare lines for more readable failed assertion message
-        t_ref = f_ref.read().split("\n")
-        t_out = f_out.read().split("\n")
+    input_dir = tmpdir.mkdir("input")
+    input_dir.join(filename).write(INPUT_CONTENTS)
 
-    # Make sure output file lines match ref lines
-    assert t_ref == t_out
+    anon_dir = tmpdir.mkdir("anon")
+    run_test(input_dir, anon_dir, filename, ANON_REF_CONTENTS, args + ["-a"])
+
+    deanon_dir = tmpdir.mkdir("deanon")
+    run_test(anon_dir, deanon_dir, filename, DEANON_REF_CONTENTS, args + ["-u"])
 
 
 def test_end_to_end_no_anonymization(tmpdir):
