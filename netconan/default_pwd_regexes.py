@@ -55,6 +55,8 @@ default_pwd_line_regexes = [
     [(r"(?P<prefix>(enable )?secret( \d)? )(\S+)", 4)],
     [(r"(?P<prefix>ip ftp password( \d)? )(\S+)", 3)],
     [(r"(?P<prefix>ip ospf authentication-key( \d)? )(\S+)", 3)],
+    [(r"(?P<prefix>ip ospf message-digest-key \d+ md5( \d)? )(\S+)", 3)],
+    [(r"(?P<prefix>authentication text )(\S+)", 2)],
     [(r"(?P<prefix>isis password )(\S+)(?=( level-\d)?)", 2)],
     [(r"(?P<prefix>(domain-password|area-password) )(\S+)", 3)],
     [(r"(?P<prefix>ip ospf message-digest-key \d+ md5( \d)? )(\S+)", 3)],
