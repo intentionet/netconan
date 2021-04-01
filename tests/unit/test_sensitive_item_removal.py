@@ -34,7 +34,8 @@ arista_password_lines = [
     (
         "username noc secret sha512 {}",
         "$6$RMxgK5ALGIf.nWEC$tHuKCyfNtJMCY561P52dTzHUmYMmLxb/Mxik.j3vMUs8lMCPocM00/NAS.SN6GCWx7d/vQIgxnClyQLAb7n3x0",
-    )
+    ),
+    ("   vrrp 2 authentication text {}", "RemoveMe"),
 ]
 # TODO(https://github.com/intentionet/netconan/issues/3):
 # Add in additional test lines (these are just first pass from IOS)
@@ -57,6 +58,8 @@ cisco_password_lines = [
     ("ip ftp password 7 {}", "122A00190102180D3C2E"),
     (" ip ospf authentication-key {}", "RemoveMe"),
     (" ip ospf authentication-key 0 {}", "RemoveMe"),
+    (" ip ospf message-digest-key 1 md5 {}", "RemoveMe"),
+    (" ip ospf message-digest-key 1 md5 3 {}", "RemoveMe"),
     ("isis password {}", "RemoveMe"),
     ("domain-password {}", "RemoveMe"),
     ("domain-password {} authenticate snp validate", "RemoveMe"),
@@ -100,6 +103,7 @@ cisco_password_lines = [
     ("set session-key outbound esp 256 authenticator {}", "1234abcdef"),
     ("set session-key outbound esp 256 cipher {0} authenticator {0}", "1234abcdef"),
     ("key-hash sha256 {}", "RemoveMe"),
+    ("  authentication text {}", "RemoveMe"),  # HSRP
 ]
 
 cisco_snmp_community_lines = [
