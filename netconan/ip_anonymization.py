@@ -100,8 +100,8 @@ class _BaseIpAnonymizer(object):
                 bits[-self.preserve_suffix :],
             )
             anon_bits = self._anonymize_bits(to_anon) + to_preserve
-            # Intentionally caching separately from inner caching
-            # To add preserved host bits into cache map
+            # Intentionally caching here in addition to _anonymize_bits caching
+            # To add full addr (including preserved host bits) to cache map
             self.cache[bits] = anon_bits
         return int(anon_bits, 2)
 
