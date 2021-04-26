@@ -81,6 +81,12 @@ def anonymizer_v4():
 
 
 @pytest.fixture(scope="module")
+def anonymizer_v4_preserving_host_bits():
+    """IPv4 anonymizer which also preserves some host bits."""
+    return IpAnonymizer(SALT, preserve_suffix=8)
+
+
+@pytest.fixture(scope="module")
 def anonymizer_v6():
     """All tests in this module use a single IPv6 anonymizer."""
     return IpV6Anonymizer(SALT)
@@ -453,6 +459,34 @@ def test_dump_iptree(tmpdir, anonymizer_v4):
     for ip_addr in ip_mapping:
         # Confirm anon addresses from ip_tree dump match anon addresses from _convert_to_anon_ip
         assert ip_mapping[ip_addr] == ip_mapping_from_dump[ip_addr]
+
+
+def test_dump_iptree_preserving_host_bits(tmpdir, anonymizer_v4_preserving_host_bits):
+    """Test IP address anonymization map-dump, when preserving host bits."""
+    ip_map_ref = {}
+    ip_map_from_dump = {}
+
+    # Build reference map
+    for ip_addr_raw in ip_v4_list:
+        ip_addr = anonymizer_v4_preserving_host_bits.make_addr(ip_addr_raw)
+        ip_int_anon = anonymizer_v4_preserving_host_bits.anonymize(int(ip_addr))
+        ip_addr_anon = str(ipaddress.IPv4Address(ip_int_anon))
+        ip_map_ref[str(ip_addr)] = ip_addr_anon
+
+    # Build mapping dict from the output of the ip_tree dump text file
+    filename = str(tmpdir.mkdir("test").join("test_dump_iptree.txt"))
+    with open(filename, "w") as f_tmp:
+        anonymizer_v4_preserving_host_bits.dump_to_file(f_tmp)
+    with open(filename, "r") as f_tmp:
+        for line in f_tmp.readlines():
+            m = re.match(r"\s*(\d+\.\d+.\d+.\d+)\s+(\d+\.\d+.\d+.\d+)\s*", line)
+            ip_addr = m.group(1)
+            ip_addr_anon = m.group(2)
+            ip_map_from_dump[ip_addr] = ip_addr_anon
+
+    # Confirm dumped text map lines up with expected/reference map
+    for ip_addr in ip_map_ref:
+        assert ip_map_ref[ip_addr] == ip_map_from_dump[ip_addr]
 
 
 @pytest.mark.parametrize(
