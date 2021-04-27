@@ -16,7 +16,6 @@
 import os
 
 import pytest
-
 from testfixtures import LogCapture
 
 from netconan.anonymize_files import anonymize_file, anonymize_files
@@ -47,9 +46,15 @@ def test_anonymize_files_bad_input_empty(tmpdir):
     input_dir = tmpdir.mkdir("input")
     output_dir = tmpdir.mkdir("output")
 
-    with pytest.raises(ValueError, match='Input directory is empty'):
-        anonymize_files(str(input_dir), str(output_dir), True, True, salt=_SALT,
-                        sensitive_words=_SENSITIVE_WORDS)
+    with pytest.raises(ValueError, match="Input directory is empty"):
+        anonymize_files(
+            str(input_dir),
+            str(output_dir),
+            True,
+            True,
+            salt=_SALT,
+            sensitive_words=_SENSITIVE_WORDS,
+        )
 
 
 def test_anonymize_files_bad_input_missing(tmpdir):
@@ -59,10 +64,15 @@ def test_anonymize_files_bad_input_missing(tmpdir):
 
     output_file = tmpdir.mkdir("out").join(filename)
 
-    with pytest.raises(ValueError, match='Input does not exist'):
-        anonymize_files(str(input_file), str(output_file), True, True,
-                        salt=_SALT,
-                        sensitive_words=_SENSITIVE_WORDS)
+    with pytest.raises(ValueError, match="Input does not exist"):
+        anonymize_files(
+            str(input_file),
+            str(output_file),
+            True,
+            True,
+            salt=_SALT,
+            sensitive_words=_SENSITIVE_WORDS,
+        )
 
 
 def test_anonymize_files_bad_output_file(tmpdir):
@@ -73,21 +83,27 @@ def test_anonymize_files_bad_output_file(tmpdir):
 
     output_file = tmpdir.mkdir("out").mkdir(filename)
 
-    with pytest.raises(ValueError, match='Cannot write output file.*'):
+    with pytest.raises(ValueError, match="Cannot write output file.*"):
         anonymize_file(str(input_file), str(output_file))
 
     # Anonymizing files should complete okay, because it skips the errored file
     with LogCapture() as log_capture:
-        anonymize_files(str(input_file), str(output_file), True, True,
-                        salt=_SALT,
-                        sensitive_words=_SENSITIVE_WORDS)
+        anonymize_files(
+            str(input_file),
+            str(output_file),
+            True,
+            True,
+            salt=_SALT,
+            sensitive_words=_SENSITIVE_WORDS,
+        )
         # Confirm the correct message is logged
         log_capture.check_present(
-            ('root', 'ERROR', 'Failed to anonymize file {}'.format(str(input_file)))
+            ("root", "ERROR", "Failed to anonymize file {}".format(str(input_file)))
         )
         # Confirm the exception info was also logged
-        assert ('Cannot write output file; output file is a directory'
-                in str(log_capture.records[-1].exc_info[1]))
+        assert "Cannot write output file; output file is a directory" in str(
+            log_capture.records[-1].exc_info[1]
+        )
 
 
 def test_anonymize_files_bad_output_dir(tmpdir):
@@ -97,12 +113,17 @@ def test_anonymize_files_bad_output_dir(tmpdir):
     input_dir.join(filename).write(_INPUT_CONTENTS)
 
     output_file = tmpdir.join("out")
-    output_file.write('blah')
+    output_file.write("blah")
 
-    with pytest.raises(ValueError, match='Output path must be a directory.*'):
-        anonymize_files(str(input_dir), str(output_file), True, True,
-                        salt=_SALT,
-                        sensitive_words=_SENSITIVE_WORDS)
+    with pytest.raises(ValueError, match="Output path must be a directory.*"):
+        anonymize_files(
+            str(input_dir),
+            str(output_file),
+            True,
+            True,
+            salt=_SALT,
+            sensitive_words=_SENSITIVE_WORDS,
+        )
 
 
 def test_anonymize_files_dir(tmpdir):
@@ -114,12 +135,18 @@ def test_anonymize_files_dir(tmpdir):
     output_dir = tmpdir.mkdir("output")
     output_file = output_dir.join(filename)
 
-    anonymize_files(str(input_dir), str(output_dir), True, True, salt=_SALT,
-                    sensitive_words=_SENSITIVE_WORDS)
+    anonymize_files(
+        str(input_dir),
+        str(output_dir),
+        True,
+        True,
+        salt=_SALT,
+        sensitive_words=_SENSITIVE_WORDS,
+    )
 
     # Make sure output file exists and matches the ref
-    assert(os.path.isfile(str(output_file)))
-    assert(read_file(str(output_file)) == _REF_CONTENTS)
+    assert os.path.isfile(str(output_file))
+    assert read_file(str(output_file)) == _REF_CONTENTS
 
 
 def test_anonymize_files_dir_skip_hidden(tmpdir):
@@ -132,11 +159,17 @@ def test_anonymize_files_dir_skip_hidden(tmpdir):
     output_dir = tmpdir.mkdir("output")
     output_file = output_dir.join(filename)
 
-    anonymize_files(str(input_dir), str(output_dir), True, True, salt=_SALT,
-                    sensitive_words=_SENSITIVE_WORDS)
+    anonymize_files(
+        str(input_dir),
+        str(output_dir),
+        True,
+        True,
+        salt=_SALT,
+        sensitive_words=_SENSITIVE_WORDS,
+    )
 
     # Make sure output file does not exist
-    assert(not os.path.exists(str(output_file)))
+    assert not os.path.exists(str(output_file))
 
 
 def test_anonymize_files_dir_nested(tmpdir):
@@ -150,15 +183,21 @@ def test_anonymize_files_dir_nested(tmpdir):
     output_file_1 = output_dir.join("subdir1").join(filename)
     output_file_2 = output_dir.join("subdir2").join("subsubdir").join(filename)
 
-    anonymize_files(str(input_dir), str(output_dir), True, True, salt=_SALT,
-                    sensitive_words=_SENSITIVE_WORDS)
+    anonymize_files(
+        str(input_dir),
+        str(output_dir),
+        True,
+        True,
+        salt=_SALT,
+        sensitive_words=_SENSITIVE_WORDS,
+    )
 
     # Make sure both output files exists and match the ref
-    assert(os.path.isfile(str(output_file_1)))
-    assert(read_file(str(output_file_1)) == _REF_CONTENTS)
+    assert os.path.isfile(str(output_file_1))
+    assert read_file(str(output_file_1)) == _REF_CONTENTS
 
-    assert(os.path.isfile(str(output_file_2)))
-    assert(read_file(str(output_file_2)) == _REF_CONTENTS)
+    assert os.path.isfile(str(output_file_2))
+    assert read_file(str(output_file_2)) == _REF_CONTENTS
 
 
 def test_anonymize_files_file(tmpdir):
@@ -169,15 +208,21 @@ def test_anonymize_files_file(tmpdir):
 
     output_file = tmpdir.mkdir("out").join(filename)
 
-    anonymize_files(str(input_file), str(output_file), True, True, salt=_SALT,
-                    sensitive_words=_SENSITIVE_WORDS)
+    anonymize_files(
+        str(input_file),
+        str(output_file),
+        True,
+        True,
+        salt=_SALT,
+        sensitive_words=_SENSITIVE_WORDS,
+    )
 
     # Make sure output file exists and matches the ref
-    assert(os.path.isfile(str(output_file)))
-    assert(read_file(str(output_file)) == _REF_CONTENTS)
+    assert os.path.isfile(str(output_file))
+    assert read_file(str(output_file)) == _REF_CONTENTS
 
 
 def read_file(file_path):
     """Read and return contents of file at specified path."""
-    with open(file_path, 'r') as f:
+    with open(file_path, "r") as f:
         return f.read()

@@ -14,11 +14,12 @@
 #   limitations under the License.
 
 import os.path
+
 import pytest
 import six
 
-from netconan.netconan import main
 from netconan import __version__
+from netconan.netconan import main
 
 INPUT_CONTENTS = """
 # Intentionet's sensitive test file
@@ -35,7 +36,7 @@ ip address 11.11.197.79 0.0.0.0
 
 """
 
-REF_CONTENTS = """
+ANON_REF_CONTENTS = """
 # a4daba's fd8607 test file
 ip address 192.168.2.1 255.255.255.255
 ip address 111.111.111.111
@@ -50,41 +51,65 @@ ip address 11.11.197.79 0.0.0.0
 
 """
 
+DEANON_REF_CONTENTS = """
+# a4daba's fd8607 test file
+ip address 192.168.2.1 255.255.255.255
+ip address 111.111.111.111
+ip address 1.2.3.4 0.0.0.0
+my hash is $1$0000$CxUUGIrqPb7GaB5midrQZ.
+AS num 8625 and 64818 should be changed
+password netconanRemoved1
+password reservedword
+ip address 11.11.11.11 0.0.0.0
+ip address 11.11.197.79 0.0.0.0
+# 3b836f word 10b348 here
+
+"""
+
+
+def run_test(input_dir, output_dir, filename, ref, args):
+    """Executes a test that the given filename is netconan-ified to ref."""
+    used_args = args + ["-i", str(input_dir), "-o", str(output_dir)]
+    main(used_args)
+
+    # Compare lines for more readable failed assertion message
+    t_ref = ref.split("\n")
+    with open(str(output_dir.join(filename))) as f_out:
+        t_out = f_out.read().split("\n")
+
+    # Make sure output file lines match ref lines
+    assert t_ref == t_out
+
 
 def test_end_to_end(tmpdir):
     """Test Netconan main with simulated input file and commandline args."""
     filename = "test.txt"
+    args = [
+        "-s",
+        "TESTSALT",
+        "-p",
+        "-w",
+        "intentionet,sensitive,ADDR",
+        "-r",
+        "reservedword",
+        "-n",
+        "65432,12345",
+        "--preserve-addresses",
+        "11.11.0.0/16,111.111.111.111",
+        "--preserve-prefixes",
+        "192.168.2.0/24",
+        "--preserve-host-bits",
+        "17",
+    ]
+
     input_dir = tmpdir.mkdir("input")
     input_dir.join(filename).write(INPUT_CONTENTS)
 
-    output_dir = tmpdir.mkdir("output")
-    output_file = output_dir.join(filename)
+    anon_dir = tmpdir.mkdir("anon")
+    run_test(input_dir, anon_dir, filename, ANON_REF_CONTENTS, args + ["-a"])
 
-    ref_file = tmpdir.join(filename)
-    ref_file.write(REF_CONTENTS)
-
-    args = [
-        '-i', str(input_dir),
-        '-o', str(output_dir),
-        '-s', 'TESTSALT',
-        '-a',
-        '-p',
-        '-w', 'intentionet,sensitive,ADDR',
-        '-r', 'reservedword',
-        '-n', '65432,12345',
-        '--preserve-addresses', '11.11.0.0/16,111.111.111.111',
-        '--preserve-prefixes', '192.168.2.0/24',
-        '--preserve-host-bits', '17',
-    ]
-    main(args)
-
-    with open(str(ref_file)) as f_ref, open(str(output_file)) as f_out:
-        # Compare lines for more readable failed assertion message
-        t_ref = f_ref.read().split('\n')
-        t_out = f_out.read().split('\n')
-
-    # Make sure output file lines match ref lines
-    assert t_ref == t_out
+    deanon_dir = tmpdir.mkdir("deanon")
+    run_test(anon_dir, deanon_dir, filename, DEANON_REF_CONTENTS, args + ["-u"])
 
 
 def test_end_to_end_no_anonymization(tmpdir):
@@ -97,22 +122,26 @@ def test_end_to_end_no_anonymization(tmpdir):
     output_file = output_dir.join(filename)
 
     args = [
-        '-i', str(input_dir),
-        '-o', str(output_dir),
-        '-s', 'TESTSALT',
-        '-r', 'reservedword',
+        "-i",
+        str(input_dir),
+        "-o",
+        str(output_dir),
+        "-s",
+        "TESTSALT",
+        "-r",
+        "reservedword",
     ]
     main(args)
 
     # Make sure no output file was generated
     # when no anonymization args are supplied
-    assert(not os.path.exists(str(output_file)))
+    assert not os.path.exists(str(output_file))
 
 
 def test_version(capsys):
     """Test that version info is printed."""
     with pytest.raises(SystemExit):
-        main(['--version'])
+        main(["--version"])
     captured = capsys.readouterr()
     # Python2 prints version info in err instead of out
     if six.PY2:

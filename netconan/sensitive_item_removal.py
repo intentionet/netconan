@@ -14,25 +14,27 @@
 #   limitations under the License.
 
 from __future__ import absolute_import
-import re
-import logging
 
+import logging
+import re
 from binascii import b2a_hex
 from enum import Enum
 from hashlib import md5
-from .default_pwd_regexes import default_pwd_line_regexes, default_com_line_regexes
-from .default_reserved_words import default_reserved_words
+
 # Using passlib for digests not supported by hashlib
 from passlib.hash import cisco_type7, md5_crypt, sha512_crypt
 from six import b
 
+from .default_pwd_regexes import default_com_line_regexes, default_pwd_line_regexes
+from .default_reserved_words import default_reserved_words
 
 # A regex matching any of the characters that are allowed to precede a password
 # regex (e.g. sensitive line is allowed to be in quotes or after a colon)
 # This is an ignored group, so it does not muck with the password regex indicies
 # And the ?<= is a lookbehind, not part of regex match text/sub text
-_ALLOWED_REGEX_PREFIX = (r'(?:(?<={prefix})|(?<={prefix} )|(?<=^)|(?<=^ ))'
-                         .format(prefix=r'[^-_a-zA-Z\d]'))
+_ALLOWED_REGEX_PREFIX = r"(?:(?<={prefix})|(?<={prefix} )|(?<=^)|(?<=^ ))".format(
+    prefix=r"[^-_a-zA-Z\d]"
+)
 
 # Number of digits to extract from hash for sensitive keyword replacement
 _ANON_SENSITIVE_WORD_LEN = 6
@@ -41,39 +43,39 @@ _ANON_SENSITIVE_WORD_LEN = 6
 # following patterns, mostly extracted from examples at
 # https://www.cisco.com/c/en/us/td/docs/routers/crs/software/crs_r4-1/routing/command/reference/b_routing_cr41crs/b_routing_cr41crs_chapter_01000.html
 # Text followed by the word 'additive'
-_IGNORED_COMM_ADDITIVE = r'\S+ additive'
+_IGNORED_COMM_ADDITIVE = r"\S+ additive"
 # Numeric, colon separated, and parameter ($) communities
-_IGNORED_COMM_COLON = r'(peeras|\$\w+|\d+)\:(peeras|\$\w+|\d+)'
+_IGNORED_COMM_COLON = r"(peeras|\$\w+|\d+)\:(peeras|\$\w+|\d+)"
 # List of communities enclosed in parenthesis, being permissive here for the
 # content inside the parenthesis for simplicity
-_IGNORED_COMM_LIST = r'\([\S ]+\)'
+_IGNORED_COMM_LIST = r"\([\S ]+\)"
 # Well-known BPG communities
-_IGNORED_COMM_WELL_KNOWN = 'gshut|internet|local-AS|no-advertise|no-export|none'
-_IGNORED_COMMUNITIES = (r'((\d+|{additive}|{colon}|{list}|{well_known})(?!\S))'
-                        .format(additive=_IGNORED_COMM_ADDITIVE,
-                                colon=_IGNORED_COMM_COLON,
-                                list=_IGNORED_COMM_LIST,
-                                well_known=_IGNORED_COMM_WELL_KNOWN))
+_IGNORED_COMM_WELL_KNOWN = "gshut|internet|local-AS|no-advertise|no-export|none"
+_IGNORED_COMMUNITIES = r"((\d+|{additive}|{colon}|{list}|{well_known})(?!\S))".format(
+    additive=_IGNORED_COMM_ADDITIVE,
+    colon=_IGNORED_COMM_COLON,
+    list=_IGNORED_COMM_LIST,
+    well_known=_IGNORED_COMM_WELL_KNOWN,
+)
 
-_LINE_SCRUBBED_MESSAGE = '! Sensitive line SCRUBBED by netconan'
+_LINE_SCRUBBED_MESSAGE = "! Sensitive line SCRUBBED by netconan"
 
 # Text that is allowed to surround passwords, to be preserved
-_PASSWORD_ENCLOSING_TEXT = ['\\\'', '\\"', '\'', '"', ' ']
-_PASSWORD_ENCLOSING_HEAD_TEXT = _PASSWORD_ENCLOSING_TEXT + ['[', '{']
-_PASSWORD_ENCLOSING_TAIL_TEXT = _PASSWORD_ENCLOSING_TEXT + [']', '}', ';', ',']
+_PASSWORD_ENCLOSING_TEXT = ["\\'", '\\"', "'", '"', " "]
+_PASSWORD_ENCLOSING_HEAD_TEXT = _PASSWORD_ENCLOSING_TEXT + ["[", "{"]
+_PASSWORD_ENCLOSING_TAIL_TEXT = _PASSWORD_ENCLOSING_TEXT + ["]", "}", ";", ","]
 
 # These are extra regexes to find lines that seem like they might contain
 # sensitive info (these are not already caught by RANCID default regexes)
 extra_password_regexes = [
-    [(r'(?<=encrypted-password )(\S+)', None)],
+    [(r"(?<=encrypted-password )(\S+)", None)],
     [(r'(?<=key ")([^"]+)', 1)],
-    [(r'(?<=key-hash sha256 )(\S+)', 1)],
+    [(r"(?<=key-hash sha256 )(\S+)", 1)],
     # Replace communities that do not look like well-known BGP communities
     # i.e. snmp communities
-    [(r'(?<=set community )((?!{ignore})\S+)'
-      .format(ignore=_IGNORED_COMMUNITIES), 1)],
-    [(r'(?<=snmp-server mib community-map )([^ :]+)', 1)],
-    [(r'(?<=snmp-community )(\S+)', 1)],
+    [(r"(?<=set community )((?!{ignore})\S+)".format(ignore=_IGNORED_COMMUNITIES), 1)],
+    [(r"(?<=snmp-server mib community-map )([^ :]+)", 1)],
+    [(r"(?<=snmp-community )(\S+)", 1)],
     # Catch-all's matching what looks like hashed passwords
     [(r'("?\$9\$[^\s;"]+)', 1)],
     [(r'("?\$1\$[^\s;"]+)', 1)],
@@ -101,15 +103,18 @@ class AsNumberAnonymizer(object):
         """Generate regex for finding AS number."""
         # Match a non-digit, any of the AS numbers and another non-digit
         # Using lookahead and lookbehind to match on context but not include that context in the match
-        self.as_num_regex = re.compile(r'(?:(?<=\D)|(?<=^))({})(?=\D|$)'.format(
-            '|'.join(as_numbers)))
+        self.as_num_regex = re.compile(
+            r"(?:(?<=\D)|(?<=^))({})(?=\D|$)".format("|".join(as_numbers))
+        )
 
     def _generate_as_number_replacement(self, as_number):
         """Generate a replacement AS number for the given AS number and salt."""
         hash_val = int(md5((self.salt + as_number).encode()).hexdigest(), 16)
         as_number = int(as_number)
         if as_number < 0 or as_number > 4294967295:
-            raise ValueError('AS number provided was outside accepted range (0-4294967295)')
+            raise ValueError(
+                "AS number provided was outside accepted range (0-4294967295)"
+            )
 
         block_begin = 0
         for next_block_begin in self._AS_NUM_BOUNDARIES:
@@ -119,7 +124,10 @@ class AsNumberAnonymizer(object):
 
     def _generate_as_number_replacement_map(self, as_numbers):
         """Generate map of AS numbers and their replacements."""
-        self.as_num_map = {as_num: self._generate_as_number_replacement(as_num) for as_num in as_numbers}
+        self.as_num_map = {
+            as_num: self._generate_as_number_replacement(as_num)
+            for as_num in as_numbers
+        }
 
     def get_as_number_pattern(self):
         """Return the compiled regex to find AS numbers."""
@@ -140,7 +148,9 @@ class SensitiveWordAnonymizer(object):
         self.sens_regex = self._generate_sensitive_word_regex(sensitive_words_)
         self.sens_word_replacements = {}
         # Figure out which reserved words may clash with sensitive words, so they can be preserved in anonymization
-        self.conflicting_words = self._generate_conflicting_reserved_word_list(sensitive_words_)
+        self.conflicting_words = self._generate_conflicting_reserved_word_list(
+            sensitive_words_
+        )
 
     def anonymize(self, line):
         """Anonymize sensitive words from the input line."""
@@ -148,26 +158,34 @@ class SensitiveWordAnonymizer(object):
             leading, words, trailing = _split_line(line)
             # Anonymize only words that do not match the conflicting (reserved) words
             words = [
-                w if w in self.conflicting_words else self.sens_regex.sub(self._lookup_anon_word, w) for w in words
+                w
+                if w in self.conflicting_words
+                else self.sens_regex.sub(self._lookup_anon_word, w)
+                for w in words
             ]
             # Restore leading and trailing whitespace since those were removed when splitting into words
-            line = leading + ' '.join(words) + trailing
+            line = leading + " ".join(words) + trailing
         return line
 
     def _generate_conflicting_reserved_word_list(self, sensitive_words):
         """Return a list of reserved words that may conflict with the specified sensitive words."""
         conflicting_words = set()
         for sensitive_word in sensitive_words:
-            conflicting_words.update(set([w for w in self.reserved_words if sensitive_word in w]))
+            conflicting_words.update(
+                set([w for w in self.reserved_words if sensitive_word in w])
+            )
         if conflicting_words:
-            logging.warning('Specified sensitive words overlap with reserved words. '
-                            'The following reserved words will be preserved: %s', conflicting_words)
+            logging.warning(
+                "Specified sensitive words overlap with reserved words. "
+                "The following reserved words will be preserved: %s",
+                conflicting_words,
+            )
         return conflicting_words
 
     @classmethod
     def _generate_sensitive_word_regex(cls, sensitive_words):
         """Compile and return regex for the specified list of sensitive words."""
-        return re.compile('({})'.format('|'.join(sensitive_words)), re.IGNORECASE)
+        return re.compile("({})".format("|".join(sensitive_words)), re.IGNORECASE)
 
     def _get_or_generate_sensitive_word_replacement(self, sensitive_word):
         """Return the replacement string for the given sensitive word.
@@ -178,7 +196,9 @@ class SensitiveWordAnonymizer(object):
         if replacement is None:
             # Only using part of the md5 hash result as the anonymized replacement
             # to cut down on the size of the replacements
-            replacement = md5((self.salt + sensitive_word).encode()).hexdigest()[:_ANON_SENSITIVE_WORD_LEN]
+            replacement = md5((self.salt + sensitive_word).encode()).hexdigest()[
+                :_ANON_SENSITIVE_WORD_LEN
+            ]
             self.sens_word_replacements[sensitive_word] = replacement
         return replacement
 
@@ -216,20 +236,18 @@ def _anonymize_value(raw_val, lookup, reserved_words):
     # Separate enclosing text (e.g. quotes) from the underlying value
     sens_head, val, sens_tail = _extract_enclosing_text(raw_val)
     if val in reserved_words:
-        logging.debug('Skipping anonymization of reserved word: "%s"',
-                      val)
+        logging.debug('Skipping anonymization of reserved word: "%s"', val)
         return raw_val
     if not val:
-        logging.debug('Nothing to anonymize after removing special characters')
+        logging.debug("Nothing to anonymize after removing special characters")
         return raw_val
 
     if val in lookup:
         anon_val = lookup[val]
-        logging.debug(
-            'Anonymized input "%s" to "%s" (via lookup)', val, anon_val)
+        logging.debug('Anonymized input "%s" to "%s" (via lookup)', val, anon_val)
         return sens_head + anon_val + sens_tail
 
-    anon_val = 'netconanRemoved{}'.format(len(lookup))
+    anon_val = "netconanRemoved{}".format(len(lookup))
     item_format = _check_sensitive_item_format(val)
     if item_format == _sensitive_item_formats.cisco_type7:
         # Not salting sensitive data, using static salt here to more easily
@@ -245,10 +263,10 @@ def _anonymize_value(raw_val, lookup, reserved_words):
         anon_val = b2a_hex(b(anon_val)).decode()
 
     if item_format == _sensitive_item_formats.md5:
-        old_salt_size = len(val.split('$')[2])
+        old_salt_size = len(val.split("$")[2])
         # Not salting sensitive data, using static salt here to more easily
         # identify anonymized lines
-        anon_val = md5_crypt.using(salt='0' * old_salt_size).hash(anon_val)
+        anon_val = md5_crypt.using(salt="0" * old_salt_size).hash(anon_val)
 
     if item_format == _sensitive_item_formats.sha512:
         # Hash anon_val w/standard rounds=5000 to omit rounds parameter from hash output
@@ -258,7 +276,7 @@ def _anonymize_value(raw_val, lookup, reserved_words):
         # TODO(https://github.com/intentionet/netconan/issues/16)
         # Encode base anon_val instead of just returning a constant here
         # This value corresponds to encoding: Conan812183
-        anon_val = '$9$0000IRc-dsJGirewg4JDj9At0RhSreK8Xhc'
+        anon_val = "$9$0000IRc-dsJGirewg4JDj9At0RhSreK8Xhc"
 
     lookup[val] = anon_val
     logging.debug('Anonymized input "%s" to "%s"', val, anon_val)
@@ -271,32 +289,32 @@ def _check_sensitive_item_format(val):
 
     # Order is important here (e.g. type 7 looks like hex or text, but has a
     # specific format so it should override hex or text)
-    if re.match(r'^\$9\$[\S]+$', val):
+    if re.match(r"^\$9\$[\S]+$", val):
         item_format = _sensitive_item_formats.juniper_type9
-    if re.match(r'^\$6\$[\S]+$', val):
+    if re.match(r"^\$6\$[\S]+$", val):
         item_format = _sensitive_item_formats.sha512
-    if re.match(r'^\$1\$[\S]+\$[\S]+$', val):
+    if re.match(r"^\$1\$[\S]+\$[\S]+$", val):
         item_format = _sensitive_item_formats.md5
-    if re.match(r'^[0-9a-fA-F]+$', val):
+    if re.match(r"^[0-9a-fA-F]+$", val):
         item_format = _sensitive_item_formats.hexadecimal
-    if re.match(r'^[01][0-9]([0-9a-fA-F]{2})+$', val):
+    if re.match(r"^[01][0-9]([0-9a-fA-F]{2})+$", val):
         item_format = _sensitive_item_formats.cisco_type7
-    if re.match(r'^[0-9]+$', val):
+    if re.match(r"^[0-9]+$", val):
         item_format = _sensitive_item_formats.numeric
     return item_format
 
 
-def _extract_enclosing_text(in_val, head='', tail=''):
+def _extract_enclosing_text(in_val, head="", tail=""):
     """Extract allowed enclosing text from input and return the enclosing and enclosed text."""
     val = in_val
     for head_text in _PASSWORD_ENCLOSING_HEAD_TEXT:
         if val.startswith(head_text):
             head += head_text
-            val = val[len(head_text):]
+            val = val[len(head_text) :]
     for tail_text in _PASSWORD_ENCLOSING_TAIL_TEXT:
         if val.endswith(tail_text):
             tail = tail_text + tail
-            val = val[:-len(tail_text)]
+            val = val[: -len(tail_text)]
 
     if val != in_val:
         return _extract_enclosing_text(val, head, tail)
@@ -305,19 +323,25 @@ def _extract_enclosing_text(in_val, head='', tail=''):
 
 def generate_default_sensitive_item_regexes():
     """Compile and return the default password and community line regexes."""
-    combined_regexes = default_pwd_line_regexes + default_com_line_regexes + \
-        extra_password_regexes
-    return [[(re.compile(_ALLOWED_REGEX_PREFIX + regex_), num) for regex_, num in group]
-            for group in combined_regexes]
+    combined_regexes = (
+        default_pwd_line_regexes + default_com_line_regexes + extra_password_regexes
+    )
+    return [
+        [(re.compile(_ALLOWED_REGEX_PREFIX + regex_), num) for regex_, num in group]
+        for group in combined_regexes
+    ]
 
 
-def replace_matching_item(compiled_regexes, input_line, pwd_lookup, reserved_words=default_reserved_words):
+def replace_matching_item(
+    compiled_regexes, input_line, pwd_lookup, reserved_words=default_reserved_words
+):
     """If line matches a regex, anonymize or remove the line."""
     # Collapse whitespace to simplify regexes, also preserve leading and trailing whitespace
     leading, words, trailing = _split_line(input_line)
     # Save enclosing text (like quotes) to avoid removing during anonymization
     leading, output_line, trailing = _extract_enclosing_text(
-        ' '.join(words), leading, trailing)
+        " ".join(words), leading, trailing
+    )
 
     # Note: compiled_regexes is a list of lists; the inner list is a group of
     # related regexes
@@ -331,24 +355,26 @@ def replace_matching_item(compiled_regexes, input_line, pwd_lookup, reserved_wor
             if match is None:
                 continue
             match_found = True
-            logging.debug('Match found on %s', output_line.rstrip())
+            logging.debug("Match found on %s", output_line.rstrip())
 
             # If this regex cannot preserve text around sensitive info,
             # then just remove the whole line
             if sensitive_item_num is None:
                 logging.warning(
                     'Anonymizing sensitive info in lines like "%s" is currently'
-                    ' unsupported, so removing this line completely',
-                    compiled_re.pattern)
-                output_line = compiled_re.sub(
-                    _LINE_SCRUBBED_MESSAGE, output_line)
+                    " unsupported, so removing this line completely",
+                    compiled_re.pattern,
+                )
+                output_line = compiled_re.sub(_LINE_SCRUBBED_MESSAGE, output_line)
                 break
 
             # This is text preceding the password and shouldn't be anonymized
-            prefix = match.group('prefix') if 'prefix' in match.groupdict() else ""
+            prefix = match.group("prefix") if "prefix" in match.groupdict() else ""
             # re.sub replaces the entire matching string, which includes prefix
             # Therefore, anon_val should have prefix prepended if applicable
-            anon_val = prefix + _anonymize_value(match.group(sensitive_item_num), pwd_lookup, reserved_words)
+            anon_val = prefix + _anonymize_value(
+                match.group(sensitive_item_num), pwd_lookup, reserved_words
+            )
             output_line = compiled_re.sub(anon_val, output_line)
 
         # If any matches existed in this regex group, stop processing more regexes
@@ -361,4 +387,4 @@ def replace_matching_item(compiled_regexes, input_line, pwd_lookup, reserved_wor
 
 def _split_line(line):
     """Split line into leading whitespace, list of words, and trailing whitespace."""
-    return line[:-len(line.lstrip())], line.split(), line[len(line.rstrip()):]
+    return line[: -len(line.lstrip())], line.split(), line[len(line.rstrip()) :]
