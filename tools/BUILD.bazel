@@ -27,6 +27,7 @@ filegroup(
         "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/routing_table/ios:IosRoutingTableLexer.tokens",
         "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/routing_table/nxos:NxosRoutingTableLexer.tokens",
         "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/vyos:VyosLexer.tokens",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/vendor/check_point_gateway/grammar:CheckPointGatewayLexer.tokens",
     ],
 )
 
