@@ -64,7 +64,8 @@ setup(
         "bidict<1.0.0",
         # Only use enum34 for Python older than 3.4
         'enum34<2.0.0; python_version < "3.4"',
-        "ipaddress<2.0.0",
+        # ipaddress is in the Python standard library in 3.3+
+        'ipaddress<2.0.0; python_version < "3.3"',
         "passlib<2.0.0",
         "six<2.0.0",
     ],
