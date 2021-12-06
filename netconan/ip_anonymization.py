@@ -22,7 +22,6 @@ from abc import ABCMeta, abstractmethod
 from hashlib import md5
 
 from bidict import bidict
-from six import add_metaclass, iteritems, text_type, u
 
 _IPv4_OCTET_PATTERN = r"(25[0-5]|(2[0-4]|1?[0-9])?[0-9])"
 
@@ -72,14 +71,7 @@ def _generate_bit_from_hash(salt, string):
     return int(last_hash_digit, 16) & 1
 
 
-def _ensure_unicode(str):
-    if not isinstance(str, text_type):
-        str = u(str)
-    return str
-
-
-@add_metaclass(ABCMeta)
-class _BaseIpAnonymizer(object):
+class _BaseIpAnonymizer(object, metaclass=ABCMeta):
     def __init__(
         self, salt, length, salter=_generate_bit_from_hash, preserve_suffix=None
     ):
@@ -148,7 +140,7 @@ class _BaseIpAnonymizer(object):
     def dump_to_file(self, file_out):
         ips = (
             (bits, anon_bits)
-            for bits, anon_bits in iteritems(self.cache)
+            for bits, anon_bits in self.cache.items()
             if len(bits) == self.length
         )
         for bits, anon_bits in ips:
@@ -210,7 +202,7 @@ class IpAnonymizer(_BaseIpAnonymizer):
         self._preserve_addresses = []
         if preserve_addresses is not None:
             self._preserve_addresses = [
-                ipaddress.ip_network(_ensure_unicode(n)) for n in preserve_addresses
+                ipaddress.ip_network(n) for n in preserve_addresses
             ]
             # Make sure the prefixes are also preserved for preserved blocks, so
             # anonymized addresses outside the block don't accidentally collide
@@ -218,7 +210,7 @@ class IpAnonymizer(_BaseIpAnonymizer):
 
         # Preserve relevant prefixes
         for subnet_str in preserve_prefixes:
-            subnet = ipaddress.ip_network(_ensure_unicode(subnet_str))
+            subnet = ipaddress.ip_network(subnet_str)
             prefix_bits = self.fmt.format(int(subnet.network_address))[
                 : subnet.prefixlen
             ]
@@ -256,7 +248,7 @@ class IpAnonymizer(_BaseIpAnonymizer):
         as octal (1.2.3.32).
         """
         addr_str = IpAnonymizer._DROP_ZEROS_PATTERN.sub(r"\1.\2.\3.\4", addr_str)
-        return ipaddress.IPv4Address(_ensure_unicode(addr_str))
+        return ipaddress.IPv4Address(addr_str)
 
     @classmethod
     def make_addr_from_int(cls, ip_int):
@@ -286,7 +278,7 @@ class IpV6Anonymizer(_BaseIpAnonymizer):
     @classmethod
     def make_addr(cls, addr_str):
         """Return an IPv6 address from the given string."""
-        return ipaddress.IPv6Address(_ensure_unicode(addr_str))
+        return ipaddress.IPv6Address(addr_str)
 
     @classmethod
     def make_addr_from_int(cls, ip_int):
