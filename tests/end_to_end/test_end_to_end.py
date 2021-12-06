@@ -16,7 +16,6 @@
 import os.path
 
 import pytest
-import six
 
 from netconan import __version__
 from netconan.netconan import main
@@ -143,8 +142,4 @@ def test_version(capsys):
     with pytest.raises(SystemExit):
         main(["--version"])
     captured = capsys.readouterr()
-    # Python2 prints version info in err instead of out
-    if six.PY2:
-        assert __version__ in captured.err
-    else:
-        assert __version__ in captured.out
+    assert __version__ in captured.out

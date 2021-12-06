@@ -23,7 +23,6 @@ from hashlib import md5
 
 # Using passlib for digests not supported by hashlib
 from passlib.hash import cisco_type7, md5_crypt, sha512_crypt
-from six import b
 
 from .default_pwd_regexes import default_com_line_regexes, default_pwd_line_regexes
 from .default_reserved_words import default_reserved_words
@@ -256,11 +255,11 @@ def _anonymize_value(raw_val, lookup, reserved_words):
 
     if item_format == _sensitive_item_formats.numeric:
         # These are the ASCII character values for anon_val converted to decimal
-        anon_val = str(int(b2a_hex(b(anon_val)), 16))
+        anon_val = str(int(b2a_hex(anon_val.encode()), 16))
 
     if item_format == _sensitive_item_formats.hexadecimal:
         # These are the ASCII character values for anon_val in hexadecimal
-        anon_val = b2a_hex(b(anon_val)).decode()
+        anon_val = b2a_hex(anon_val.encode()).decode()
 
     if item_format == _sensitive_item_formats.md5:
         old_salt_size = len(val.split("$")[2])

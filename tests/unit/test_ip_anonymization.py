@@ -20,12 +20,7 @@ import re
 
 import pytest
 
-from netconan.ip_anonymization import (
-    IpAnonymizer,
-    IpV6Anonymizer,
-    _ensure_unicode,
-    anonymize_ip_addr,
-)
+from netconan.ip_anonymization import IpAnonymizer, IpV6Anonymizer, anonymize_ip_addr
 
 ip_v4_classes = [
     "0.0.0.0/1",  # Class A
@@ -260,7 +255,7 @@ def test_preserve_custom_prefixes():
     ip_end = int(anonymizer.make_addr("170.255.255.255"))
     ip_end_anon = anonymizer.anonymize(ip_end)
 
-    network = ipaddress.ip_network(_ensure_unicode(subnet))
+    network = ipaddress.ip_network(subnet)
 
     # Make sure the anonymized addresses are different from the originals
     assert ip_start_anon != ip_start
@@ -336,7 +331,7 @@ def test_preserve_private_prefixes(anonymizer_v4, start, end, subnet):
     ip_int_end = int(anonymizer_v4.make_addr(end))
     ip_int_end_anon = anonymizer_v4.anonymize(ip_int_end)
 
-    network = ipaddress.ip_network(_ensure_unicode(subnet))
+    network = ipaddress.ip_network(subnet)
 
     # Make sure addresses in the block stay in the block
     assert ipaddress.ip_address(ip_int_start_anon) in network
