@@ -67,6 +67,7 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
     ],
+    python_requires=">=3.7",
     # What does your project relate to?
     keywords="network configuration anonymizer",
     # You can just specify the packages manually here if your project is
