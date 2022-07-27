@@ -70,6 +70,7 @@ default_pwd_line_regexes = [
     [(r"(?P<prefix>digest secret( \d)? )(\S+)", 3)],
     [(r"(?P<prefix>ppp .* hostname )(\S+)", 2)],
     [(r"(?P<prefix>ppp .* password( \d)? )(\S+)", 3)],
+    [(r"(?P<prefix>pre-shared-key( address( ipv6)?| hostname) \S+ key( \d)? )(\S+)", 5)],
     [(r"(?P<prefix>(ikev2 )?(local|remote)-authentication pre-shared-key )(\S+)", 4)],
     [
         (
