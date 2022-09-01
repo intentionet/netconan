@@ -81,7 +81,7 @@ setup(
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=[
-        "configargparse<1.0.0",
+        "configargparse<2.0.0",
         "bidict<1.0.0",
         "passlib<2.0.0",
     ],
