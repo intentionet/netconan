@@ -18,7 +18,7 @@ import os
 import pytest
 from testfixtures import LogCapture
 
-from netconan.anonymize_files import anonymize_file, anonymize_files
+from netconan.anonymize_files import anonymize_file, anonymize_files, anonymize_configuration, build_anonymizers
 
 _INPUT_CONTENTS = """
 # Intentionet's sensitive test file
@@ -220,6 +220,33 @@ def test_anonymize_files_file(tmpdir):
     # Make sure output file exists and matches the ref
     assert os.path.isfile(str(output_file))
     assert read_file(str(output_file)) == _REF_CONTENTS
+
+
+def test_anonymize_configuration():
+    """Test anonymize_configuration."""
+    anonymizer_configuration = {
+        "anon_ip": True,
+        "anon_pwd": True,
+        "as_numbers": None,
+        "preserve_networks": None,
+        "preserve_prefixes": None,
+        "preserve_suffix_v4": None,
+        "preserve_suffix_v6": None,
+        "reserved_words": None,
+        "undo_ip_anon": False,
+        "salt": _SALT,
+        "sensitive_words": _SENSITIVE_WORDS,
+    }
+    anonymizers = build_anonymizers(
+        anonymizer_configuration
+    )
+    output = anonymize_configuration(
+        _INPUT_CONTENTS.splitlines(),
+        **anonymizers
+    )
+
+    # A trailing newline is added to the output to make it match 100%
+    assert "\n".join(output) + "\n" == _REF_CONTENTS
 
 
 def read_file(file_path):
