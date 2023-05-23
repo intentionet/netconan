@@ -1,12 +1,4 @@
 """Test file anonymization."""
-import io
-import os
-
-import pytest
-from testfixtures import LogCapture
-
-from netconan.anonymize_files import FileAnonymizer, anonymize_files
-
 #   Copyright 2018 Intentionet
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +13,13 @@ from netconan.anonymize_files import FileAnonymizer, anonymize_files
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+import io
+import os
+
+import pytest
+from testfixtures import LogCapture
+
+from netconan.anonymize_files import FileAnonymizer, anonymize_files
 
 _INPUT_CONTENTS = """
 # Intentionet's sensitive test file
