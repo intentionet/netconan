@@ -1,4 +1,12 @@
 """Test file anonymization."""
+import io
+import os
+
+import pytest
+from testfixtures import LogCapture
+
+from netconan.anonymize_files import FileAnonymizer, anonymize_files
+
 #   Copyright 2018 Intentionet
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,12 +21,6 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-import os
-
-import pytest
-from testfixtures import LogCapture
-
-from netconan.anonymize_files import anonymize_file, anonymize_files, anonymize_configuration, build_anonymizers
 
 _INPUT_CONTENTS = """
 # Intentionet's sensitive test file
@@ -84,7 +86,7 @@ def test_anonymize_files_bad_output_file(tmpdir):
     output_file = tmpdir.mkdir("out").mkdir(filename)
 
     with pytest.raises(ValueError, match="Cannot write output file.*"):
-        anonymize_file(str(input_file), str(output_file))
+        FileAnonymizer(True, True).anonymize_file(str(input_file), str(output_file))
 
     # Anonymizing files should complete okay, because it skips the errored file
     with LogCapture() as log_capture:
@@ -222,31 +224,17 @@ def test_anonymize_files_file(tmpdir):
     assert read_file(str(output_file)) == _REF_CONTENTS
 
 
-def test_anonymize_configuration():
-    """Test anonymize_configuration."""
-    anonymizer_configuration = {
-        "anon_ip": True,
-        "anon_pwd": True,
-        "as_numbers": None,
-        "preserve_networks": None,
-        "preserve_prefixes": None,
-        "preserve_suffix_v4": None,
-        "preserve_suffix_v6": None,
-        "reserved_words": None,
-        "undo_ip_anon": False,
-        "salt": _SALT,
-        "sensitive_words": _SENSITIVE_WORDS,
-    }
-    anonymizers = build_anonymizers(
-        anonymizer_configuration
+def test_anonymize_in_memory():
+    """Test whether anonymization in memory works as expected."""
+    file_anonymizer = FileAnonymizer(
+        anon_pwd=True, anon_ip=True, salt=_SALT, sensitive_words=_SENSITIVE_WORDS
     )
-    output = anonymize_configuration(
-        _INPUT_CONTENTS.splitlines(),
-        **anonymizers
-    )
+    input_io = io.StringIO(_INPUT_CONTENTS)
+    actual_output_io = io.StringIO()
+    expected_output_io = io.StringIO(_REF_CONTENTS)
+    file_anonymizer.anonymize_io(input_io, actual_output_io)
 
-    # A trailing newline is added to the output to make it match 100%
-    assert "\n".join(output) + "\n" == _REF_CONTENTS
+    assert expected_output_io.getvalue() == actual_output_io.getvalue()
 
 
 def read_file(file_path):
