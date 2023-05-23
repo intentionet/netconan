@@ -13,12 +13,13 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+import io
 import os
 
 import pytest
 from testfixtures import LogCapture
 
-from netconan.anonymize_files import anonymize_file, anonymize_files
+from netconan.anonymize_files import FileAnonymizer, anonymize_files
 
 _INPUT_CONTENTS = """
 # Intentionet's sensitive test file
@@ -84,7 +85,7 @@ def test_anonymize_files_bad_output_file(tmpdir):
     output_file = tmpdir.mkdir("out").mkdir(filename)
 
     with pytest.raises(ValueError, match="Cannot write output file.*"):
-        anonymize_file(str(input_file), str(output_file))
+        FileAnonymizer(True, True).anonymize_file(str(input_file), str(output_file))
 
     # Anonymizing files should complete okay, because it skips the errored file
     with LogCapture() as log_capture:
@@ -220,6 +221,19 @@ def test_anonymize_files_file(tmpdir):
     # Make sure output file exists and matches the ref
     assert os.path.isfile(str(output_file))
     assert read_file(str(output_file)) == _REF_CONTENTS
+
+
+def test_anonymize_in_memory():
+    """Test whether anonymization in memory works as expected."""
+    file_anonymizer = FileAnonymizer(
+        anon_pwd=True, anon_ip=True, salt=_SALT, sensitive_words=_SENSITIVE_WORDS
+    )
+    input_io = io.StringIO(_INPUT_CONTENTS)
+    actual_output_io = io.StringIO()
+    expected_output_io = io.StringIO(_REF_CONTENTS)
+    file_anonymizer.anonymize_io(input_io, actual_output_io)
+
+    assert expected_output_io.getvalue() == actual_output_io.getvalue()
 
 
 def read_file(file_path):
