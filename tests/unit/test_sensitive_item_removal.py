@@ -85,8 +85,14 @@ cisco_password_lines = [
     ("pre-shared-key remote 6 {}", "FLgBaJHXdYY_AcHZZMgQ_RhTDJXHUBAAB"),
     ("pre-shared-key address 10.0.0.1 key {}", "FLgBaJHXdYY_AcHZZMgQ_RhTDJXHUBAAB"),
     ("pre-shared-key address 10.0.0.1 key 6 {}", "FLgBaJHXdYY_AcHZZMgQ_RhTDJXHUBAAB"),
-    ("pre-shared-key address ipv6 ::1/128 key 6 {}", "FLgBaJHXdYY_AcHZZMgQ_RhTDJXHUBAAB"),
-    ("pre-shared-key hostname example.com key 6 {}", "FLgBaJHXdYY_AcHZZMgQ_RhTDJXHUBAAB"),
+    (
+        "pre-shared-key address ipv6 ::1/128 key 6 {}",
+        "FLgBaJHXdYY_AcHZZMgQ_RhTDJXHUBAAB",
+    ),
+    (
+        "pre-shared-key hostname example.com key 6 {}",
+        "FLgBaJHXdYY_AcHZZMgQ_RhTDJXHUBAAB",
+    ),
     ("tacacs-server host 1.1.1.1 key {}", "RemoveMe"),
     ("radius-server host 1.1.1.1 key 0 {}", "RemoveMe"),
     ("tacacs-server key 7 {}", "122A00190102180D3C2E"),
