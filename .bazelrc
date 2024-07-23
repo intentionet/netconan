@@ -1,0 +1,2 @@
+# Eventually they want us to upgrade to MODULE.bazel but it's not mandatory yet
+common --enable_bzlmod=False
