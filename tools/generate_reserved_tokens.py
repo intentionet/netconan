@@ -1,4 +1,5 @@
 """Script used to generate reserved words/tokens used by Netconan, from Batfish token files."""
+
 #   Copyright 2018 Intentionet
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");

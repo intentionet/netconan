@@ -1,4 +1,5 @@
 """Generate & apply default regexes for finding & removing sensitive info."""
+
 #   Copyright 2018 Intentionet
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -157,9 +158,11 @@ class SensitiveWordAnonymizer(object):
             leading, words, trailing = _split_line(line)
             # Anonymize only words that do not match the conflicting (reserved) words
             words = [
-                w
-                if w in self.conflicting_words
-                else self.sens_regex.sub(self._lookup_anon_word, w)
+                (
+                    w
+                    if w in self.conflicting_words
+                    else self.sens_regex.sub(self._lookup_anon_word, w)
+                )
                 for w in words
             ]
             # Restore leading and trailing whitespace since those were removed when splitting into words

@@ -1,4 +1,5 @@
 """Default regexes from RANCID for finding & removing passwords."""
+
 # Copyright (c) 1997-2017 by Henry Kilmer and John Heasley
 # All rights reserved.
 #

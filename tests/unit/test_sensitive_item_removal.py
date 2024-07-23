@@ -1,4 +1,5 @@
 """Test removal of passwords and snmp communities."""
+
 #   Copyright 2018 Intentionet
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
