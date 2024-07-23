@@ -4,6 +4,7 @@ See:
 https://packaging.python.org/en/latest/distributing.html
 https://github.com/pypa/sampleproject
 """
+
 #   Copyright 2018 Intentionet
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +22,7 @@ https://github.com/pypa/sampleproject
 from os import path
 
 # Always prefer setuptools over distutils
-from setuptools import find_packages, setup
+from setuptools import setup
 
 here = path.abspath(path.dirname(__file__))
 
@@ -63,17 +64,16 @@ setup(
         # that you indicate whether you support Python 2, Python 3 or both.
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3 :: Only",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
     ],
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     # What does your project relate to?
     keywords="network configuration anonymizer",
-    # You can just specify the packages manually here if your project is
-    # simple. Or you can use find_packages().
-    packages=find_packages(exclude=["contrib", "docs", "tests"]),
+    packages=["netconan"],
     # Alternatively, if you want to distribute just a my_module.py, uncomment
     # this:
     #   py_modules=["my_module"],
@@ -82,8 +82,8 @@ setup(
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=[
-        "configargparse<2.0.0",
         "bidict<1.0.0",
+        "configargparse<2.0.0",
         "passlib<2.0.0",
     ],
     # List additional groups of dependencies here (e.g. development
@@ -91,14 +91,13 @@ setup(
     # for example:
     # $ pip install -e .[dev,test]
     extras_require={
-        "dev": ["flake8<4.0.0", "flake8-docstrings<2.0.0", "pydocstyle<4.0.0"],
+        "dev": ["flake8<8.0.0", "flake8-docstrings<2.0.0", "pydocstyle<6.0.0"],
     },
     # List pytest requirements for running unit tests
-    setup_requires=["pytest-runner<6.0"],
-    # pytest 5+ does not support Python 2
+    setup_requires=["pytest-runner<7"],
     tests_require=[
         "pytest>=6,<7",
-        "pytest-cov<3.0.0",
+        "pytest-cov<6.0.0",
         "requests_mock<2.0.0",
         "testfixtures<7.0.0",
     ],
