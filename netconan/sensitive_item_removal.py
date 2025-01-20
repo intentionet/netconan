@@ -65,6 +65,11 @@ _PASSWORD_ENCLOSING_TEXT = ["\\'", '\\"', "'", '"', " "]
 _PASSWORD_ENCLOSING_HEAD_TEXT = _PASSWORD_ENCLOSING_TEXT + ["[", "{"]
 _PASSWORD_ENCLOSING_TAIL_TEXT = _PASSWORD_ENCLOSING_TEXT + ["]", "}", ";", ","]
 
+aws_regexes = [
+    [(r"(?<=\<pre_shared_key\>).{32}(?=\<\/pre_shared_key)", 0)],
+    [(r"(?<=PreSharedKey\": \").{32}", 0)]
+]
+
 # These are extra regexes to find lines that seem like they might contain
 # sensitive info (these are not already caught by RANCID default regexes)
 extra_password_regexes = [
@@ -326,7 +331,7 @@ def _extract_enclosing_text(in_val, head="", tail=""):
 def generate_default_sensitive_item_regexes():
     """Compile and return the default password and community line regexes."""
     combined_regexes = (
-        default_pwd_line_regexes + default_com_line_regexes + extra_password_regexes
+        aws_regexes + default_pwd_line_regexes + default_com_line_regexes + extra_password_regexes
     )
     return [
         [(re.compile(_ALLOWED_REGEX_PREFIX + regex_), num) for regex_, num in group]
