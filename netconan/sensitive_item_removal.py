@@ -276,9 +276,6 @@ def _anonymize_value(raw_val, lookup, reserved_words):
         anon_val = sha512_crypt.using(rounds=5000).hash(anon_val)
 
     if item_format == _sensitive_item_formats.juniper_type9:
-        # TODO(https://github.com/intentionet/netconan/issues/16)
-        # Encode base anon_val instead of just returning a constant here
-        # This value corresponds to encoding: Conan812183
         anon_val = juniper_secrets.juniper_encrypt(anon_val)
 
     lookup[val] = anon_val
