@@ -73,7 +73,7 @@ setup(
     python_requires=">=3.8",
     # What does your project relate to?
     keywords="network configuration anonymizer",
-    packages=["netconan"],
+    packages=["netconan", "netconan.utils"],
     # Alternatively, if you want to distribute just a my_module.py, uncomment
     # this:
     #   py_modules=["my_module"],

@@ -21,6 +21,7 @@ import re
 from binascii import b2a_hex
 from enum import Enum
 from hashlib import md5
+from netconan.utils import juniper_secrets
 
 # Using passlib for digests not supported by hashlib
 from passlib.hash import cisco_type7, md5_crypt, sha512_crypt
@@ -278,7 +279,7 @@ def _anonymize_value(raw_val, lookup, reserved_words):
         # TODO(https://github.com/intentionet/netconan/issues/16)
         # Encode base anon_val instead of just returning a constant here
         # This value corresponds to encoding: Conan812183
-        anon_val = "$9$0000IRc-dsJGirewg4JDj9At0RhSreK8Xhc"
+        anon_val = juniper_secrets.juniper_encrypt(anon_val)
 
     lookup[val] = anon_val
     logging.debug('Anonymized input "%s" to "%s"', val, anon_val)
