@@ -21,10 +21,11 @@ import re
 from binascii import b2a_hex
 from enum import Enum
 from hashlib import md5
-from netconan.utils import juniper_secrets
 
 # Using passlib for digests not supported by hashlib
 from passlib.hash import cisco_type7, md5_crypt, sha512_crypt
+
+from netconan.utils import juniper_secrets
 
 from .default_pwd_regexes import default_com_line_regexes, default_pwd_line_regexes
 from .default_reserved_words import default_reserved_words

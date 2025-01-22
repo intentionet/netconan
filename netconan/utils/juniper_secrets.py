@@ -9,12 +9,12 @@ FAMILY = [
     "QzF3n6/9CAtpu0O",
     "B1IREhcSyrleKvMW8LXx",
     "7N-dVbwsY2g4oaJZGUDj",
-    "iHkq.mPf5T"
+    "iHkq.mPf5T",
 ]
 
 EXTRA = {c: (3 - fam) for fam, chars in enumerate(FAMILY) for c in chars}
 
-NUM_ALPHA = list("".join(FAMILY).replace('-', '')+'-')
+NUM_ALPHA = list("".join(FAMILY).replace("-", "") + "-")
 ALPHA_NUM = {char: idx for idx, char in enumerate(NUM_ALPHA)}
 
 ENCODING = [
@@ -24,7 +24,7 @@ ENCODING = [
     [1, 64],
     [1, 32],
     [1, 4, 16, 128],
-    [1, 32, 64]
+    [1, 32, 64],
 ]
 
 VALID = f"^{MAGIC}[{''.join(NUM_ALPHA)}]{{4,}}$".replace("$", r"\$", 2)
@@ -42,7 +42,7 @@ def juniper_decrypt(crypt):
     if not crypt or not re.search(VALID, crypt):
         raise ValueError("Invalid Juniper crypt string!")
 
-    chars = crypt[len(MAGIC):]
+    chars = crypt[len(MAGIC) :]
     first, chars = _nibble(chars, 1)
     _, chars = _nibble(chars, EXTRA[first])
 
@@ -106,7 +106,7 @@ def juniper_encrypt(plain, salt=None):
 
 
 def _randc(count):
-    return ''.join(random.choice(NUM_ALPHA) for _ in range(count))
+    return "".join(random.choice(NUM_ALPHA) for _ in range(count))
 
 
 def _gap_encode(pc, prev, enc):
