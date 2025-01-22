@@ -54,7 +54,7 @@ def juniper_decrypt(crypt):
         nibble_len = len(decode)
         nibble, chars = _nibble(chars, nibble_len)
         gaps = []
-        for i  in enumerate(nibble):
+        for i, _  in enumerate(nibble):
             gaps.append(_gap(prev, nibble[i]))
             prev = nibble[i]
         decrypt += _gap_decode(gaps, decode)
