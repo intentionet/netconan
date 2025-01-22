@@ -14,7 +14,7 @@ FAMILY = [
 
 EXTRA = {c: (3 - fam) for fam, chars in enumerate(FAMILY) for c in chars}
 
-NUM_ALPHA = list("".join(FAMILY).replace('-','')+'-')
+NUM_ALPHA = list("".join(FAMILY).replace('-', '')+'-')
 ALPHA_NUM = {char: idx for idx, char in enumerate(NUM_ALPHA)}
 
 ENCODING = [
@@ -54,37 +54,39 @@ def juniper_decrypt(crypt):
         nibble_len = len(decode)
         nibble, chars = _nibble(chars, nibble_len)
         gaps = []
-        for i, _  in enumerate(nibble):
+        for i, _ in enumerate(nibble):
             gaps.append(_gap(prev, nibble[i]))
             prev = nibble[i]
         decrypt += _gap_decode(gaps, decode)
     return decrypt
 
+
 def _nibble(chars, length):
     nib = chars[:length]
     chars = chars[length:]
-
     return nib, chars
+
 
 def _gap(c1, c2):
     diff = ALPHA_NUM[c2] - ALPHA_NUM[c1]
     pos_diff = diff + len(NUM_ALPHA)
     return pos_diff % len(NUM_ALPHA) - 1
 
+
 def _gap_decode(gaps, dec):
     if len(gaps) != len(dec):
         raise ValueError("Nibble and decode size not the same!")
-
     num = sum(g * d for g, d in zip(gaps, dec))
     return chr(num % 256)
 
+
 def juniper_encrypt(plain, salt=None):
     """Encrypts a Juniper $9 encrypted secret.
-    
+
     Args:
       plain: String containing the plaintext secret to be encrypted.
       salt: Optional salt to be used when encrypting the secret.
-    
+
     Returns:
       String representing the encrypted secret.
     """
@@ -102,21 +104,20 @@ def juniper_encrypt(plain, salt=None):
         pos += 1
     return crypt
 
+
 def _randc(count):
     return ''.join(random.choice(NUM_ALPHA) for _ in range(count))
+
 
 def _gap_encode(pc, prev, enc):
     ord_val = ord(pc)
     crypt = ""
     gaps = []
-
     for mod in reversed(enc):
         gaps.insert(0, ord_val // mod)
         ord_val %= mod
-
     for gap in gaps:
         gap += ALPHA_NUM[prev] + 1
         prev = NUM_ALPHA[gap % len(NUM_ALPHA)]
         crypt += prev
-
     return crypt
