@@ -1,4 +1,9 @@
-"""Encrypts and decryptes Juniper Type 9 hashes."""
+"""Encrypts and decryptes Juniper Type 9 hashes.
+
+This class is a derivative work based on the perl module Crypt-Juniper by Kevin Brintnall.
+Permission to release this derived code under the Apache 2.0 License was granted by Kevin
+Brintnall on 2015/12/04. see http://search.cpan.org/~kbrint/Crypt-Juniper/lib/Crypt/Juniper.pm
+"""
 
 import random
 import re
