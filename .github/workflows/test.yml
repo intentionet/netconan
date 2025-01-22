@@ -22,4 +22,4 @@ jobs:
           pip install -e .[test]
       - name: Test
         run: |
-          python setup.py test
+          pytest

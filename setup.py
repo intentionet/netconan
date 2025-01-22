@@ -92,15 +92,13 @@ setup(
     # $ pip install -e .[dev,test]
     extras_require={
         "dev": ["flake8<8.0.0", "flake8-docstrings<2.0.0", "pydocstyle<6.0.0"],
+        "test": [
+            "pytest>=6,<7",
+            "pytest-cov<6.0.0",
+            "requests_mock<2.0.0",
+            "testfixtures<7.0.0",
+        ],
     },
-    # List pytest requirements for running unit tests
-    setup_requires=["pytest-runner<7"],
-    tests_require=[
-        "pytest>=6,<7",
-        "pytest-cov<6.0.0",
-        "requests_mock<2.0.0",
-        "testfixtures<7.0.0",
-    ],
     # If there are data files included in your packages that need to be
     # installed, specify them here.  If using Python 2.6 or less, then these
     # have to be included in MANIFEST.in as well.
