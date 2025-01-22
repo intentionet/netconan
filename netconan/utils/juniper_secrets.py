@@ -1,8 +1,11 @@
 """Encrypts and decryptes Juniper Type 9 hashes.
 
-This class is a derivative work based on the perl module Crypt-Juniper by Kevin Brintnall.
-Permission to release this derived code under the Apache 2.0 License was granted by Kevin
-Brintnall on 2015/12/04. see http://search.cpan.org/~kbrint/Crypt-Juniper/lib/Crypt/Juniper.pm
+This module is a derivative work based on the perl module Crypt-Juniper by Kevin Brintnall.
+https://metacpan.org/dist/Crypt-Juniper/view/lib/Crypt/Juniper.pm
+Used under the Artistic License https://dev.perl.org/licenses/artistic.html
+
+This work was modified from the original in the following ways:
+2025-01-21: Rob Ankeny(ankeny at gmail.com): Translated from perl to python.
 """
 
 import random
@@ -97,6 +100,7 @@ def juniper_encrypt(plain, salt=None):
     """
     if salt is None:
         salt = _randc(1)
+    salt = salt[0]
     rand = _randc(EXTRA[salt])
 
     pos = 0
