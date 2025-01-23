@@ -83,14 +83,14 @@ def _gap(c1: str, c2: str) -> int:
     return pos_diff % len(NUM_ALPHA) - 1
 
 
-def _gap_decode(gaps: List[int] , dec: List[int]) -> chr:
+def _gap_decode(gaps: List[int], dec: List[int]) -> chr:
     if len(gaps) != len(dec):
         raise ValueError("Nibble and decode size not the same!")
     num = sum(g * d for g, d in zip(gaps, dec))
     return chr(num % 256)
 
 
-def juniper_encrypt(plain: str, salt: str=None ) -> str:
+def juniper_encrypt(plain: str, salt: str = None) -> str:
     """Encrypts a Juniper $9 encrypted secret.
 
     Args:

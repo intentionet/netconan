@@ -117,7 +117,6 @@ def test_end_to_end(tmpdir):
     run_test(anon_dir, deanon_dir, filename, DEANON_REF_CONTENTS, args + ["-u"])
 
 
-
 def test_end_to_end_no_anonymization(tmpdir):
     """Test Netconan main with simulated input file and no anonymization args."""
     filename = "test.txt"
