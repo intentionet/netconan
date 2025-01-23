@@ -115,7 +115,7 @@ def test_end_to_end(tmpdir):
 
     deanon_dir = tmpdir.mkdir("deanon")
     run_test(anon_dir, deanon_dir, filename, DEANON_REF_CONTENTS, args + ["-u"])
-    print("foo")
+
 
 
 def test_end_to_end_no_anonymization(tmpdir):

@@ -10,6 +10,7 @@ This work was modified from the original in the following ways:
 
 import random
 import re
+from typing import List, Tuple
 
 MAGIC = "$9$"
 
@@ -25,6 +26,7 @@ EXTRA = {c: (3 - fam) for fam, chars in enumerate(FAMILY) for c in chars}
 NUM_ALPHA = list("".join(FAMILY))
 ALPHA_NUM = {char: idx for idx, char in enumerate(NUM_ALPHA)}
 
+
 ENCODING = [
     [1, 4, 32],
     [1, 16, 32],
@@ -38,7 +40,7 @@ ENCODING = [
 VALID = rf"^{re.escape(MAGIC)}[{re.escape(''.join(NUM_ALPHA))}]{{4,}}$"
 
 
-def juniper_decrypt(crypt):
+def juniper_decrypt(crypt: str) -> str:
     """Decrypts a Juniper $9 encrypted secret.
 
     Args:
@@ -69,26 +71,26 @@ def juniper_decrypt(crypt):
     return decrypt
 
 
-def _nibble(chars, length):
+def _nibble(chars: str, length: int) -> Tuple[str, str]:
     nib = chars[:length]
     chars = chars[length:]
     return nib, chars
 
 
-def _gap(c1, c2):
+def _gap(c1: str, c2: str) -> int:
     diff = ALPHA_NUM[c2] - ALPHA_NUM[c1]
     pos_diff = diff + len(NUM_ALPHA)
     return pos_diff % len(NUM_ALPHA) - 1
 
 
-def _gap_decode(gaps, dec):
+def _gap_decode(gaps: List[int] , dec: List[int]) -> chr:
     if len(gaps) != len(dec):
         raise ValueError("Nibble and decode size not the same!")
     num = sum(g * d for g, d in zip(gaps, dec))
     return chr(num % 256)
 
 
-def juniper_encrypt(plain, salt=None):
+def juniper_encrypt(plain: str, salt: str=None ) -> str:
     """Encrypts a Juniper $9 encrypted secret.
 
     Args:
@@ -114,11 +116,11 @@ def juniper_encrypt(plain, salt=None):
     return crypt
 
 
-def _randc(count):
+def _randc(count: int) -> str:
     return "".join(random.choice(NUM_ALPHA) for _ in range(count))
 
 
-def _gap_encode(pc, prev, enc):
+def _gap_encode(pc: str, prev: str, enc: List[int]) -> str:
     ord_val = ord(pc)
     crypt = ""
     gaps = []

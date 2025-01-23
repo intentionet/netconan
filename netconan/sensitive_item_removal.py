@@ -286,7 +286,10 @@ def _anonymize_value(raw_val, lookup, reserved_words, salt):
 
     if item_format == _sensitive_item_formats.juniper_type9:
         anon_val = juniper_secrets.juniper_encrypt(anon_val, salt)
-    lookup[val] = anon_val
+    if decrypted:
+        lookup[decrypted] = anon_val
+    else:
+        lookup[val] = anon_val
     logging.debug('Anonymized input "%s" to "%s"', val, anon_val)
     return sens_head + anon_val + sens_tail
 
