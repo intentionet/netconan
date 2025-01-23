@@ -256,7 +256,7 @@ def _anonymize_value(raw_val, lookup, reserved_words, salt):
         logging.debug('Anonymized input "%s" to "%s" (via lookup)', val, anon_val)
         return sens_head + anon_val + sens_tail
     elif decrypted in lookup:
-        anon_val = lookup[decrypted]
+        anon_val = juniper_secrets.juniper_encrypt(lookup[decrypted], salt)
         logging.debug('Anonymized input "%s" to "%s" (via lookup)', val, anon_val)
         return sens_head + anon_val + sens_tail
     anon_val = "netconanRemoved{}".format(len(lookup))

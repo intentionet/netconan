@@ -33,6 +33,7 @@ password reservedword
 ip address 11.11.11.11 0.0.0.0
 ip address 11.11.197.79 0.0.0.0
 # Sensitive word Addr here
+pre-shared-key ascii-text "123"; ## SECRET-DATA
 pre-shared-key ascii-text "$9$eZkvX7dbs4JG"; ## SECRET-DATA
 pre-shared-key ascii-text "$9$qmQF69A01R"; ## SECRET-DATA
 
@@ -50,8 +51,9 @@ password reservedword
 ip address 11.11.11.11 0.0.0.0
 ip address 11.11.197.79 0.0.0.0
 # 3b836f word 10b348 here
-pre-shared-key ascii-text "$9$TF/t1IceMXn/SeMXbwYgoZjqP5z9CuqmpBRhvM7-Vbs4JGD"; ## SECRET-DATA
-pre-shared-key ascii-text "$9$TF/t1IceMXn/SeMXbwYgoZjqP5z9CuqmpBRhvM7-Vbs4JGD"; ## SECRET-DATA
+pre-shared-key ascii-text "146741862156641154150793826712647197746"; ## SECRET-DATA
+pre-shared-key ascii-text "$9$Tz/C0BIrKMhcs24oGUuOBRreM8X7dbMWDiqmTQcyre8X7-VgaZdVk.P5F3hSyKX7goJDHqZG69tu1IwY24GDHqmF69mPhSrlMWHq.5n/O1RyevRE"; ## SECRET-DATA
+pre-shared-key ascii-text "$9$Tz/C0BIrKMhcs24oGUuOBRreM8X7dbMWDiqmTQcyre8X7-VgaZdVk.P5F3hSyKX7goJDHqZG69tu1IwY24GDHqmF69mPhSrlMWHq.5n/O1RyevRE"; ## SECRET-DATA
 
 """
 
@@ -67,8 +69,9 @@ password reservedword
 ip address 11.11.11.11 0.0.0.0
 ip address 11.11.197.79 0.0.0.0
 # 3b836f word 10b348 here
-pre-shared-key ascii-text "$9$TF/t1IceMXn/SeMXbwYgoZjqP5z9CuqmpBRhvM7-Vbs4JGD"; ## SECRET-DATA
-pre-shared-key ascii-text "$9$TF/t1IceMXn/SeMXbwYgoZjqP5z9CuqmpBRhvM7-Vbs4JGD"; ## SECRET-DATA
+pre-shared-key ascii-text "146741862156641154150793826712647197746"; ## SECRET-DATA
+pre-shared-key ascii-text "$9$Tz/C0BIrKMhcs24oGUuOBRreM8X7dbMWDiqmTQcyre8X7-VgaZdVk.P5F3hSyKX7goJDHqZG69tu1IwY24GDHqmF69mPhSrlMWHq.5n/O1RyevRE"; ## SECRET-DATA
+pre-shared-key ascii-text "$9$Tz/C0BIrKMhcs24oGUuOBRreM8X7dbMWDiqmTQcyre8X7-VgaZdVk.P5F3hSyKX7goJDHqZG69tu1IwY24GDHqmF69mPhSrlMWHq.5n/O1RyevRE"; ## SECRET-DATA
 
 """
 
