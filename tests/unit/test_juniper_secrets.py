@@ -22,7 +22,6 @@ from netconan.utils import juniper_secrets
 def test_juniper_encrypt(plain_text, expected):
     """Test encryption of secrets."""
     juniper_secrets._randc = MagicMock(return_value="a")
-    print(juniper_secrets.juniper_encrypt(plain_text))
     assert juniper_secrets.juniper_encrypt(plain_text) == expected
 
 
