@@ -35,7 +35,7 @@ ENCODING = [
     [1, 32, 64],
 ]
 
-VALID = fr"^{re.escape(MAGIC)}[{re.escape(''.join(NUM_ALPHA))}]{{4,}}$"
+VALID = rf"^{re.escape(MAGIC)}[{re.escape(''.join(NUM_ALPHA))}]{{4,}}$"
 
 
 def juniper_decrypt(crypt):

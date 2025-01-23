@@ -350,7 +350,7 @@ def test_anonymize_sensitive_words_preserve_reserved_word():
 def test__anonymize_value(val):
     """Test sensitive item anonymization."""
     pwd_lookup = {}
-    anon_val = _anonymize_value(val, pwd_lookup, {})
+    anon_val = _anonymize_value(val, pwd_lookup, {}, "testsalt")
     val_format = _check_sensitive_item_format(val)
     anon_val_format = _check_sensitive_item_format(anon_val)
 
@@ -368,13 +368,15 @@ def test__anonymize_value(val):
         assert org_salt_size == anon_salt_size
 
     # Confirm reanonymizing same source value results in same anonymized value
-    assert anon_val == _anonymize_value(val, pwd_lookup, {})
+    assert anon_val == _anonymize_value(val, pwd_lookup, {}, "testsalt")
 
 
 def test__anonymize_value_unique():
     """Test that unique sensitive items have unique anonymized values."""
     pwd_lookup = {}
-    anon_vals = [_anonymize_value(pwd, pwd_lookup, {}) for pwd in unique_passwords]
+    anon_vals = [
+        _anonymize_value(pwd, pwd_lookup, {}, "testsalt") for pwd in unique_passwords
+    ]
     unique_anon_vals = set()
 
     for anon_val in anon_vals:
@@ -465,14 +467,14 @@ def test_pwd_removal(regexes, raw_config_line, sensitive_text):
     """Test removal of passwords and communities from config lines."""
     config_line = raw_config_line.format(sensitive_text)
     pwd_lookup = {}
-    anon_line = replace_matching_item(regexes, config_line, pwd_lookup)
+    anon_line = replace_matching_item(regexes, config_line, pwd_lookup, "testsalt")
     # Make sure the output line does not contain the sensitive text
     assert sensitive_text not in anon_line
 
     if _LINE_SCRUBBED_MESSAGE not in anon_line:
         # If the line wasn't "completely scrubbed",
         # make sure context was preserved
-        anon_val = _anonymize_value(sensitive_text, pwd_lookup, {})
+        anon_val = _anonymize_value(sensitive_text, pwd_lookup, {}, "testsalt")
         assert anon_line == raw_config_line.format(anon_val)
 
 
@@ -480,7 +482,9 @@ def test_pwd_removal_with_whitespace(regexes):
     """Test removal of password when a sensitive line contains extra whitespace."""
     sensitive_text = "RemoveMe"
     sensitive_line = "     password   0      \t{}".format(sensitive_text)
-    assert sensitive_text not in replace_matching_item(regexes, sensitive_line, {})
+    assert sensitive_text not in replace_matching_item(
+        regexes, sensitive_line, {}, "testsalt"
+    )
 
 
 @pytest.mark.parametrize(
@@ -500,7 +504,9 @@ def test_pwd_removal_and_preserve_reserved_word(regexes, config_line, sensitive_
     """Test removal of passwords when reserved words must be skipped."""
     config_line = config_line.format(sensitive_text)
     pwd_lookup = {}
-    assert sensitive_text not in replace_matching_item(regexes, config_line, pwd_lookup)
+    assert sensitive_text not in replace_matching_item(
+        regexes, config_line, pwd_lookup, "testsalt"
+    )
 
 
 @pytest.mark.parametrize(
@@ -516,7 +522,9 @@ def test_pwd_removal_and_preserve_reserved_word(regexes, config_line, sensitive_
 def test_pwd_removal_preserve_reserved_word(regexes, config_line):
     """Test that reserved words are preserved even if they appear in password lines."""
     pwd_lookup = {}
-    assert config_line == replace_matching_item(regexes, config_line, pwd_lookup)
+    assert config_line == replace_matching_item(
+        regexes, config_line, pwd_lookup, "testsalt"
+    )
 
 
 @pytest.mark.parametrize(
@@ -533,7 +541,9 @@ def test_pwd_removal_preserve_reserved_word(regexes, config_line):
 def test_pwd_removal_preserve_context(regexes, config_line, anon_line):
     """Test that context is preserved replacing/removing passwords."""
     pwd_lookup = {}
-    assert anon_line == replace_matching_item(regexes, config_line, pwd_lookup)
+    assert anon_line == replace_matching_item(
+        regexes, config_line, pwd_lookup, "testsalt"
+    )
 
 
 @pytest.mark.parametrize("whitespace", [" ", "\t", "\n", " \t\n"])
@@ -543,7 +553,7 @@ def test_pwd_removal_preserve_leading_whitespace(regexes, whitespace):
         line="password secret", whitespace=whitespace
     )
     pwd_lookup = {}
-    processed_line = replace_matching_item(regexes, config_line, pwd_lookup)
+    processed_line = replace_matching_item(regexes, config_line, pwd_lookup, "testsalt")
     assert processed_line.startswith(whitespace)
 
 
@@ -554,7 +564,7 @@ def test_pwd_removal_preserve_trailing_whitespace(regexes, whitespace):
         line="password secret", whitespace=whitespace
     )
     pwd_lookup = {}
-    processed_line = replace_matching_item(regexes, config_line, pwd_lookup)
+    processed_line = replace_matching_item(regexes, config_line, pwd_lookup, "testsalt")
     assert processed_line.endswith(whitespace)
 
 
@@ -576,7 +586,9 @@ def test_pwd_removal_prepend(regexes, config_line, sensitive_text, prepend_text)
     """Test that sensitive lines are still anonymized correctly if preceded by allowed text."""
     config_line = prepend_text + config_line.format(sensitive_text)
     pwd_lookup = {}
-    assert sensitive_text not in replace_matching_item(regexes, config_line, pwd_lookup)
+    assert sensitive_text not in replace_matching_item(
+        regexes, config_line, pwd_lookup, "testsalt"
+    )
 
 
 @pytest.mark.parametrize("config_line,sensitive_text", sensitive_lines)
@@ -595,7 +607,9 @@ def test_pwd_removal_append(regexes, config_line, sensitive_text, append_text):
     """Test that sensitive lines are still anonymized correctly if followed by allowed text."""
     config_line = config_line.format(sensitive_text) + append_text
     pwd_lookup = {}
-    assert sensitive_text not in replace_matching_item(regexes, config_line, pwd_lookup)
+    assert sensitive_text not in replace_matching_item(
+        regexes, config_line, pwd_lookup, "testsalt"
+    )
 
 
 @pytest.mark.parametrize(
@@ -632,4 +646,6 @@ def test_pwd_removal_insensitive_lines(regexes, config_line):
     # Collapse all whitespace in original config_line and add newline since
     # that will be done by replace_matching_item
     config_line = "{}\n".format(" ".join(config_line.split()))
-    assert config_line == replace_matching_item(regexes, config_line, pwd_lookup)
+    assert config_line == replace_matching_item(
+        regexes, config_line, pwd_lookup, "testsalt"
+    )
