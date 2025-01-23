@@ -1,7 +1,5 @@
 """Tests Juniper secret encryption/decryption methods."""
 
-from unittest.mock import MagicMock
-
 import pytest
 
 from netconan.utils import juniper_secrets
@@ -10,18 +8,17 @@ from netconan.utils import juniper_secrets
 @pytest.mark.parametrize(
     "plain_text, expected",
     [
-        ("abc", "$9$aaZGiq.5F39"),
-        ("123", "$9$aaZikmfT3/C"),
-        ("netconan", "$9$aaGi.Qz6t0IDi/t0IrlKM8xds"),
+        ("abc", "$9$nnet/9pOBEyrv"),
+        ("123", "$9$nnet/p01RhrKM"),
+        ("netconan", "$9$nnet9pBcSe8xdApK8xdg4aZUi.5"),
         (
             "QjEf.WloKY4IBVGik9xeIO9xWN5F7S13",
-            "$9$aaZiqn6AB1Eqmtu1Rrldbs4ZjzF69pOF301EhleJZUHqP/9pBIcOBb24aiHzFnCuBlKMWxdfTOIEcleXxNb4aUjk.fTGU",
+            "$9$nnet/pOleWN-bO18X-Vg4.P5F/tSyevL7yrx-bw4o6/CuOIKvLNds7NPQFnpuSylMXN4aZGi.Rh7dbs4ojikPFnCt0BRh9C",
         ),
     ],
 )
 def test_juniper_encrypt(plain_text, expected):
     """Test encryption of secrets."""
-    juniper_secrets._randc = MagicMock(return_value="a")
     assert juniper_secrets.juniper_encrypt(plain_text) == expected
 
 

@@ -8,7 +8,6 @@ This work was modified from the original in the following ways:
 2025-01-21: Rob Ankeny(ankeny at gmail.com): Translated from perl to python.
 """
 
-import random
 import re
 from typing import List, Tuple
 
@@ -100,6 +99,14 @@ def juniper_encrypt(plain: str, salt: str = None) -> str:
     Returns:
       String representing the encrypted secret.
     """
+    # Juniper encryption takes in a salt which should be a single character.
+    # If not present it generates a random single alpha-numeric character.
+    # It then uses this salt to get a random number between 0 and 3 from
+    # the EXTRA dictionary. This number is then used to generate 0-3 random
+    # characters from the family of characters.
+    # Because netconan isn't actually creating true passwords that are to be used
+    # in the wild and is about sharing, it is safe to ignore the randomness
+    # in favor of generating predictable outputs.
     if salt is None:
         salt = _randc(1)
     salt = salt[0]
@@ -117,7 +124,15 @@ def juniper_encrypt(plain: str, salt: str = None) -> str:
 
 
 def _randc(count: int) -> str:
-    return "".join(random.choice(NUM_ALPHA) for _ in range(count))
+    # return "".join(random.choice(NUM_ALPHA) for _ in range(count))
+    if count == 3:
+        return "net"
+    elif count == 2:
+        return "ne"
+    elif count == 1:
+        return "n"
+    else:
+        return ""
 
 
 def _gap_encode(pc: str, prev: str, enc: List[int]) -> str:

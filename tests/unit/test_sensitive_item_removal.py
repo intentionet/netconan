@@ -159,16 +159,19 @@ juniper_password_lines = [
     ('secret "{}"', "$9$Be4EhyVb2GDkevYo"),
     (
         'set interfaces irb unit 5 family inet address 1.2.3.0/24 vrrp-group 5 authentication-key "{}"',
-        "$9$i.m5OBEevLz3RSevx7-VwgZj5TFCA0Tz9p",
+        "$9$tap0BlKMx7-lKMXx7VbZGDkqfAt0hyKbsHqPfn6reKW8x2gaJDH-dwgaJDjf5QFCpSyKvWXRh-bsYJZQFn/0BIRcKWxDiPTznu0vWLNbs4aGkqfp0dbYgGUik.mz36/t0IhvW7dsgUD/Ctu1hKvL",
     ),
-    ('set system tacplus-server 1.2.3.4 secret "{}"', "$9$HqfQ1IcrK8n/t0IcvM24aZGi6/t"),
     (
         'set system tacplus-server 1.2.3.4 secret "{}"',
-        "$9$YVgoZk.5n6AHq9tORlegoJGDkPfQCtOP5Qn9pRE",
+        "$9$tap0BlKMx7-lKMXx7VbZGDkqfAt0hyKbsHqPfn6reKW8x2gaJDH-dwgaJDjf5QFCpSyKvWXRh-bsYJZQFn/0BIRcKWxDiPTznu0vWLNbs4aGkqfp0dbYgGUik.mz36/t0IhvW7dsgUD/Ctu1hKvL",
+    ),
+    (
+        'set system tacplus-server 1.2.3.4 secret "{}"',
+        "$9$tap0BlKMx7-lKMXx7VbZGDkqfAt0hyKbsHqPfn6reKW8x2gaJDH-dwgaJDjf5QFCpSyKvWXRh-bsYJZQFn/0BIRcKWxDiPTznu0vWLNbs4aGkqfp0dbYgGUik.mz36/t0IhvW7dsgUD/Ctu1hKvL",
     ),
     (
         'set security ike policy test-ike-policy pre-shared-key ascii-text "{}"',
-        "$9$/E6g9tO1IcSrvfTCu1hKv-VwgJD",
+        "$9$tap0BlKMx7-lKMXx7VbZGDkqfAt0hyKbsHqPfn6reKW8x2gaJDH-dwgaJDjf5QFCpSyKvWXRh-bsYJZQFn/0BIRcKWxDiPTznu0vWLNbs4aGkqfp0dbYgGUik.mz36/t0IhvW7dsgUD/Ctu1hKvL",
     ),
     (
         'set system root-authentication encrypted-password "{}"',
@@ -192,8 +195,14 @@ juniper_password_lines = [
     ("set snmp community {} authorization read-only", "SECRETTEXT"),
     ("set snmp trap-group {} otherstuff", "SECRETTEXT"),
     ("key hexadecimal {}", "ABCDEF123456"),
-    ('authentication-key "{}";', "$9$i.m5OBEevLz3RSevx7-VwgZj5TFCA0Tz9p"),
-    ("hello-authentication-key {}", "$9$i.m5OBEevLz3RSevx7-VwgZj5TFCA0Tz9p"),
+    (
+        'authentication-key "{}";',
+        "$9$tap0BlKMx7-lKMXx7VbZGDkqfAt0hyKbsHqPfn6reKW8x2gaJDH-dwgaJDjf5QFCpSyKvWXRh-bsYJZQFn/0BIRcKWxDiPTznu0vWLNbs4aGkqfp0dbYgGUik.mz36/t0IhvW7dsgUD/Ctu1hKvL",
+    ),
+    (
+        "hello-authentication-key {}",
+        "$9$tap0BlKMx7-lKMXx7VbZGDkqfAt0hyKbsHqPfn6reKW8x2gaJDH-dwgaJDjf5QFCpSyKvWXRh-bsYJZQFn/0BIRcKWxDiPTznu0vWLNbs4aGkqfp0dbYgGUik.mz36/t0IhvW7dsgUD/Ctu1hKvL",
+    ),
 ]
 
 misc_password_lines = [
@@ -350,7 +359,7 @@ def test_anonymize_sensitive_words_preserve_reserved_word():
 def test__anonymize_value(val):
     """Test sensitive item anonymization."""
     pwd_lookup = {}
-    anon_val = _anonymize_value(val, pwd_lookup, {}, "testsalt")
+    anon_val = _anonymize_value(val, pwd_lookup, {}, SALT)
     val_format = _check_sensitive_item_format(val)
     anon_val_format = _check_sensitive_item_format(anon_val)
 
@@ -368,14 +377,14 @@ def test__anonymize_value(val):
         assert org_salt_size == anon_salt_size
 
     # Confirm reanonymizing same source value results in same anonymized value
-    assert anon_val == _anonymize_value(val, pwd_lookup, {}, "testsalt")
+    assert anon_val == _anonymize_value(val, pwd_lookup, {}, SALT)
 
 
 def test__anonymize_value_unique():
     """Test that unique sensitive items have unique anonymized values."""
     pwd_lookup = {}
     anon_vals = [
-        _anonymize_value(pwd, pwd_lookup, {}, "testsalt") for pwd in unique_passwords
+        _anonymize_value(pwd, pwd_lookup, {}, SALT) for pwd in unique_passwords
     ]
     unique_anon_vals = set()
 
@@ -467,14 +476,14 @@ def test_pwd_removal(regexes, raw_config_line, sensitive_text):
     """Test removal of passwords and communities from config lines."""
     config_line = raw_config_line.format(sensitive_text)
     pwd_lookup = {}
-    anon_line = replace_matching_item(regexes, config_line, pwd_lookup, "testsalt")
+    anon_line = replace_matching_item(regexes, config_line, pwd_lookup, SALT)
     # Make sure the output line does not contain the sensitive text
     assert sensitive_text not in anon_line
 
     if _LINE_SCRUBBED_MESSAGE not in anon_line:
         # If the line wasn't "completely scrubbed",
         # make sure context was preserved
-        anon_val = _anonymize_value(sensitive_text, pwd_lookup, {}, "testsalt")
+        anon_val = _anonymize_value(sensitive_text, pwd_lookup, {}, SALT)
         assert anon_line == raw_config_line.format(anon_val)
 
 
@@ -483,7 +492,7 @@ def test_pwd_removal_with_whitespace(regexes):
     sensitive_text = "RemoveMe"
     sensitive_line = "     password   0      \t{}".format(sensitive_text)
     assert sensitive_text not in replace_matching_item(
-        regexes, sensitive_line, {}, "testsalt"
+        regexes, sensitive_line, {}, SALT
     )
 
 
@@ -505,7 +514,7 @@ def test_pwd_removal_and_preserve_reserved_word(regexes, config_line, sensitive_
     config_line = config_line.format(sensitive_text)
     pwd_lookup = {}
     assert sensitive_text not in replace_matching_item(
-        regexes, config_line, pwd_lookup, "testsalt"
+        regexes, config_line, pwd_lookup, SALT
     )
 
 
@@ -522,9 +531,7 @@ def test_pwd_removal_and_preserve_reserved_word(regexes, config_line, sensitive_
 def test_pwd_removal_preserve_reserved_word(regexes, config_line):
     """Test that reserved words are preserved even if they appear in password lines."""
     pwd_lookup = {}
-    assert config_line == replace_matching_item(
-        regexes, config_line, pwd_lookup, "testsalt"
-    )
+    assert config_line == replace_matching_item(regexes, config_line, pwd_lookup, SALT)
 
 
 @pytest.mark.parametrize(
@@ -541,9 +548,7 @@ def test_pwd_removal_preserve_reserved_word(regexes, config_line):
 def test_pwd_removal_preserve_context(regexes, config_line, anon_line):
     """Test that context is preserved replacing/removing passwords."""
     pwd_lookup = {}
-    assert anon_line == replace_matching_item(
-        regexes, config_line, pwd_lookup, "testsalt"
-    )
+    assert anon_line == replace_matching_item(regexes, config_line, pwd_lookup, SALT)
 
 
 @pytest.mark.parametrize("whitespace", [" ", "\t", "\n", " \t\n"])
@@ -553,7 +558,7 @@ def test_pwd_removal_preserve_leading_whitespace(regexes, whitespace):
         line="password secret", whitespace=whitespace
     )
     pwd_lookup = {}
-    processed_line = replace_matching_item(regexes, config_line, pwd_lookup, "testsalt")
+    processed_line = replace_matching_item(regexes, config_line, pwd_lookup, SALT)
     assert processed_line.startswith(whitespace)
 
 
@@ -564,7 +569,7 @@ def test_pwd_removal_preserve_trailing_whitespace(regexes, whitespace):
         line="password secret", whitespace=whitespace
     )
     pwd_lookup = {}
-    processed_line = replace_matching_item(regexes, config_line, pwd_lookup, "testsalt")
+    processed_line = replace_matching_item(regexes, config_line, pwd_lookup, SALT)
     assert processed_line.endswith(whitespace)
 
 
@@ -587,7 +592,7 @@ def test_pwd_removal_prepend(regexes, config_line, sensitive_text, prepend_text)
     config_line = prepend_text + config_line.format(sensitive_text)
     pwd_lookup = {}
     assert sensitive_text not in replace_matching_item(
-        regexes, config_line, pwd_lookup, "testsalt"
+        regexes, config_line, pwd_lookup, SALT
     )
 
 
@@ -608,7 +613,7 @@ def test_pwd_removal_append(regexes, config_line, sensitive_text, append_text):
     config_line = config_line.format(sensitive_text) + append_text
     pwd_lookup = {}
     assert sensitive_text not in replace_matching_item(
-        regexes, config_line, pwd_lookup, "testsalt"
+        regexes, config_line, pwd_lookup, SALT
     )
 
 
@@ -646,6 +651,4 @@ def test_pwd_removal_insensitive_lines(regexes, config_line):
     # Collapse all whitespace in original config_line and add newline since
     # that will be done by replace_matching_item
     config_line = "{}\n".format(" ".join(config_line.split()))
-    assert config_line == replace_matching_item(
-        regexes, config_line, pwd_lookup, "testsalt"
-    )
+    assert config_line == replace_matching_item(regexes, config_line, pwd_lookup, SALT)
