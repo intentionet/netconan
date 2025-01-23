@@ -22,7 +22,7 @@ FAMILY = [
 
 EXTRA = {c: (3 - fam) for fam, chars in enumerate(FAMILY) for c in chars}
 
-NUM_ALPHA = list("".join(FAMILY).replace("-", "") + "-")
+NUM_ALPHA = list("".join(FAMILY))
 ALPHA_NUM = {char: idx for idx, char in enumerate(NUM_ALPHA)}
 
 ENCODING = [
@@ -35,7 +35,7 @@ ENCODING = [
     [1, 32, 64],
 ]
 
-VALID = f"^{MAGIC}[{''.join(NUM_ALPHA)}]{{4,}}$".replace("$", r"\$", 2)
+VALID = fr"^{re.escape(MAGIC)}[{re.escape(''.join(NUM_ALPHA))}]{{4,}}$"
 
 
 def juniper_decrypt(crypt):
