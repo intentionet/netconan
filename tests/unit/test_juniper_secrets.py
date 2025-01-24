@@ -19,7 +19,7 @@ from netconan.utils import juniper_secrets
 )
 def test_juniper_encrypt(plain_text, expected):
     """Test encryption of secrets."""
-    assert juniper_secrets.juniper_unsafe_encrypt(plain_text) == expected
+    assert juniper_secrets.juniper_nonrandom_encrypt(plain_text) == expected
 
 
 @pytest.mark.parametrize(
@@ -48,3 +48,13 @@ def test_invalid_juniper_decrypt(encrypted):
     """Test raising errors when decrypting invalid secrets."""
     with pytest.raises(ValueError):
         juniper_secrets.juniper_decrypt(encrypted)
+
+
+def test_encryption_decryption():
+    """Test a large set of inputs to detect any possible encrypting/decrypting issues."""
+    for i in range(0, 1000):
+        plaintext = str(i)
+        decrypted = juniper_secrets.juniper_decrypt(
+            juniper_secrets.juniper_nonrandom_encrypt(plaintext, "t")
+        )
+        assert decrypted == plaintext
