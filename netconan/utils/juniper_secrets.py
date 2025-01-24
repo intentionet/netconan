@@ -6,6 +6,9 @@ Used under the Artistic License https://dev.perl.org/licenses/artistic.html
 
 This work was modified from the original in the following ways:
 2025-01-21: Rob Ankeny(ankeny at gmail.com): Translated from perl to python.
+2025-01-23: Rob Ankeny(ankeny at gmail.com): Updated methods to have non-random outputs
+    for the benefit of deterministic outputs. Updated docstrings and method names to
+    better reflect these changes.
 """
 
 import re
@@ -89,8 +92,17 @@ def _gap_decode(gaps: List[int], dec: List[int]) -> chr:
     return chr(num % 256)
 
 
-def juniper_encrypt(plain: str, salt: str = None) -> str:
+def juniper_nonrandom_encrypt(plain: str, salt: str = None) -> str:
     """Encrypts a Juniper $9 encrypted secret.
+
+    Juniper encryption takes in a salt which should be a single character.
+    If not present it generates a random single alpha-numeric character.
+    It then uses this salt to get a random number between 0 and 3 from
+    the EXTRA dictionary. This number is then used to generate 0-3 random
+    characters from the family of characters.
+    Because netconan isn't actually creating true passwords that are to be used
+    in the wild and is about sharing, it is safe to ignore the randomness
+    in favor of generating predictable outputs.
 
     Args:
       plain: String containing the plaintext secret to be encrypted.
@@ -99,18 +111,10 @@ def juniper_encrypt(plain: str, salt: str = None) -> str:
     Returns:
       String representing the encrypted secret.
     """
-    # Juniper encryption takes in a salt which should be a single character.
-    # If not present it generates a random single alpha-numeric character.
-    # It then uses this salt to get a random number between 0 and 3 from
-    # the EXTRA dictionary. This number is then used to generate 0-3 random
-    # characters from the family of characters.
-    # Because netconan isn't actually creating true passwords that are to be used
-    # in the wild and is about sharing, it is safe to ignore the randomness
-    # in favor of generating predictable outputs.
     if salt is None:
-        salt = _randc(1)
+        salt = _fixedc(1)
     salt = salt[0]
-    rand = _randc(EXTRA[salt])
+    rand = _fixedc(EXTRA[salt])
 
     pos = 0
     prev = salt
@@ -123,8 +127,7 @@ def juniper_encrypt(plain: str, salt: str = None) -> str:
     return crypt
 
 
-def _randc(count: int) -> str:
-    # return "".join(random.choice(NUM_ALPHA) for _ in range(count))
+def _fixedc(count: int) -> str:
     if count == 3:
         return "net"
     elif count == 2:

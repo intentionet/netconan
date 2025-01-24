@@ -19,7 +19,7 @@ from netconan.utils import juniper_secrets
 )
 def test_juniper_encrypt(plain_text, expected):
     """Test encryption of secrets."""
-    assert juniper_secrets.juniper_encrypt(plain_text) == expected
+    assert juniper_secrets.juniper_unsafe_encrypt(plain_text) == expected
 
 
 @pytest.mark.parametrize(
