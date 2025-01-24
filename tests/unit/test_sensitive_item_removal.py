@@ -196,6 +196,11 @@ juniper_password_lines = [
     ("hello-authentication-key {}", "$9$i.m5OBEevLz3RSevx7-VwgZj5TFCA0Tz9p"),
 ]
 
+aws_lines = [
+    ("<pre_shared_key>{}</pre_shared_key>", "cRr9m5bWF4D1P7EsGw53WWzWMO_xcvnY"),
+    ('"PreSharedKey": "{}",', "OzWcYvwcG19WW5bMr5mEn3DF7sRWPx_4"),
+]
+
 misc_password_lines = [
     ("my password is ", "$1$salt$abcdefghijklmnopqrs"),
     ("set community {} trailing text", "RemoveMe"),
@@ -210,6 +215,7 @@ sensitive_lines = (
     + fortinet_password_lines
     + juniper_password_lines
     + misc_password_lines
+    + aws_lines
 )
 
 sensitive_items_and_formats = [
