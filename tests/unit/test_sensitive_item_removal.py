@@ -198,7 +198,7 @@ juniper_password_lines = [
 
 aws_lines = [
     ("<pre_shared_key>{}</pre_shared_key>", "cRr9m5bWF4D1P7EsGw53WWzWMO_xcvnY"),
-    ("\"PreSharedKey\": \"{}\",", "OzWcYvwcG19WW5bMr5mEn3DF7sRWPx_4")
+    ('"PreSharedKey": "{}",', "OzWcYvwcG19WW5bMr5mEn3DF7sRWPx_4"),
 ]
 
 misc_password_lines = [
@@ -215,7 +215,7 @@ sensitive_lines = (
     + fortinet_password_lines
     + juniper_password_lines
     + misc_password_lines
-    + aws_lines 
+    + aws_lines
 )
 
 sensitive_items_and_formats = [
