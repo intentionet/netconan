@@ -117,7 +117,7 @@ class FileAnonymizer:
             output_line = line
             if self.compiled_regexes is not None and self.pwd_lookup is not None:
                 output_line = replace_matching_item(
-                    self.compiled_regexes, output_line, self.pwd_lookup
+                    self.compiled_regexes, output_line, self.pwd_lookup, self.salt
                 )
 
             if self.anonymizer6 is not None:

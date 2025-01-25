@@ -25,6 +25,8 @@ from hashlib import md5
 # Using passlib for digests not supported by hashlib
 from passlib.hash import cisco_type7, md5_crypt, sha512_crypt
 
+from netconan.utils import juniper_secrets
+
 from .default_pwd_regexes import default_com_line_regexes, default_pwd_line_regexes
 from .default_reserved_words import default_reserved_words
 
@@ -232,7 +234,7 @@ def anonymize_as_numbers(anonymizer, line):
     return as_number_regex.sub(lambda match: anonymizer.anonymize(match.group(0)), line)
 
 
-def _anonymize_value(raw_val, lookup, reserved_words):
+def _anonymize_value(raw_val, lookup, reserved_words, salt):
     """Generate an anonymized replacement for the input value.
 
     This function tries to determine what type of value was passed in and
@@ -248,12 +250,20 @@ def _anonymize_value(raw_val, lookup, reserved_words):
     if not val:
         logging.debug("Nothing to anonymize after removing special characters")
         return raw_val
-
+    decrypted = None
+    if val.startswith(juniper_secrets.MAGIC):
+        try:
+            decrypted = juniper_secrets.juniper_decrypt(val)
+        except ValueError:
+            pass
     if val in lookup:
         anon_val = lookup[val]
         logging.debug('Anonymized input "%s" to "%s" (via lookup)', val, anon_val)
         return sens_head + anon_val + sens_tail
-
+    elif decrypted in lookup:
+        anon_val = juniper_secrets.juniper_nonrandom_encrypt(lookup[decrypted], salt)
+        logging.debug('Anonymized input "%s" to "%s" (via lookup)', val, anon_val)
+        return sens_head + anon_val + sens_tail
     anon_val = "netconanRemoved{}".format(len(lookup))
     item_format = _check_sensitive_item_format(val)
     if item_format == _sensitive_item_formats.cisco_type7:
@@ -280,12 +290,11 @@ def _anonymize_value(raw_val, lookup, reserved_words):
         anon_val = sha512_crypt.using(rounds=5000).hash(anon_val)
 
     if item_format == _sensitive_item_formats.juniper_type9:
-        # TODO(https://github.com/intentionet/netconan/issues/16)
-        # Encode base anon_val instead of just returning a constant here
-        # This value corresponds to encoding: Conan812183
-        anon_val = "$9$0000IRc-dsJGirewg4JDj9At0RhSreK8Xhc"
-
-    lookup[val] = anon_val
+        anon_val = juniper_secrets.juniper_nonrandom_encrypt(anon_val, salt)
+    if decrypted:
+        lookup[decrypted] = juniper_secrets.juniper_decrypt(anon_val)
+    else:
+        lookup[val] = anon_val
     logging.debug('Anonymized input "%s" to "%s"', val, anon_val)
     return sens_head + anon_val + sens_tail
 
@@ -343,7 +352,11 @@ def generate_default_sensitive_item_regexes():
 
 
 def replace_matching_item(
-    compiled_regexes, input_line, pwd_lookup, reserved_words=default_reserved_words
+    compiled_regexes,
+    input_line,
+    pwd_lookup,
+    salt,
+    reserved_words=default_reserved_words,
 ):
     """If line matches a regex, anonymize or remove the line."""
     # Collapse whitespace to simplify regexes, also preserve leading and trailing whitespace
@@ -383,7 +396,7 @@ def replace_matching_item(
             # re.sub replaces the entire matching string, which includes prefix
             # Therefore, anon_val should have prefix prepended if applicable
             anon_val = prefix + _anonymize_value(
-                match.group(sensitive_item_num), pwd_lookup, reserved_words
+                match.group(sensitive_item_num), pwd_lookup, reserved_words, salt
             )
             output_line = compiled_re.sub(anon_val, output_line)
 
