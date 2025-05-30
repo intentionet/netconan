@@ -18,13 +18,11 @@ on:
         type: boolean
 
 jobs:
-  build-and-publish:
-    name: Build and publish Python distribution to ${{ inputs.repository == 'pypi' && 'PyPI' || 'TestPyPI' }}
+  build:
+    name: Build Python distribution
     runs-on: ubuntu-latest
     permissions:
-      # Required for trusted publishing
-      id-token: write
-      # Required for checkout
+      # Required for checkout only
       contents: read
 
     steps:
@@ -56,16 +54,32 @@ jobs:
       - name: Check package
         run: twine check dist/*
 
-      - name: Publish package
-        if: ${{ !inputs.dry_run }}
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          repository-url: ${{ inputs.repository == 'pypi' && 'https://pypi.org/legacy/' || 'https://test.pypi.org/legacy/' }}
-        # No credentials needed for trusted publishing!
-
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: dist
           path: dist/
           retention-days: 7
+
+  publish:
+    name: Publish to ${{ inputs.repository == 'pypi' && 'PyPI' || 'TestPyPI' }}
+    needs: build
+    runs-on: ubuntu-latest
+    # Only run publish job if not a dry run
+    if: ${{ !inputs.dry_run }}
+    permissions:
+      # Required for trusted publishing only
+      id-token: write
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish package
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: ${{ inputs.repository == 'pypi' && 'https://pypi.org/legacy/' || 'https://test.pypi.org/legacy/' }}
+        # No credentials needed for trusted publishing!
