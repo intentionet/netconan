@@ -6,7 +6,7 @@ on:
       repository:
         description: "Target repository"
         required: true
-        default: "pypi"
+        default: "testpypi"
         type: choice
         options:
           - pypi
@@ -14,7 +14,7 @@ on:
       dry_run:
         description: "Dry run (build but do not publish)"
         required: true
-        default: false
+        default: true
         type: boolean
 
 jobs:
@@ -35,7 +35,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.9"
-          cache: "pip"
 
       - name: Install build dependencies
         run: |
@@ -61,7 +60,7 @@ jobs:
         if: ${{ !inputs.dry_run }}
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          repository-url: ${{ inputs.repository == 'testpypi' && 'https://test.pypi.org/legacy/' || '' }}
+          repository-url: ${{ inputs.repository == 'pypi' && 'https://pypi.org/legacy/' || 'https://test.pypi.org/legacy/' }}
         # No credentials needed for trusted publishing!
 
       - name: Upload artifacts
