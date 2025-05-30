@@ -27,3 +27,30 @@ Building a release
 5. Run ``twine check dist/*`` to check the built artifacts.
 6. Run ``twine upload dist/*`` to upload the built artifacts to pypi.
 7. Use GitHub releases to draft a new version: tag ``v0.13.0`` and title ``Netconan 0.13.0``. Populate release notes according to recent style and your discretion. Take especial care to acknowledge new or external open source contributions.
+
+Building a release with GitHub Actions
+-------------------------------------
+
+1. Create a clean release branch following the steps above.
+2. Ensure the version number in `netconan/__init__.py` has been updated (no `.dev` extension).
+3. Push the branch to GitHub.
+4. Go to the GitHub repository and navigate to the "Actions" tab.
+5. Select the "Publish Python Package" workflow.
+6. Click "Run workflow" and select the release branch.
+7. Choose the release type (patch, minor, major) and the target repository (pypi or testpypi).
+8. Click "Run workflow".
+9. Once the workflow completes successfully, the package will be published to the selected repository.
+10. Create a GitHub release as described above (for PyPI releases only).
+
+Testing with TestPyPI
+--------------------
+
+Before publishing a package to the main PyPI repository, it's recommended to test it with TestPyPI:
+
+1. Follow the steps above for building a release with GitHub Actions, but select "testpypi" as the target repository.
+2. Once published to TestPyPI, you can install the package using:
+   ```
+   pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ netconan
+   ```
+3. Verify that the package installs correctly and functions as expected.
+4. If everything works as expected, run the workflow again but select "pypi" as the target repository.
