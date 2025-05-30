@@ -41,6 +41,7 @@ setup(
     version=about["__version__"],
     description=about["__desc__"],
     long_description=readme,
+    long_description_content_type="text/x-rst",
     # The project's main homepage.
     url=about["__url__"],
     # Author details
