@@ -16,6 +16,7 @@
 
 import re
 import textwrap
+
 import pytest
 
 from netconan.sensitive_item_removal import (
@@ -211,33 +212,40 @@ aws_lines = [
     ("<pre_shared_key>{}</pre_shared_key>", "cRr9m5bWF4D1P7EsGw53WWzWMO_xcvnY"),
     ('"PreSharedKey": "{}",', "OzWcYvwcG19WW5bMr5mEn3DF7sRWPx_4"),
     (
-        ('"CustomerGatewayConfiguration": "<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?>\\n'
-         '<vpn_connection id=\\"vpn-123\\">\\n'
-         '  <ipsec_tunnel>\\n'
-         '    <ike>\\n'
-         '      <pre_shared_key>{}</pre_shared_key>\\n'
-         '    </ike>\\n'
-         '  </ipsec_tunnel>\\n'
-         '  <ipsec_tunnel>\\n'
-         '    <ike>\\n'
-         '      <pre_shared_key>{}</pre_shared_key>\\n'
-         '    </ike>\\n'
-         '  </ipsec_tunnel>\\n'
-         '</vpn_connection>",'), ("FnPi1E827cWJr.qGRhjwY85j2zeVdq6T", "FnPi1E827cWJr.qGRhjwY85j2zeVdq6T")),
+        (
+            '"CustomerGatewayConfiguration": "<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?>\\n'
+            '<vpn_connection id=\\"vpn-123\\">\\n'
+            "  <ipsec_tunnel>\\n"
+            "    <ike>\\n"
+            "      <pre_shared_key>{}</pre_shared_key>\\n"
+            "    </ike>\\n"
+            "  </ipsec_tunnel>\\n"
+            "  <ipsec_tunnel>\\n"
+            "    <ike>\\n"
+            "      <pre_shared_key>{}</pre_shared_key>\\n"
+            "    </ike>\\n"
+            "  </ipsec_tunnel>\\n"
+            '</vpn_connection>",'
+        ),
+        ("FnPi1E827cWJr.qGRhjwY85j2zeVdq6T", "FnPi1E827cWJr.qGRhjwY85j2zeVdq6T"),
+    ),
     (
-        ('"CustomerGatewayConfiguration": "<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?>\\n'
-         '<vpn_connection id=\\"vpn-123\\">\\n'
-         '  <ipsec_tunnel>\\n'
-         '    <ike>\\n'
-         '      <pre_shared_key>{}</pre_shared_key>\\n'
-         '    </ike>\\n'
-         '  </ipsec_tunnel>\\n'
-         '  <ipsec_tunnel>\\n'
-         '    <ike>\\n'
-         '      <pre_shared_key>{}</pre_shared_key>\\n'
-         '    </ike>\\n'
-         '  </ipsec_tunnel>\\n'
-         '</vpn_connection>",'), ("FnPi1E827cWJr.qGRhjwY85j2zeVdq6T", "LzmeHN_8ar9oVosUh1Xe8O7IaeYLUGno") 
+        (
+            '"CustomerGatewayConfiguration": "<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?>\\n'
+            '<vpn_connection id=\\"vpn-123\\">\\n'
+            "  <ipsec_tunnel>\\n"
+            "    <ike>\\n"
+            "      <pre_shared_key>{}</pre_shared_key>\\n"
+            "    </ike>\\n"
+            "  </ipsec_tunnel>\\n"
+            "  <ipsec_tunnel>\\n"
+            "    <ike>\\n"
+            "      <pre_shared_key>{}</pre_shared_key>\\n"
+            "    </ike>\\n"
+            "  </ipsec_tunnel>\\n"
+            '</vpn_connection>",'
+        ),
+        ("FnPi1E827cWJr.qGRhjwY85j2zeVdq6T", "LzmeHN_8ar9oVosUh1Xe8O7IaeYLUGno"),
     ),
 ]
 
@@ -513,7 +521,7 @@ def test_pwd_removal(regexes, raw_config_line, sensitive_text):
     """Test removal of passwords and communities from config lines."""
     # Determine the number of placeholders, handling both {} and {0}, {1}, etc.
     # This is a more robust way to count placeholders.
-    num_placeholders = len(re.findall(r'\{\d*\}', raw_config_line))
+    num_placeholders = len(re.findall(r"\{\d*\}", raw_config_line))
 
     if isinstance(sensitive_text, tuple):
         config_line = raw_config_line.format(*sensitive_text)
@@ -536,14 +544,18 @@ def test_pwd_removal(regexes, raw_config_line, sensitive_text):
         # If the line wasn't "completely scrubbed",
         # make sure context was preserved
         if isinstance(sensitive_text, tuple):
-            anon_vals = [_anonymize_value(text, pwd_lookup, {}, SALT) for text in sensitive_text]
+            anon_vals = [
+                _anonymize_value(text, pwd_lookup, {}, SALT) for text in sensitive_text
+            ]
             expected_line = raw_config_line.format(*anon_vals)
         else:
             anon_val = _anonymize_value(sensitive_text, pwd_lookup, {}, SALT)
             expected_line = raw_config_line.format(anon_val)
         # Normalize whitespace more aggressively for comparison
-        normalized_anon_line = re.sub(r'\s+', ' ', textwrap.dedent(anon_line)).strip()
-        normalized_expected_line = re.sub(r'\s+', ' ', textwrap.dedent(expected_line)).strip()
+        normalized_anon_line = re.sub(r"\s+", " ", textwrap.dedent(anon_line)).strip()
+        normalized_expected_line = re.sub(
+            r"\s+", " ", textwrap.dedent(expected_line)
+        ).strip()
         assert normalized_anon_line == normalized_expected_line
 
 
@@ -659,12 +671,14 @@ def test_pwd_removal_prepend(regexes, config_line, sensitive_text, prepend_text)
         formatted_config_line = config_line.format(*sensitive_text)
     else:
         formatted_config_line = config_line
-    
+
     config_line = prepend_text + formatted_config_line
     pwd_lookup = {}
     if isinstance(sensitive_text, tuple):
         for text in sensitive_text:
-            assert text not in replace_matching_item(regexes, config_line, pwd_lookup, SALT)
+            assert text not in replace_matching_item(
+                regexes, config_line, pwd_lookup, SALT
+            )
     else:
         assert sensitive_text not in replace_matching_item(
             regexes, config_line, pwd_lookup, SALT
@@ -700,7 +714,9 @@ def test_pwd_removal_append(regexes, config_line, sensitive_text, append_text):
     pwd_lookup = {}
     if isinstance(sensitive_text, tuple):
         for text in sensitive_text:
-            assert text not in replace_matching_item(regexes, config_line, pwd_lookup, SALT)
+            assert text not in replace_matching_item(
+                regexes, config_line, pwd_lookup, SALT
+            )
     else:
         assert sensitive_text not in replace_matching_item(
             regexes, config_line, pwd_lookup, SALT
