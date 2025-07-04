@@ -391,12 +391,12 @@ def replace_matching_item(
                 output_line = compiled_re.sub(_LINE_SCRUBBED_MESSAGE, output_line)
                 break
 
-            
-
             output_line = compiled_re.sub(
                 # This is text preceding the password and shouldn't be anonymized
                 lambda m: (m.group("prefix") if "prefix" in m.groupdict() else "")
-                + _anonymize_value(m.group(sensitive_item_num), pwd_lookup, reserved_words, salt),
+                + _anonymize_value(
+                    m.group(sensitive_item_num), pwd_lookup, reserved_words, salt
+                ),
                 output_line,
             )
 
