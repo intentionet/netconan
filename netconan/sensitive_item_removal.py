@@ -391,14 +391,14 @@ def replace_matching_item(
                 output_line = compiled_re.sub(_LINE_SCRUBBED_MESSAGE, output_line)
                 break
 
-            # This is text preceding the password and shouldn't be anonymized
-            prefix = match.group("prefix") if "prefix" in match.groupdict() else ""
-            # re.sub replaces the entire matching string, which includes prefix
-            # Therefore, anon_val should have prefix prepended if applicable
-            anon_val = prefix + _anonymize_value(
-                match.group(sensitive_item_num), pwd_lookup, reserved_words, salt
+            output_line = compiled_re.sub(
+                # This is text preceding the password and shouldn't be anonymized
+                lambda m: (m.group("prefix") if "prefix" in m.groupdict() else "")
+                + _anonymize_value(
+                    m.group(sensitive_item_num), pwd_lookup, reserved_words, salt
+                ),
+                output_line,
             )
-            output_line = compiled_re.sub(anon_val, output_line)
 
         # If any matches existed in this regex group, stop processing more regexes
         if match_found:
