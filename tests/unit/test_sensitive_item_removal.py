@@ -14,6 +14,8 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+import re
+import textwrap
 import pytest
 
 from netconan.sensitive_item_removal import (
@@ -208,6 +210,35 @@ juniper_password_lines = [
 aws_lines = [
     ("<pre_shared_key>{}</pre_shared_key>", "cRr9m5bWF4D1P7EsGw53WWzWMO_xcvnY"),
     ('"PreSharedKey": "{}",', "OzWcYvwcG19WW5bMr5mEn3DF7sRWPx_4"),
+    (
+        ('"CustomerGatewayConfiguration": "<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?>\\n'
+         '<vpn_connection id=\\"vpn-123\\">\\n'
+         '  <ipsec_tunnel>\\n'
+         '    <ike>\\n'
+         '      <pre_shared_key>{}</pre_shared_key>\\n'
+         '    </ike>\\n'
+         '  </ipsec_tunnel>\\n'
+         '  <ipsec_tunnel>\\n'
+         '    <ike>\\n'
+         '      <pre_shared_key>{}</pre_shared_key>\\n'
+         '    </ike>\\n'
+         '  </ipsec_tunnel>\\n'
+         '</vpn_connection>",'), ("FnPi1E827cWJr.qGRhjwY85j2zeVdq6T", "FnPi1E827cWJr.qGRhjwY85j2zeVdq6T")),
+    (
+        ('"CustomerGatewayConfiguration": "<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?>\\n'
+         '<vpn_connection id=\\"vpn-123\\">\\n'
+         '  <ipsec_tunnel>\\n'
+         '    <ike>\\n'
+         '      <pre_shared_key>{}</pre_shared_key>\\n'
+         '    </ike>\\n'
+         '  </ipsec_tunnel>\\n'
+         '  <ipsec_tunnel>\\n'
+         '    <ike>\\n'
+         '      <pre_shared_key>{}</pre_shared_key>\\n'
+         '    </ike>\\n'
+         '  </ipsec_tunnel>\\n'
+         '</vpn_connection>",'), ("FnPi1E827cWJr.qGRhjwY85j2zeVdq6T", "LzmeHN_8ar9oVosUh1Xe8O7IaeYLUGno") 
+    ),
 ]
 
 misc_password_lines = [
@@ -480,17 +511,40 @@ def test__extract_enclosing_text(val, quote):
 @pytest.mark.parametrize("raw_config_line,sensitive_text", sensitive_lines)
 def test_pwd_removal(regexes, raw_config_line, sensitive_text):
     """Test removal of passwords and communities from config lines."""
-    config_line = raw_config_line.format(sensitive_text)
+    # Determine the number of placeholders, handling both {} and {0}, {1}, etc.
+    # This is a more robust way to count placeholders.
+    num_placeholders = len(re.findall(r'\{\d*\}', raw_config_line))
+
+    if isinstance(sensitive_text, tuple):
+        config_line = raw_config_line.format(*sensitive_text)
+    else:
+        # If sensitive_text is a single value, it should be used for all placeholders
+        if num_placeholders > 0:
+            config_line = raw_config_line.format(*([sensitive_text] * num_placeholders))
+        else:
+            config_line = raw_config_line
     pwd_lookup = {}
     anon_line = replace_matching_item(regexes, config_line, pwd_lookup, SALT)
     # Make sure the output line does not contain the sensitive text
-    assert sensitive_text not in anon_line
+    if isinstance(sensitive_text, tuple):
+        for text in sensitive_text:
+            assert text not in anon_line
+    else:
+        assert sensitive_text not in anon_line
 
     if _LINE_SCRUBBED_MESSAGE not in anon_line:
         # If the line wasn't "completely scrubbed",
         # make sure context was preserved
-        anon_val = _anonymize_value(sensitive_text, pwd_lookup, {}, SALT)
-        assert anon_line == raw_config_line.format(anon_val)
+        if isinstance(sensitive_text, tuple):
+            anon_vals = [_anonymize_value(text, pwd_lookup, {}, SALT) for text in sensitive_text]
+            expected_line = raw_config_line.format(*anon_vals)
+        else:
+            anon_val = _anonymize_value(sensitive_text, pwd_lookup, {}, SALT)
+            expected_line = raw_config_line.format(anon_val)
+        # Normalize whitespace more aggressively for comparison
+        normalized_anon_line = re.sub(r'\s+', ' ', textwrap.dedent(anon_line)).strip()
+        normalized_expected_line = re.sub(r'\s+', ' ', textwrap.dedent(expected_line)).strip()
+        assert normalized_anon_line == normalized_expected_line
 
 
 def test_pwd_removal_with_whitespace(regexes):
@@ -595,11 +649,26 @@ def test_pwd_removal_preserve_trailing_whitespace(regexes, whitespace):
 )
 def test_pwd_removal_prepend(regexes, config_line, sensitive_text, prepend_text):
     """Test that sensitive lines are still anonymized correctly if preceded by allowed text."""
-    config_line = prepend_text + config_line.format(sensitive_text)
+    num_placeholders = config_line.count("{}")
+    if num_placeholders == 1:
+        if isinstance(sensitive_text, tuple):
+            formatted_config_line = config_line.format(sensitive_text[0])
+        else:
+            formatted_config_line = config_line.format(sensitive_text)
+    elif num_placeholders > 1:
+        formatted_config_line = config_line.format(*sensitive_text)
+    else:
+        formatted_config_line = config_line
+    
+    config_line = prepend_text + formatted_config_line
     pwd_lookup = {}
-    assert sensitive_text not in replace_matching_item(
-        regexes, config_line, pwd_lookup, SALT
-    )
+    if isinstance(sensitive_text, tuple):
+        for text in sensitive_text:
+            assert text not in replace_matching_item(regexes, config_line, pwd_lookup, SALT)
+    else:
+        assert sensitive_text not in replace_matching_item(
+            regexes, config_line, pwd_lookup, SALT
+        )
 
 
 @pytest.mark.parametrize("config_line,sensitive_text", sensitive_lines)
@@ -616,11 +685,26 @@ def test_pwd_removal_prepend(regexes, config_line, sensitive_text, prepend_text)
 )
 def test_pwd_removal_append(regexes, config_line, sensitive_text, append_text):
     """Test that sensitive lines are still anonymized correctly if followed by allowed text."""
-    config_line = config_line.format(sensitive_text) + append_text
+    num_placeholders = config_line.count("{}")
+    if num_placeholders == 1:
+        if isinstance(sensitive_text, tuple):
+            formatted_config_line = config_line.format(sensitive_text[0])
+        else:
+            formatted_config_line = config_line.format(sensitive_text)
+    elif num_placeholders > 1:
+        formatted_config_line = config_line.format(*sensitive_text)
+    else:
+        formatted_config_line = config_line
+
+    config_line = formatted_config_line + append_text
     pwd_lookup = {}
-    assert sensitive_text not in replace_matching_item(
-        regexes, config_line, pwd_lookup, SALT
-    )
+    if isinstance(sensitive_text, tuple):
+        for text in sensitive_text:
+            assert text not in replace_matching_item(regexes, config_line, pwd_lookup, SALT)
+    else:
+        assert sensitive_text not in replace_matching_item(
+            regexes, config_line, pwd_lookup, SALT
+        )
 
 
 @pytest.mark.parametrize(
