@@ -61,7 +61,7 @@ def write_reserved_words_file(filename, token_set):
     with open(filename, "w") as file:
         file.write(PREAMBLE)
         for token in sorted(token_set):
-            file.write("{}'{}',\n".format(DEFAULT_PREFIX, token))
+            file.write('{}"{}",\n'.format(DEFAULT_PREFIX, token.replace('"', '\\"')))
         file.write(POSTAMBLE)
 
 
