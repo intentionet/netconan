@@ -17,17 +17,6 @@ Suppose that the latest release was ``v0.12.3``. That means that in the master b
 3. Commit the version change and push the branch to GitHub.
 4. Go back to the master branch, and bump the minor version to ``0.14.0.dev``.
 
-Building a release
------------------
-
-1. Create a clean virtual environment of the lowest supported Python version (e.g., 3.9).
-2. Check out the release branch and ensure the version number has been updated (no ``.dev`` extension, accurate minor and patch versions).
-3. Run ``pip install --upgrade pip wheel build twine`` in order to get the needed release packages.
-4. Run ``python -m build`` to build the release.
-5. Run ``twine check dist/*`` to check the built artifacts.
-6. Run ``twine upload dist/*`` to upload the built artifacts to pypi.
-7. Use GitHub releases to draft a new version: tag ``v0.13.0`` and title ``Netconan 0.13.0``. Populate release notes according to recent style and your discretion. Take especial care to acknowledge new or external open source contributions.
-
 Building a release with GitHub Actions
 -------------------------------------
 
