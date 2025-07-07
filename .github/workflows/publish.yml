@@ -67,6 +67,7 @@ jobs:
     runs-on: ubuntu-latest
     # Only run publish job if not a dry run
     if: ${{ !inputs.dry_run }}
+    environment: pypi
     permissions:
       # Required for trusted publishing only
       id-token: write
