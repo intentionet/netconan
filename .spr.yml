@@ -5,7 +5,7 @@ githubRemote: origin
 githubBranch: master
 requireChecks: true
 requireApproval: false
-mergeMethod: rebase
+mergeMethod: squash
 mergeQueue: false
 forceFetchTags: false
 showPrTitlesInStack: false
