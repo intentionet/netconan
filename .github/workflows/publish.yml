@@ -81,5 +81,5 @@ jobs:
       - name: Publish package
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          repository-url: ${{ inputs.repository == 'pypi' && 'https://pypi.org/legacy/' || 'https://test.pypi.org/legacy/' }}
+          repository-url: ${{ inputs.repository == 'pypi' && 'https://upload.pypi.org/legacy/' || 'https://test.pypi.org/legacy/' }}
         # No credentials needed for trusted publishing!
