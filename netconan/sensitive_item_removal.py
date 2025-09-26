@@ -162,7 +162,7 @@ class SensitiveWordAnonymizer(object):
     def anonymize(self, line):
         """Anonymize sensitive words from the input line."""
         if self.sens_regex.search(line) is not None:
-            leading, words, trailing = _split_line(line)
+            leading, words, trailing, space_counts = _split_line(line)
             # Anonymize only words that do not match the conflicting (reserved) words
             words = [
                 (
@@ -174,6 +174,10 @@ class SensitiveWordAnonymizer(object):
             ]
             # Restore leading and trailing whitespace since those were removed when splitting into words
             line = leading + " ".join(words) + trailing
+
+            if space_counts:
+                line = _restore_spaces(line, space_counts, leading, trailing)
+
         return line
 
     def _generate_conflicting_reserved_word_list(self, sensitive_words):
@@ -359,8 +363,8 @@ def replace_matching_item(
     reserved_words=default_reserved_words,
 ):
     """If line matches a regex, anonymize or remove the line."""
-    # Collapse whitespace to simplify regexes, also preserve leading and trailing whitespace
-    leading, words, trailing = _split_line(input_line)
+    # Collapse whitespace to simplify regexes, also preserve leading and trailing whitespace and store space counts
+    leading, words, trailing, space_counts = _split_line(input_line)
     # Save enclosing text (like quotes) to avoid removing during anonymization
     leading, output_line, trailing = _extract_enclosing_text(
         " ".join(words), leading, trailing
@@ -404,10 +408,62 @@ def replace_matching_item(
         if match_found:
             break
 
-    # Restore leading and trailing whitespace for readability and context
-    return leading + output_line + trailing
+    if space_counts:
+        line_to_return = _restore_spaces(output_line, space_counts, leading, trailing)
+    else:
+        line_to_return = leading + output_line + trailing
+
+    return line_to_return
 
 
 def _split_line(line):
-    """Split line into leading whitespace, list of words, and trailing whitespace."""
-    return line[: -len(line.lstrip())], line.split(), line[len(line.rstrip()) :]
+    """Split a non-empty/non-blank line into leading and trailing whitespace, list of words, and list of space counts between words."""
+    leading = line[: -len(line.lstrip())]
+    trailing = line[len(line.rstrip()) :]
+    words = line.strip().split()
+
+    space_counts = []
+    i = 0
+    while i < len(line):
+        count = 0
+        while i < len(line) and line[i] == " ":
+            count += 1
+            i += 1
+        if count > 0:
+            space_counts.append(count)
+        while i < len(line) and line[i] != " ":
+            i += 1
+
+    return leading, words, trailing, space_counts
+
+
+def _restore_spaces(line, target_space_counts, leading, trailing):
+    """Restore spaces between words according to target_space_counts. Leading/trailing characters are preserved."""
+    parts = line.split()
+
+    # Rebuild starting with leading
+    rebuilt = leading
+
+    # Determine whether to skip the first value in target_space_counts due to leading
+    skip = 0
+    if leading and target_space_counts:
+        # Only skip if all leading characters are spaces and match the first count
+        if leading.isspace() and target_space_counts[0] == len(leading):
+            skip = 1
+
+    # Rebuild the remaining words
+    for i, word in enumerate(parts):
+        rebuilt += word
+        if i < len(parts) - 1:
+            idx = i + skip
+            # TODO: For now, the else 1 guard below is currently needed in a few
+            # tests due to both _split_line and _extract_enclosing_text doing
+            # some handling of leading/trailing. It would be good to remove the
+            # need for it.
+            spaces = target_space_counts[idx] if idx < len(target_space_counts) else 1
+            rebuilt += " " * spaces
+
+    # Add on trailing
+    rebuilt += trailing
+
+    return rebuilt
