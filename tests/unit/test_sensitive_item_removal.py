@@ -670,7 +670,7 @@ def test_pwd_removal_preserve_multiple_inline_whitespace(regexes, whitespace):
     [
         (" ", "  "),
         ("    ", "   "),
-        ("     .", "       "),
+        ("      ", "       "),
     ],
 )
 def test_pwd_removal_preserve_different_inline_whitespace(regexes, ws1, ws2):
