@@ -652,7 +652,7 @@ def test_pwd_removal_preserve_single_inline_whitespace(regexes, whitespace):
     config_line = f"{line}{whitespace}{line}"
     pwd_lookup = {}
     processed_line = replace_matching_item(regexes, config_line, pwd_lookup, SALT)
-    assert processed_line == f"{line}{whitespace}{line}"
+    assert processed_line == config_line
 
 
 @pytest.mark.parametrize("whitespace", [" ", "  ", "   ", "          "])
@@ -662,7 +662,7 @@ def test_pwd_removal_preserve_multiple_inline_whitespace(regexes, whitespace):
     config_line = f"{line}{whitespace}{line}{whitespace}{line}"
     pwd_lookup = {}
     processed_line = replace_matching_item(regexes, config_line, pwd_lookup, SALT)
-    assert processed_line == f"{line}{whitespace}{line}{whitespace}{line}"
+    assert processed_line == config_line
 
 
 @pytest.mark.parametrize(
@@ -679,7 +679,7 @@ def test_pwd_removal_preserve_different_inline_whitespace(regexes, ws1, ws2):
     config_line = f"{line}{ws1}{line}{ws2}{line}"
     pwd_lookup = {}
     processed_line = replace_matching_item(regexes, config_line, pwd_lookup, SALT)
-    assert processed_line == f"{line}{ws1}{line}{ws2}{line}"
+    assert processed_line == config_line
 
 
 @pytest.mark.parametrize("config_line,sensitive_text", sensitive_lines)
