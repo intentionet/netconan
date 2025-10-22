@@ -417,53 +417,53 @@ def replace_matching_item(
 
 
 def _split_line(line):
-    """Split a non-empty/non-blank line into leading and trailing whitespace, list of words, and list of space counts between words."""
+    """Split a non-empty/non-blank line into leading and trailing whitespace, list of words, and list of whitespace strings between words."""
     leading = line[: -len(line.lstrip())]
     trailing = line[len(line.rstrip()) :]
     words = line.strip().split()
-
-    space_counts = []
+    whitespace_strings = []
     i = 0
     while i < len(line):
-        count = 0
-        while i < len(line) and line[i] == " ":
-            count += 1
+        ws = ""
+        while i < len(line) and line[i] in " \t":
+            ws += line[i]
             i += 1
-        if count > 0:
-            space_counts.append(count)
-        while i < len(line) and line[i] != " ":
+        if ws:
+            whitespace_strings.append(ws)
+        while i < len(line) and line[i] not in " \t":
             i += 1
+    return leading, words, trailing, whitespace_strings
 
-    return leading, words, trailing, space_counts
 
-
-def _restore_spaces(line, target_space_counts, leading, trailing):
-    """Restore spaces between words according to target_space_counts. Leading/trailing characters are preserved."""
+def _restore_spaces(line, target_whitespace_strings, leading, trailing):
+    """Restore whitespace between words according to target_whitespace_strings. Leading/trailing characters are preserved."""
     parts = line.split()
-
     # Rebuild starting with leading
     rebuilt = leading
-
-    # Determine whether to skip the first value in target_space_counts due to leading
+    # Determine whether to skip the first value in target_whitespace_strings due to leading
     skip = 0
-    if leading and target_space_counts:
-        # Only skip if all leading characters are spaces and match the first count
-        if leading.isspace() and target_space_counts[0] == len(leading):
+    if leading and target_whitespace_strings:
+        # Only skip if all leading characters are whitespace and match the first string
+        if (
+            leading.replace(" ", "").replace("\t", "") == ""
+            and target_whitespace_strings[0] == leading
+        ):
             skip = 1
-
     # Rebuild the remaining words
     for i, word in enumerate(parts):
         rebuilt += word
         if i < len(parts) - 1:
             idx = i + skip
-            # TODO: For now, the else 1 guard below is currently needed in a few
+            # TODO: For now, the else ' ' guard below is currently needed in a few
             # tests due to both _split_line and _extract_enclosing_text doing
             # some handling of leading/trailing. It would be good to remove the
             # need for it.
-            spaces = target_space_counts[idx] if idx < len(target_space_counts) else 1
-            rebuilt += " " * spaces
-
+            spaces = (
+                target_whitespace_strings[idx]
+                if idx < len(target_whitespace_strings)
+                else " "
+            )
+            rebuilt += spaces
     # Add on trailing
     rebuilt += trailing
-
     return rebuilt

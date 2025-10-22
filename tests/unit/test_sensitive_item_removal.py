@@ -645,21 +645,25 @@ def test_pwd_removal_preserve_trailing_whitespace(regexes, whitespace):
     assert processed_line.endswith(whitespace)
 
 
-@pytest.mark.parametrize("whitespace", [" ", "  ", "   ", "          "])
+@pytest.mark.parametrize(
+    "whitespace", [" ", "  ", "   ", "          ", "\t", "  \t \t"]
+)
 def test_pwd_removal_preserve_single_inline_whitespace(regexes, whitespace):
-    """Test single inline whitespace is preserved in config lines."""
-    line = "password secret"
-    config_line = f"{line}{whitespace}{line}"
+    """Test single inline whitespace including tabs is preserved in config lines."""
+    word = "foobar"
+    config_line = f"{word}{whitespace}{word}"
     pwd_lookup = {}
     processed_line = replace_matching_item(regexes, config_line, pwd_lookup, SALT)
     assert processed_line == config_line
 
 
-@pytest.mark.parametrize("whitespace", [" ", "  ", "   ", "          "])
+@pytest.mark.parametrize(
+    "whitespace", [" ", "  ", "   ", "          ", "\t", "  \t \t"]
+)
 def test_pwd_removal_preserve_multiple_inline_whitespace(regexes, whitespace):
-    """Test multiple inline whitespace is preserved in config lines."""
-    line = "password secret"
-    config_line = f"{line}{whitespace}{line}{whitespace}{line}"
+    """Test multiple inline whitespace including tabs is preserved in config lines."""
+    word = "foobar"
+    config_line = f"{word}{whitespace}{word}{whitespace}{word}"
     pwd_lookup = {}
     processed_line = replace_matching_item(regexes, config_line, pwd_lookup, SALT)
     assert processed_line == config_line
@@ -671,12 +675,45 @@ def test_pwd_removal_preserve_multiple_inline_whitespace(regexes, whitespace):
         (" ", "  "),
         ("    ", "   "),
         ("      ", "       "),
+        ("\t", "\t"),
+        ("\t", "\t "),
+        (" \t", "\t"),
+        (" \t ", "  \t  "),
     ],
 )
 def test_pwd_removal_preserve_different_inline_whitespace(regexes, ws1, ws2):
-    """Test different inline whitespace sizes are preserved in config lines."""
-    line = "password secret"
-    config_line = f"{line}{ws1}{line}{ws2}{line}"
+    """Test different inline whitespace sizes, including tabs, are preserved in config lines."""
+    word = "foobar"
+    config_line = f"{word}{ws1}{word}{ws2}{word}"
+    pwd_lookup = {}
+    processed_line = replace_matching_item(regexes, config_line, pwd_lookup, SALT)
+    assert processed_line == config_line
+
+
+@pytest.mark.parametrize(
+    "leading, ws1, ws2, trailing",
+    [
+        ("", " ", "  ", ""),
+        ("", "    ", "   ", ""),
+        ("", "      ", "       ", ""),
+        ("", "\t", "\t", ""),
+        ("", "\t", "\t ", ""),
+        ("", " \t", "\t", ""),
+        ("", " \t ", "  \t  ", ""),
+        ("  ", " ", "  ", ""),
+        ("\t", "    ", "   ", ""),
+        ("   ", "\t", "\t ", "\t"),
+        (" \t ", " \t", "\t", "  "),
+        ("", " ", "  ", "   "),
+        ("\t\t", "\t", "\t", "\t\t"),
+    ],
+)
+def test_pwd_removal_preserve_leading_inline_and_trailing_whitespace(
+    regexes, leading, ws1, ws2, trailing
+):
+    """Test leading, inline, and trailing whitespace including tabs are preserved in config lines."""
+    word = "foobar"
+    config_line = f"{leading}{word}{ws1}{word}{ws2}{word}{trailing}"
     pwd_lookup = {}
     processed_line = replace_matching_item(regexes, config_line, pwd_lookup, SALT)
     assert processed_line == config_line
