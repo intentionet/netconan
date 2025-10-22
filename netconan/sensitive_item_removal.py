@@ -162,7 +162,7 @@ class SensitiveWordAnonymizer(object):
     def anonymize(self, line):
         """Anonymize sensitive words from the input line."""
         if self.sens_regex.search(line) is not None:
-            leading, words, trailing, space_counts = _split_line(line)
+            leading, words, trailing, whitespace_strings = _split_line(line)
             # Anonymize only words that do not match the conflicting (reserved) words
             words = [
                 (
@@ -175,8 +175,8 @@ class SensitiveWordAnonymizer(object):
             # Restore leading and trailing whitespace since those were removed when splitting into words
             line = leading + " ".join(words) + trailing
 
-            if space_counts:
-                line = _restore_spaces(line, space_counts, leading, trailing)
+            if whitespace_strings:
+                line = _restore_spaces(line, whitespace_strings, leading, trailing)
 
         return line
 
@@ -364,7 +364,7 @@ def replace_matching_item(
 ):
     """If line matches a regex, anonymize or remove the line."""
     # Collapse whitespace to simplify regexes, also preserve leading and trailing whitespace and store space counts
-    leading, words, trailing, space_counts = _split_line(input_line)
+    leading, words, trailing, whitespace_strings = _split_line(input_line)
     # Save enclosing text (like quotes) to avoid removing during anonymization
     leading, output_line, trailing = _extract_enclosing_text(
         " ".join(words), leading, trailing
@@ -408,8 +408,10 @@ def replace_matching_item(
         if match_found:
             break
 
-    if space_counts:
-        line_to_return = _restore_spaces(output_line, space_counts, leading, trailing)
+    if whitespace_strings:
+        line_to_return = _restore_spaces(
+            output_line, whitespace_strings, leading, trailing
+        )
     else:
         line_to_return = leading + output_line + trailing
 
