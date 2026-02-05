@@ -162,18 +162,13 @@ class SensitiveWordAnonymizer(object):
     def anonymize(self, line):
         """Anonymize sensitive words from the input line."""
         if self.sens_regex.search(line) is not None:
-            leading, words, trailing = _split_line(line)
+            _, _, _, parts, word_indices = _split_line_preserve_whitespace(line)
             # Anonymize only words that do not match the conflicting (reserved) words
-            words = [
-                (
-                    w
-                    if w in self.conflicting_words
-                    else self.sens_regex.sub(self._lookup_anon_word, w)
-                )
-                for w in words
-            ]
-            # Restore leading and trailing whitespace since those were removed when splitting into words
-            line = leading + " ".join(words) + trailing
+            for i in word_indices:
+                w = parts[i]
+                if w not in self.conflicting_words:
+                    parts[i] = self.sens_regex.sub(self._lookup_anon_word, w)
+            line = "".join(parts)
         return line
 
     def _generate_conflicting_reserved_word_list(self, sensitive_words):
@@ -359,15 +354,27 @@ def replace_matching_item(
     reserved_words=default_reserved_words,
 ):
     """If line matches a regex, anonymize or remove the line."""
-    # Collapse whitespace to simplify regexes, also preserve leading and trailing whitespace
-    leading, words, trailing = _split_line(input_line)
-    # Save enclosing text (like quotes) to avoid removing during anonymization
-    leading, output_line, trailing = _extract_enclosing_text(
-        " ".join(words), leading, trailing
+    # Split preserving whitespace for later restoration
+    leading, words, trailing, parts, word_indices = _split_line_preserve_whitespace(
+        input_line
     )
+
+    # Collapse whitespace to simplify regexes
+    joined_line = " ".join(words)
+
+    # Extract enclosing text (quotes, braces) so regexes operate on inner content.
+    # This is needed for the scrub case where regex (.*) would otherwise eat closing chars.
+    enclosing_head, output_line, enclosing_tail = _extract_enclosing_text(
+        joined_line, leading, trailing
+    )
+
+    # Track whether enclosing text was extracted - if so, word boundaries changed
+    # and we can't restore original whitespace
+    enclosing_text_extracted = output_line != joined_line
 
     # Note: compiled_regexes is a list of lists; the inner list is a group of
     # related regexes
+    any_match_found = False
     for compiled_regex_grp in compiled_regexes:
         match_found = False
 
@@ -378,6 +385,7 @@ def replace_matching_item(
             if match is None:
                 continue
             match_found = True
+            any_match_found = True
             logging.debug("Match found on %s", output_line.rstrip())
 
             # If this regex cannot preserve text around sensitive info,
@@ -404,10 +412,41 @@ def replace_matching_item(
         if match_found:
             break
 
-    # Restore leading and trailing whitespace for readability and context
-    return leading + output_line + trailing
+    # If no regex matched, return the original line unchanged
+    if not any_match_found:
+        return input_line
+
+    # Restore original whitespace by mapping processed words back to original positions.
+    # Only possible if enclosing text wasn't extracted (which changes word boundaries).
+    processed_words = output_line.split()
+    if not enclosing_text_extracted and len(processed_words) == len(word_indices):
+        for i, word_idx in enumerate(word_indices):
+            parts[word_idx] = processed_words[i]
+        return "".join(parts)
+
+    # Fall back to collapsed whitespace with enclosing text
+    return enclosing_head + output_line + enclosing_tail
 
 
-def _split_line(line):
-    """Split line into leading whitespace, list of words, and trailing whitespace."""
-    return line[: -len(line.lstrip())], line.split(), line[len(line.rstrip()) :]
+def _split_line_preserve_whitespace(line):
+    """Split line into parts, preserving whitespace as separate elements.
+
+    Uses re.split with a capturing group to keep whitespace delimiters.
+    Returns (leading, words, trailing, parts, word_indices) where:
+    - leading: leading whitespace
+    - words: list of words (for compatibility with collapsed-whitespace processing)
+    - trailing: trailing whitespace
+    - parts: list of alternating whitespace and word tokens
+    - word_indices: indices of the word (non-whitespace) elements in parts
+    """
+    # Split on whitespace, keeping whitespace as separate list elements
+    parts = re.split(r"(\s+)", line)
+    # Identify which indices contain words (non-whitespace, non-empty)
+    word_indices = [i for i, part in enumerate(parts) if part and not part.isspace()]
+
+    # Derive leading/trailing whitespace from parts
+    words = [parts[i] for i in word_indices]
+    leading = parts[0] if parts and parts[0] and parts[0].isspace() else ""
+    trailing = parts[-1] if parts and parts[-1] and parts[-1].isspace() else ""
+
+    return leading, words, trailing, parts, word_indices
