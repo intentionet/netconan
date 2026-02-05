@@ -69,6 +69,7 @@ setup(
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: 3.13",
+        "Programming Language :: Python :: 3.14",
     ],
     python_requires=">=3.10",
     # What does your project relate to?
@@ -93,7 +94,7 @@ setup(
     extras_require={
         "dev": ["flake8<8.0.0", "flake8-docstrings<2.0.0", "pydocstyle<6.0.0"],
         "test": [
-            "pytest>=6,<7",
+            "pytest>=7",
             "pytest-cov<6.0.0",
             "requests_mock<2.0.0",
             "testfixtures<7.0.0",
