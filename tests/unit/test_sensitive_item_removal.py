@@ -679,6 +679,17 @@ def test_pwd_removal_preserve_trailing_whitespace(regexes, whitespace):
     assert processed_line.endswith(whitespace)
 
 
+@pytest.mark.parametrize("whitespace", [" ", "\t", "\n", " \t\n"])
+def test_line_scrub_preserve_trailing_whitespace(regexes, whitespace):
+    """Test trailing whitespace is preserved when line is scrubbed (encrypted-password case)."""
+    # encrypted-password triggers line scrubbing (sensitive_item_num=None)
+    config_line = "        encrypted-password SECRET{}".format(whitespace)
+    pwd_lookup = {}
+    processed_line = replace_matching_item(regexes, config_line, pwd_lookup, SALT)
+    assert _LINE_SCRUBBED_MESSAGE in processed_line
+    assert processed_line.endswith(whitespace)
+
+
 @pytest.mark.parametrize("config_line,sensitive_text", sensitive_lines)
 @pytest.mark.parametrize(
     "prepend_text",
