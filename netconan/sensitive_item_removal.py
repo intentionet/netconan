@@ -439,14 +439,20 @@ def _split_line_preserve_whitespace(line):
     - parts: list of alternating whitespace and word tokens
     - word_indices: indices of the word (non-whitespace) elements in parts
     """
-    # Split on whitespace, keeping whitespace as separate list elements
+    # Split on whitespace, keeping whitespace as separate list elements.
+    # re.split produces empty strings at boundaries when the string starts/ends
+    # with a delimiter, so drop those to simplify subsequent logic.
     parts = re.split(r"(\s+)", line)
+    if parts and parts[0] == "":
+        parts = parts[1:]
+    if parts and parts[-1] == "":
+        parts = parts[:-1]
     # Identify which indices contain words (non-whitespace, non-empty)
     word_indices = [i for i, part in enumerate(parts) if part and not part.isspace()]
 
     # Derive leading/trailing whitespace from parts
     words = [parts[i] for i in word_indices]
-    leading = parts[0] if parts and parts[0] and parts[0].isspace() else ""
-    trailing = parts[-1] if parts and parts[-1] and parts[-1].isspace() else ""
+    leading = parts[0] if parts and parts[0].isspace() else ""
+    trailing = parts[-1] if parts and parts[-1].isspace() else ""
 
     return leading, words, trailing, parts, word_indices
