@@ -1,44 +1,47 @@
 load("@rules_python//python:defs.bzl", "py_binary")
 
+# Reference the antlr_grammar rules that produce .tokens files as outputs.
+# The tokens files are generated outputs, not individual targets.
 filegroup(
-    name = "tokens",
+    name = "antlr_outputs",
     srcs = [
-        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/arista:AristaLexer.tokens",
-        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/cisco:CiscoLexer.tokens",
-        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/cisco_asa:AsaLexer.tokens",
-        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/cisco_nxos:CiscoNxosLexer.tokens",
-        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/cisco_xr:CiscoXrLexer.tokens",
-        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/cumulus_concatenated:CumulusConcatenatedLexer.tokens",
-        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/cumulus_interfaces:CumulusInterfacesLexer.tokens",
-        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/cumulus_nclu:CumulusNcluLexer.tokens",
-        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/cumulus_ports:CumulusPortsLexer.tokens",
-        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/f5_bigip_imish:F5BigipImishLexer.tokens",
-        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/f5_bigip_structured:F5BigipStructuredLexer.tokens",
-        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/flatjuniper:FlatJuniperLexer.tokens",
-        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/flatvyos:FlatVyosLexer.tokens",
-        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/fortios:FortiosLexer.tokens",
-        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/frr:FrrLexer.tokens",
-        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/iptables:IptablesLexer.tokens",
-        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/juniper:JuniperLexer.tokens",
-        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/mrv:MrvLexer.tokens",
-        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/palo_alto:PaloAltoLexer.tokens",
-        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/palo_alto_nested:PaloAltoNestedLexer.tokens",
-        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/routing_table/eos:EosRoutingTableLexer.tokens",
-        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/routing_table/ios:IosRoutingTableLexer.tokens",
-        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/routing_table/nxos:NxosRoutingTableLexer.tokens",
-        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/vyos:VyosLexer.tokens",
-        "@batfish//projects/batfish/src/main/antlr4/org/batfish/vendor/a10/grammar:A10Lexer.tokens",
-        "@batfish//projects/batfish/src/main/antlr4/org/batfish/vendor/check_point_gateway/grammar:CheckPointGatewayLexer.tokens",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/cisco:cisco_generated",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/cisco_asa:cisco_asa_generated",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/cisco_xr:cisco_xr_generated",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/cumulus_concatenated:cumulus_concatenated_generated",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/cumulus_interfaces:cumulus_interfaces_generated",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/cumulus_nclu:cumulus_nclu_generated",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/cumulus_ports:cumulus_ports_generated",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/f5_bigip_imish:f5_bigip_imish_generated",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/f5_bigip_structured:f5_bigip_structured_generated",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/flatjuniper:flatjuniper_generated",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/flatvyos:flatvyos_generated",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/fortios:fortios_generated",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/frr:frr_generated",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/iptables:iptables_generated",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/juniper:juniper_generated",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/mrv:mrv_generated",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/palo_alto:palo_alto_generated",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/palo_alto_nested:palo_alto_nested_generated",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/routing_table/eos:eos_generated",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/routing_table/ios:ios_generated",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/routing_table/nxos:nxos_generated",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/grammar/vyos:vyos_generated",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/vendor/a10/grammar:grammar_generated",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/vendor/arista/grammar:grammar_generated",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/vendor/check_point_gateway/grammar:grammar_generated",
+        "@batfish//projects/batfish/src/main/antlr4/org/batfish/vendor/cisco_nxos/grammar:grammar_generated",
     ],
 )
 
 genrule(
     name = "concat_all_files",
     srcs = [
-        ":tokens",
+        ":antlr_outputs",
     ],
     outs = ["concatenated.tokens"],
-    cmd = "cat $(locations :tokens) > $@",
+    # Filter for .tokens files only from the antlr_grammar outputs
+    cmd = "for f in $(locations :antlr_outputs); do if [[ $$f == *.tokens ]]; then cat $$f; fi; done > $@",
 )
 
 py_binary(
