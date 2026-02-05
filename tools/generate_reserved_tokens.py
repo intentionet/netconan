@@ -17,7 +17,7 @@ import os
 import re
 from pathlib import Path
 
-from rules_python.python.runfiles import runfiles
+from python.runfiles import runfiles
 
 DEFAULT_PREFIX = "    "
 TOKEN_REGEX = re.compile(r"'([^']+)'=\d+")

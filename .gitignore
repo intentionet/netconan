@@ -107,3 +107,9 @@ ENV/
 
 # bazel
 /bazel-*
+
+# local bazel configuration
+.bazelrc.user
+
+# development artifacts
+working/
