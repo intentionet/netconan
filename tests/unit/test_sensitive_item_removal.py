@@ -400,6 +400,24 @@ def test_anonymize_sensitive_words_preserve_reserved_word():
     assert reserved_word in anon_line.split()
 
 
+def test_anonymize_sensitive_words_preserve_whitespace():
+    """Test that whitespace is preserved when anonymizing sensitive words."""
+    keyword = "ACMECORP"
+    # Line with various whitespace patterns
+    line = "  foo   {}  bar\tqux".format(keyword)
+
+    anonymizer = SensitiveWordAnonymizer([keyword], SALT, [])
+    anon_line = anonymizer.anonymize(line)
+
+    # Confirm keyword is removed
+    assert keyword not in anon_line
+
+    # Confirm whitespace is preserved by checking the pattern
+    anon_keyword = anonymizer.anonymize(keyword)
+    expected_line = "  foo   {}  bar\tqux".format(anon_keyword)
+    assert anon_line == expected_line
+
+
 @pytest.mark.parametrize("val", unique_passwords)
 def test__anonymize_value(val):
     """Test sensitive item anonymization."""
@@ -566,6 +584,22 @@ def test_pwd_removal_with_whitespace(regexes):
     assert sensitive_text not in replace_matching_item(
         regexes, sensitive_line, {}, SALT
     )
+
+
+def test_pwd_removal_preserves_whitespace(regexes):
+    """Test that whitespace between words is preserved during password anonymization."""
+    sensitive_text = "RemoveMe"
+    sensitive_line = "     password   0      \t{}".format(sensitive_text)
+    pwd_lookup = {}
+    processed_line = replace_matching_item(regexes, sensitive_line, pwd_lookup, SALT)
+
+    # Verify sensitive text is removed
+    assert sensitive_text not in processed_line
+
+    # Verify whitespace is preserved by checking structure matches
+    anon_val = _anonymize_value(sensitive_text, pwd_lookup, {}, SALT)
+    expected_line = "     password   0      \t{}".format(anon_val)
+    assert processed_line == expected_line
 
 
 @pytest.mark.parametrize(
