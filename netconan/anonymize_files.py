@@ -21,6 +21,7 @@ import logging
 import os
 import random
 import string
+import sys
 
 from .default_reserved_words import default_reserved_words
 from .ip_anonymization import IpAnonymizer, IpV6Anonymizer, anonymize_ip_addr
@@ -158,12 +159,21 @@ def anonymize_files(
     preserve_suffix_v6=None,
 ):
     """Anonymize each file in input and save to output."""
-    if not os.path.exists(input_path):
+    use_stdin = input_path == "-"
+    use_stdout = output_path == "-"
+
+    if not use_stdin and not os.path.exists(input_path):
         raise ValueError("Input does not exist")
 
     # Generate list of file tuples: (input file path, output file path)
     file_list = []
-    if os.path.isfile(input_path):
+    if use_stdin or use_stdout:
+        if use_stdout and not use_stdin and os.path.isdir(input_path):
+            raise ValueError(
+                "Cannot write directory output to stdout; "
+                "use a file input with -o - or specify an output directory"
+            )
+    elif os.path.isfile(input_path):
         file_list = [(input_path, output_path)]
     else:
         if not os.listdir(input_path):
@@ -200,21 +210,34 @@ def anonymize_files(
         undo_ip_anon=undo_ip_anon,
     )
 
-    for in_path, out_path in file_list:
-        logging.debug("File in  %s", in_path)
-        logging.debug("File out %s", out_path)
+    if use_stdin or use_stdout:
+        in_io = sys.stdin if use_stdin else open(input_path, "r")
+        out_io = sys.stdout if use_stdout else open(output_path, "w")
         try:
-            # Make parent dirs for output file if they don't exist
-            _mkdirs(out_path)
-            if os.path.isdir(out_path):
-                raise ValueError(
-                    "Cannot write output file; "
-                    "output file is a directory ({})".format(out_path)
-                )
-            with open(in_path, "r") as f_in, open(out_path, "w") as f_out:
-                file_anonymizer.anonymize_io(f_in, f_out)
-        except Exception:
-            logging.error("Failed to anonymize file %s", in_path, exc_info=True)
+            if not use_stdout:
+                _mkdirs(output_path)
+            file_anonymizer.anonymize_io(in_io, out_io)
+        finally:
+            if not use_stdin and in_io is not sys.stdin:
+                in_io.close()
+            if not use_stdout and out_io is not sys.stdout:
+                out_io.close()
+    else:
+        for in_path, out_path in file_list:
+            logging.debug("File in  %s", in_path)
+            logging.debug("File out %s", out_path)
+            try:
+                # Make parent dirs for output file if they don't exist
+                _mkdirs(out_path)
+                if os.path.isdir(out_path):
+                    raise ValueError(
+                        "Cannot write output file; "
+                        "output file is a directory ({})".format(out_path)
+                    )
+                with open(in_path, "r") as f_in, open(out_path, "w") as f_out:
+                    file_anonymizer.anonymize_io(f_in, f_out)
+            except Exception:
+                logging.error("Failed to anonymize file %s", in_path, exc_info=True)
 
     if dumpfile is not None:
         with open(dumpfile, "w") as f_out:

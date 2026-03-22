@@ -16,6 +16,7 @@
 
 import io
 import os
+import sys
 
 import pytest
 from testfixtures import LogCapture
@@ -235,6 +236,79 @@ def test_anonymize_in_memory():
     file_anonymizer.anonymize_io(input_io, actual_output_io)
 
     assert expected_output_io.getvalue() == actual_output_io.getvalue()
+
+
+def test_anonymize_files_stdin_stdout(monkeypatch):
+    """Test anonymize_files with stdin and stdout (pipe mode)."""
+    monkeypatch.setattr("sys.stdin", io.StringIO(_INPUT_CONTENTS))
+    fake_stdout = io.StringIO()
+    monkeypatch.setattr("sys.stdout", fake_stdout)
+
+    anonymize_files(
+        "-",
+        "-",
+        True,
+        True,
+        salt=_SALT,
+        sensitive_words=_SENSITIVE_WORDS,
+    )
+
+    assert fake_stdout.getvalue() == _REF_CONTENTS
+
+
+def test_anonymize_files_stdin_to_file(monkeypatch, tmpdir):
+    """Test anonymize_files with stdin input and file output."""
+    monkeypatch.setattr("sys.stdin", io.StringIO(_INPUT_CONTENTS))
+
+    output_file = tmpdir.mkdir("out").join("test.txt")
+
+    anonymize_files(
+        "-",
+        str(output_file),
+        True,
+        True,
+        salt=_SALT,
+        sensitive_words=_SENSITIVE_WORDS,
+    )
+
+    assert os.path.isfile(str(output_file))
+    assert read_file(str(output_file)) == _REF_CONTENTS
+
+
+def test_anonymize_files_file_to_stdout(monkeypatch, tmpdir):
+    """Test anonymize_files with file input and stdout output."""
+    input_file = tmpdir.join("test.txt")
+    input_file.write(_INPUT_CONTENTS)
+
+    fake_stdout = io.StringIO()
+    monkeypatch.setattr("sys.stdout", fake_stdout)
+
+    anonymize_files(
+        str(input_file),
+        "-",
+        True,
+        True,
+        salt=_SALT,
+        sensitive_words=_SENSITIVE_WORDS,
+    )
+
+    assert fake_stdout.getvalue() == _REF_CONTENTS
+
+
+def test_anonymize_files_dir_to_stdout_raises(tmpdir):
+    """Test that directory input with stdout output raises ValueError."""
+    input_dir = tmpdir.mkdir("input")
+    input_dir.join("test.txt").write(_INPUT_CONTENTS)
+
+    with pytest.raises(ValueError, match="Cannot write directory output to stdout"):
+        anonymize_files(
+            str(input_dir),
+            "-",
+            True,
+            True,
+            salt=_SALT,
+            sensitive_words=_SENSITIVE_WORDS,
+        )
 
 
 def read_file(file_path):
