@@ -1,4 +1,5 @@
 """Default reserved words that should not be anonymized by sensitive word anonymization."""
+
 #   Copyright 2018 Intentionet
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,8 +23,8 @@
 # These are important tokens in network device configs and should not be modified by keyword anonymization
 default_reserved_words = {
     "!",
-    "\"",
-    "\"${node}\"",
+    '"',
+    '"${node}"',
     "#",
     "$",
     "%",
@@ -77,7 +78,7 @@ default_reserved_words = {
     "@",
     "[",
     "\\",
-    "\\\"",
+    '\\"',
     "\\n",
     "\\r",
     "]",
