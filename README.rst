@@ -91,7 +91,20 @@ For *reversible operations* (specifically, IP address anonymization), Netconan c
 Running netconan
 ================
 
-Netconan processes the ``input`` file or recursively processes files in the ``input`` directory (skipping files starting with ``.``) and saves processed files at the specified ``output``. 
+Netconan processes the ``input`` file or recursively processes files in the ``input`` directory (skipping files starting with ``.``) and saves processed files at the specified ``output``.
+
+Pipe mode
+---------
+
+Netconan supports reading from stdin and writing to stdout using ``-`` as the input or output path. This enables pipe-based workflows:
+
+.. code-block:: bash
+
+    $ cat config.cfg | netconan -i - -o - -a -p -s mysalt > anonymized.cfg
+    $ cat config.cfg | netconan -i - -o anonymized.cfg -a -p -s mysalt
+    $ netconan -i config.cfg -o - -a -p -s mysalt > anonymized.cfg
+
+Note that directory input cannot be combined with ``-o -``.
 
 For more information about less commonly-used features, see the Netconan help (``-h``).  For more information on config file syntax, see `here <https://goo.gl/R74nmi>`_.
 

@@ -14,6 +14,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+import io
 import os.path
 
 import pytest
@@ -144,6 +145,42 @@ def test_end_to_end_no_anonymization(tmpdir):
     # Make sure no output file was generated
     # when no anonymization args are supplied
     assert not os.path.exists(str(output_file))
+
+
+def test_end_to_end_stdin_stdout(monkeypatch):
+    """Test Netconan main with stdin/stdout pipe mode."""
+    monkeypatch.setattr("sys.stdin", io.StringIO(INPUT_CONTENTS))
+    fake_stdout = io.StringIO()
+    monkeypatch.setattr("sys.stdout", fake_stdout)
+
+    args = [
+        "-i",
+        "-",
+        "-o",
+        "-",
+        "-s",
+        "TESTSALT",
+        "-a",
+        "-p",
+        "-w",
+        "intentionet,sensitive,ADDR",
+        "-r",
+        "reservedword",
+        "-n",
+        "65432,12345",
+        "--preserve-addresses",
+        "11.11.0.0/16,111.111.111.111",
+        "--preserve-prefixes",
+        "192.168.2.0/24",
+        "--preserve-host-bits",
+        "17",
+    ]
+    main(args)
+
+    # Compare lines for more readable failed assertion message
+    t_ref = ANON_REF_CONTENTS.split("\n")
+    t_out = fake_stdout.getvalue().split("\n")
+    assert t_ref == t_out
 
 
 def test_version(capsys):
