@@ -18,9 +18,9 @@ import ipaddress
 import logging
 import re
 from abc import ABCMeta, abstractmethod
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from hashlib import md5
-from typing import IO, Callable
+from typing import IO
 
 from bidict import bidict
 
