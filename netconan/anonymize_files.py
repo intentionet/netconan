@@ -97,16 +97,6 @@ class FileAnonymizer:
         if as_numbers is not None:
             self.anonymizer_as_num = AsNumberAnonymizer(as_numbers, self.salt)
 
-    def anonymize_file(self, in_file, out_file):
-        """Anonymize a single file."""
-        if os.path.isdir(out_file):
-            raise ValueError(
-                "Cannot write output file; "
-                "output file is a directory ({})".format(out_file)
-            )
-        with open(in_file, "r") as in_io, open(out_file, "w") as out_io:
-            self.anonymize_io(in_io, out_io)
-
     def anonymize_io(self, in_io, out_io):
         """Reads from the in_io buffer, writing anonymized configuration into the out_io buffer.
 
@@ -165,16 +155,15 @@ def anonymize_files(
     if not use_stdin and not os.path.exists(input_path):
         raise ValueError("Input does not exist")
 
-    # Generate list of file tuples: (input file path, output file path)
-    file_list = []
-    if use_stdin or use_stdout:
-        if use_stdout and not use_stdin and os.path.isdir(input_path):
-            raise ValueError(
-                "Cannot write directory output to stdout; "
-                "use a file input with -o - or specify an output directory"
-            )
-    elif os.path.isfile(input_path):
+    # Build list of (input, output) pairs to process.
+    # Pipe paths use "-" as a sentinel for stdin/stdout.
+    if use_stdin or os.path.isfile(input_path):
         file_list = [(input_path, output_path)]
+    elif use_stdout:
+        raise ValueError(
+            "Cannot write directory output to stdout; "
+            "use a file input with -o - or specify an output directory"
+        )
     else:
         if not os.listdir(input_path):
             raise ValueError("Input directory is empty")
@@ -182,7 +171,7 @@ def anonymize_files(
             raise ValueError(
                 "Output path must be a directory if input path is a directory"
             )
-
+        file_list = []
         for root, dirs, files in os.walk(input_path):
             rel_root = os.path.relpath(root, input_path)
             file_list.extend(
@@ -210,39 +199,42 @@ def anonymize_files(
         undo_ip_anon=undo_ip_anon,
     )
 
-    if use_stdin or use_stdout:
-        in_io = sys.stdin if use_stdin else open(input_path, "r")
-        out_io = sys.stdout if use_stdout else open(output_path, "w")
+    for in_path, out_path in file_list:
+        logging.debug("File in  %s", in_path)
+        logging.debug("File out %s", out_path)
         try:
-            if not use_stdout:
-                _mkdirs(output_path)
-            file_anonymizer.anonymize_io(in_io, out_io)
-        finally:
-            if not use_stdin and in_io is not sys.stdin:
-                in_io.close()
-            if not use_stdout and out_io is not sys.stdout:
-                out_io.close()
-    else:
-        for in_path, out_path in file_list:
-            logging.debug("File in  %s", in_path)
-            logging.debug("File out %s", out_path)
-            try:
-                # Make parent dirs for output file if they don't exist
-                _mkdirs(out_path)
-                if os.path.isdir(out_path):
-                    raise ValueError(
-                        "Cannot write output file; "
-                        "output file is a directory ({})".format(out_path)
-                    )
-                with open(in_path, "r") as f_in, open(out_path, "w") as f_out:
-                    file_anonymizer.anonymize_io(f_in, f_out)
-            except Exception:
-                logging.error("Failed to anonymize file %s", in_path, exc_info=True)
+            _process_one(file_anonymizer, in_path, out_path)
+        except Exception:
+            logging.error("Failed to anonymize file %s", in_path, exc_info=True)
 
     if dumpfile is not None:
         with open(dumpfile, "w") as f_out:
             file_anonymizer.anonymizer4.dump_to_file(f_out)
             file_anonymizer.anonymizer6.dump_to_file(f_out)
+
+
+def _process_one(file_anonymizer, in_path, out_path):
+    """Anonymize a single input/output pair. A path of "-" means stdin/stdout."""
+    use_stdin = in_path == "-"
+    use_stdout = out_path == "-"
+
+    if not use_stdout:
+        _mkdirs(out_path)
+        if os.path.isdir(out_path):
+            raise ValueError(
+                "Cannot write output file; "
+                "output file is a directory ({})".format(out_path)
+            )
+
+    in_io = sys.stdin if use_stdin else open(in_path, "r")
+    out_io = sys.stdout if use_stdout else open(out_path, "w")
+    try:
+        file_anonymizer.anonymize_io(in_io, out_io)
+    finally:
+        if not use_stdin:
+            in_io.close()
+        if not use_stdout:
+            out_io.close()
 
 
 def _mkdirs(file_path):
