@@ -305,8 +305,7 @@ def test_preserve_address_preserves_prefix():
 
 
 def _cpl_v4(left, right):
-    """
-    Return the common prefix length for two IPv4 addresses.
+    """Return the common prefix length for two IPv4 addresses.
 
     e.g.
     _cpl_v4(1.0.0.1, 1.0.0.1) == 32

@@ -32,7 +32,7 @@ dependencies = [
 dynamic = ["version"]
 
 [project.optional-dependencies]
-dev = ["flake8<8.0.0", "flake8-docstrings<2.0.0", "pydocstyle<6.0.0"]
+dev = ["ruff>=0.15"]
 test = [
     "pytest>=7",
     "pytest-cov<6.0.0",
@@ -54,6 +54,13 @@ netconan = ["py.typed"]
 
 [tool.setuptools.dynamic]
 version = {attr = "netconan.__version__"}
+
+[tool.ruff]
+exclude = ["netconan/default_reserved_words.py"]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "D", "I"]
+ignore = ["E203", "E501", "D203", "D213", "D401", "D413"]
 
 [tool.pytest.ini_options]
 addopts = "--cov=netconan"
