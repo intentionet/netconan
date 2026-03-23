@@ -15,6 +15,30 @@ accidentally committing sensitive material.
 mkdir -p tests/test_data/{cisco,arista,juniper,fortinet,aws,snmp}
 ```
 
+## Multi-Vendor Sources
+
+These repositories contain configs for multiple vendors in one place.
+
+- [Batfish](https://github.com/batfish/batfish)
+  — The single best source. Test configs for Cisco, Arista, Juniper (flat and
+  hierarchical), Fortinet, Palo Alto, and more under
+  `projects/batfish/src/test/resources/org/batfish/grammar/`. Hundreds of files.
+- [CiscoConfParse test fixtures](https://github.com/mpenning/ciscoconfparse/tree/master/tests/fixtures/configs)
+  — Parser test fixtures covering Cisco IOS/NXOS/ASA/IOS-XR, Juniper JunOS, F5,
+  Arista EOS, Palo Alto, Brocade, HP, and more.
+- [NTC Templates](https://github.com/networktocode/ntc-templates)
+  — TextFSM templates with sample `show` command outputs for many vendors. Look
+  under `tests/` for fixture data.
+- [Azure VPN Config Samples](https://github.com/Azure/Azure-vpn-config-samples)
+  — Microsoft-maintained. Full running configs for Cisco ASA/ISR/ASR, Juniper SRX,
+  FortiGate, and others. Contains encrypted passwords and pre-shared keys.
+- [Oxidized](https://github.com/ytti/oxidized)
+  — RANCID replacement supporting 90+ vendor OS types. The tool itself is useful for
+  collecting configs from lab devices.
+- [Containerlab topologies (holo-routing)](https://github.com/holo-routing/containerlab-topologies)
+  — 25+ protocol lab topologies with configs for FRRouting, Nokia SR Linux, Arista
+  cEOS. Covers BGP, OSPF, IS-IS, MPLS-LDP, VRRP, and more.
+
 ## Vendor Sources
 
 ### Cisco IOS
@@ -24,11 +48,19 @@ Cisco IOS has the broadest regex coverage in netconan (75+ password patterns).
 **GitHub repos:**
 
 - [Batfish Cisco test configs](https://github.com/batfish/batfish/tree/master/projects/batfish/src/test/resources/org/batfish/grammar/cisco/testconfigs)
-  — Hundreds of minimal IOS/IOS-XE configs covering edge cases. Clone the repo
-  and copy files from the path above.
+  — Hundreds of minimal IOS/IOS-XE configs covering edge cases.
+- [CiscoConfParse test fixtures](https://github.com/mpenning/ciscoconfparse/tree/master/tests/fixtures/configs)
+  — Multiple `sample_NN.ios` files with diverse IOS syntax (interfaces, routing,
+  ACLs, HSRP, etc.). Also includes ASA, NXOS, IOS-XR samples.
+- [tireland1985/cisco-config-examples](https://github.com/tireland1985/cisco-config-examples)
+  — 5 sanitized lab configs: AP1141N, C2811-CUCME, C2911 router, C3560G L3 switch.
+  Contains enable secrets, TACACS+, SNMP community strings.
 - [NTC Templates](https://github.com/networktocode/ntc-templates)
-  — TextFSM templates with sample `show` command outputs for many Cisco platforms.
-  Look under `tests/` for fixture data.
+  — TextFSM templates with sample `show` command outputs under `tests/`.
+- [frostbits-security/ccat](https://github.com/frostbits-security/ccat)
+  — Cisco Config Analysis Tool with test configs in `example/` directory.
+- [bbartik/cisco-cfg](https://github.com/bbartik/cisco-cfg)
+  — 6 router config files including Jinja2 templates.
 
 **Download example (Batfish):**
 
@@ -55,10 +87,20 @@ authentication for EOS (see `default_pwd_regexes.py`, Issue #3 tracks expanding 
 
 - [Batfish Arista test configs](https://github.com/batfish/batfish/tree/master/projects/batfish/src/test/resources/org/batfish/grammar/arista/testconfigs)
   — Arista-specific test configs in the Batfish grammar suite.
-- [Arista NetDevOps Community](https://github.com/arista-netdevops-community)
-  — Multiple repos with EOS config examples and automation scripts.
+- [HPENetworking/HPEIMCUtils — Arista sample config](https://github.com/HPENetworking/HPEIMCUtils/blob/master/DeviceAdapters/Arista%20Networks/arista%20sample%20config.txt)
+  — Complete Arista config with enable secret, username admin secret, SNMP
+  community strings ("public"/"private"), MLAG, VLANs, NTP, AAA.
+- [networkop/arista-network-ci](https://github.com/networkop/arista-network-ci)
+  — Generated configs for lab and production topologies. BGP, interfaces, VLANs,
+  SVIs, route-maps. Configs intentionally contain bugs for testing Batfish.
+- [arista-netdevops-community/ceos_lab_demo](https://github.com/arista-netdevops-community/ceos_lab_demo)
+  — 3 cEOS startup configs for an EBGP triangle topology.
+- [arista-netdevops-community/avd-evpn-webinar-june-11](https://github.com/arista-netdevops-community/avd-evpn-webinar-june-11)
+  — EVPN/VXLAN fabric configs in `intended/configs/` directory.
 - [Ansible Arista EOS Collection](https://github.com/ansible-collections/arista.eos)
   — Ansible modules with EOS config snippets in the docs and test fixtures.
+- [JulioPDX/multi-vendor-python](https://github.com/JulioPDX/multi-vendor-python)
+  — Running/startup configs from Cisco vIOS, Arista vEOS, and Aruba CX.
 
 **Download example (Batfish):**
 
@@ -80,16 +122,19 @@ has strong Juniper support including Type 9 encryption handling.
 
 - [Batfish Flat Juniper test configs](https://github.com/batfish/batfish/tree/master/projects/batfish/src/test/resources/org/batfish/grammar/flatjuniper/testconfigs)
   — Set-style ("flat") Juniper configs used in Batfish parsing tests.
+- [jcoeder/juniper-configurations](https://github.com/jcoeder/juniper-configurations)
+  — 28 production-style set-style config snippets: BGP (communities, policies, bogon
+  filtering), OSPF, firewall rules (QFX5100 RE protection), HA (chassis redundancy,
+  MC-LAG), SRX dynamic VPN, SNMPv3, TACACS, EVPN/VXLAN, IPFIX.
+- [flightlesstux/juniper-srx-config](https://github.com/flightlesstux/juniper-srx-config)
+  — SRX110H-VA set-style config for VDSL2 internet connectivity. System setup,
+  interfaces, security zones, NAT.
 
-**Download example:**
+**Download example (jcoeder):**
 
 ```bash
-git clone --depth 1 --filter=blob:none --sparse \
-  https://github.com/batfish/batfish.git /tmp/batfish
-cd /tmp/batfish
-git sparse-checkout set projects/batfish/src/test/resources/org/batfish/grammar/flatjuniper/testconfigs
-cp projects/batfish/src/test/resources/org/batfish/grammar/flatjuniper/testconfigs/* \
-  /path/to/netconan/tests/test_data/juniper/
+git clone https://github.com/jcoeder/juniper-configurations.git /tmp/juniper-configs
+cp /tmp/juniper-configs/*.conf tests/test_data/juniper/
 ```
 
 **Vendor docs:**
@@ -106,8 +151,17 @@ should be tested since netconan's regexes may behave differently with indented b
 
 - [Batfish Juniper test configs](https://github.com/batfish/batfish/tree/master/projects/batfish/src/test/resources/org/batfish/grammar/juniper/testconfigs)
   — Hierarchical (brace-style) Juniper configs.
+- [Azure VPN Config Samples — Juniper SRX](https://github.com/Azure/Azure-vpn-config-samples/tree/master/Juniper/Current/SRX)
+  — Full hierarchical SRX configs for site-to-site VPNs with security zones,
+  policies, IPsec, IKE. Contains `encrypted-password "$1$..."` entries.
+- [jtkristoff/junos](https://github.com/jtkristoff/junos)
+  — 10+ hierarchical config templates: BFD, BGP Monitoring Protocol, firewall
+  filters, iBGP, route origin validation, BGP route sanitization.
+- [codeout/junoser](https://github.com/codeout/junoser)
+  — PEG parser for JunOS configs with test fixtures in both set and hierarchical
+  format.
 
-**Download example:**
+**Download example (Batfish):**
 
 ```bash
 git clone --depth 1 --filter=blob:none --sparse \
@@ -126,15 +180,32 @@ passwords and pksecret fields (4 regex patterns).
 **GitHub repos:**
 
 - [Azure VPN Config Samples — FortiGate](https://github.com/Azure/Azure-vpn-config-samples/tree/master/Fortinet/Current)
-  — Full `show full-configuration` output from a FortiGate device.
+  — Full `show full-configuration` output from a FortiGate device. Contains
+  `set password ENC SH2...` and `set psksecret ENC ...` entries.
 - [Batfish Fortinet test configs](https://github.com/batfish/batfish/tree/master/projects/batfish/src/test/resources/org/batfish/grammar/fortios/testconfigs)
   — FortiOS test configs in the Batfish grammar suite.
+- [vansteenk/FortiLab-VPN-IPSEC](https://github.com/vansteenk/FortiLab-VPN-IPSEC)
+  — Lab environment with complete FortiGate `.conf` backup files. Contains VPN
+  IPsec phase1 configs with PSK, admin passwords (ENC format), user credentials,
+  certificate private keys.
+- [fortinet/fortigate-terraform-deploy](https://github.com/fortinet/fortigate-terraform-deploy)
+  — Terraform deployment templates with FortiGate configs. See
+  `aws/6.2/ha/config-active.conf` for HA example.
+- [cgustave/fgtconfig](https://github.com/cgustave/fgtconfig)
+  — FortiGate configuration analysis tool, may contain test fixture configs.
 
 **Download example (Azure VPN samples):**
 
 ```bash
 curl -o tests/test_data/fortinet/fortigate_full.txt \
   "https://raw.githubusercontent.com/Azure/Azure-vpn-config-samples/master/Fortinet/Current/fortigate_show%20full-configuration.txt"
+```
+
+**Download example (FortiLab):**
+
+```bash
+git clone https://github.com/vansteenk/FortiLab-VPN-IPSEC.git /tmp/fortilab
+cp /tmp/fortilab/*.conf tests/test_data/fortinet/
 ```
 
 **Vendor docs:**
@@ -153,6 +224,17 @@ Netconan has 4 regex patterns for these.
   — CloudFormation templates with VPN connection configs.
 - [Terraform AWS VPN Gateway](https://github.com/terraform-aws-modules/terraform-aws-vpn-gateway)
   — Terraform module with VPN config examples in `examples/`.
+- [PackeTsar/AWS_IPv6_VPN](https://github.com/PackeTsar/AWS_IPv6_VPN)
+  — Guide for building IPv6 site-to-site VPN to AWS with IKEv1 pre-shared-key
+  config examples.
+- [cloudposse/terraform-aws-vpn-connection](https://github.com/cloudposse/terraform-aws-vpn-connection)
+  — Terraform module supporting `tunnel1_preshared_key` / `tunnel2_preshared_key`.
+- [asantos2000/aws_vpn_config](https://github.com/asantos2000/aws_vpn_config)
+  — Tool to download VPN configs from AWS and convert to vendor-specific formats.
+  Uses `describe_vpn_connections` API to get the XML.
+- [Azure VPN Config Samples — Cisco ASA](https://github.com/Azure/Azure-vpn-config-samples/tree/master/Cisco/Current/ASA)
+  — ASA running-config with `ikev1 pre-shared-key` entries; useful for testing
+  Cisco VPN pre-shared key regexes too.
 
 **Vendor docs:**
 
@@ -179,7 +261,22 @@ AWS VPN configs follow a predictable XML structure. A minimal test file:
 SNMP community strings and SNMPv3 user/group definitions appear across all vendors.
 Netconan covers `snmp-server community` and `snmp-server user` patterns (14+ regexes).
 
-**Vendor docs (Cisco — most comprehensive examples):**
+**GitHub repos:**
+
+- [LibreNMS — SNMP Configuration Examples](https://github.com/librenms/librenms/blob/master/doc/Support/SNMP-Configuration-Examples.md)
+  — Comprehensive multi-vendor SNMP guide covering Cisco (ASA, IOS), Juniper,
+  Extreme, Linux, Windows. Uses placeholders like `<YOUR-COMMUNITY>`.
+- [JunOS SNMPv3 example (Gist)](https://gist.github.com/rendoaw/541c41527d9c576305dd)
+  — Complete Juniper JunOS SNMPv3 config with `## SECRET-DATA` markers, MD5/SHA
+  auth, DES/AES128 privacy, community strings.
+- [jcoeder/juniper-configurations](https://github.com/jcoeder/juniper-configurations)
+  — Includes SNMPv3 set-style config snippets among its 28 files.
+- [net-snmp/net-snmp — EXAMPLE.conf](https://github.com/net-snmp/net-snmp/blob/master/EXAMPLE.conf.def)
+  — Example `snmpd.conf` with community string configuration.
+- [colin-mccarthy/ansible-playbooks-for-cisco-ios](https://github.com/colin-mccarthy/ansible-playbooks-for-cisco-ios)
+  — SNMP configuration playbooks with `snmp-server` command examples.
+
+**Vendor docs:**
 
 - [Cisco SNMPv3 Configuration Guide](https://www.cisco.com/c/en/us/td/docs/ios-xml/ios/snmp/configuration/xe-3se/3850/snmp-xe-3se-3850-book/nm-snmp-snmpv3.html)
   — Complete SNMPv3 user/group/view config examples with all security levels.
