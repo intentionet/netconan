@@ -195,9 +195,9 @@ def test_passwords_anonymized(vendor, source, config_path, output_dir):
     output_text = output_file.read_text(encoding="utf-8", errors="replace")
 
     # At minimum, the output should differ from input when passwords are present
-    assert (
-        output_text != input_text
-    ), f"Output is identical to input despite password patterns in {config_path.name}"
+    assert output_text != input_text, (
+        f"Output is identical to input despite password patterns in {config_path.name}"
+    )
 
 
 @pytest.mark.parametrize(
@@ -242,6 +242,6 @@ def test_ips_anonymized(vendor, source, config_path, output_dir):
     output_ips = extract_ip_addresses(output_text)
 
     # At least some IPs should have changed
-    assert (
-        input_ips != output_ips
-    ), f"IP addresses unchanged in {config_path.name}: {meaningful_ips}"
+    assert input_ips != output_ips, (
+        f"IP addresses unchanged in {config_path.name}: {meaningful_ips}"
+    )
