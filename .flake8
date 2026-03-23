@@ -1,0 +1,4 @@
+[flake8]
+filename=*.py,
+extend-ignore=E203,E501,D401,W503
+exclude=docs,__pycache__,.eggs,*.egg,build,virtualEnv,virtualEnv3
