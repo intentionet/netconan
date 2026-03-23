@@ -113,3 +113,6 @@ ENV/
 
 # development artifacts
 working/
+
+# downloaded test configs (see tests/TEST_DATA_SOURCES.md)
+tests/test_data/
