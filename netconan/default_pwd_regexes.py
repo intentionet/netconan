@@ -31,7 +31,6 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-
 # A raw regex rule: (pattern_string, capture_group_index_or_None)
 RegexRule = tuple[str, int | None]
 

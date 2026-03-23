@@ -224,8 +224,9 @@ def _process_one(file_anonymizer: FileAnonymizer, in_path: str, out_path: str) -
         _mkdirs(out_path)
         if os.path.isdir(out_path):
             raise ValueError(
-                "Cannot write output file; "
-                "output file is a directory ({})".format(out_path)
+                "Cannot write output file; output file is a directory ({})".format(
+                    out_path
+                )
             )
 
     in_io: IO[str] = sys.stdin if use_stdin else open(in_path, "r")
