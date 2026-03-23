@@ -221,7 +221,8 @@ class IpAnonymizer(_BaseIpAnonymizer):
         self._preserve_addresses: list[ipaddress.IPv4Network] = []
         if preserve_addresses is not None:
             self._preserve_addresses = [
-                ipaddress.ip_network(n) for n in preserve_addresses  # type: ignore[misc]
+                ipaddress.ip_network(n)
+                for n in preserve_addresses  # type: ignore[misc]
             ]
             # Make sure the prefixes are also preserved for preserved blocks, so
             # anonymized addresses outside the block don't accidentally collide
@@ -259,8 +260,7 @@ class IpAnonymizer(_BaseIpAnonymizer):
 
     @classmethod
     def make_addr(cls, addr_str: str) -> ipaddress.IPv4Address:
-        """
-        Return an IPv4 address from the given string.
+        """Return an IPv4 address from the given string.
 
         If the octets in `addr_str` have leading zeros, such as in 1.2.3.040,
         those zeros will be ignored (1.2.3.40) -- they will NOT be interpreted
