@@ -49,7 +49,7 @@
 # TODO(https://github.com/intentionet/netconan/issues/107)
 # Some of these regexes need to be updated to support quote enclosed passwords
 # which is allowed for at least some syntax on Juniper devices
-default_pwd_line_regexes = [
+default_pwd_line_regexes: list[list[tuple[str, int | None]]] = [
     [(r"(?P<prefix>set (password|pksecret)( ENC)? )(\S+)", 4)],
     [(r"(?P<prefix>(password|passwd)( level \d+)?( \d+)? )(\S+)", 5)],
     [(r"(?P<prefix>username( \S+)+ (password|secret)( \d| sha512)? )(\S+)", 5)],
@@ -135,7 +135,7 @@ default_pwd_line_regexes = [
     [(r"(\S* )*((pre-shared-|)key (ascii-text|hexadecimal)) [^ ;]+(.*)", None)],
 ]
 # Taken from RANCID community scrubbing regexes
-default_com_line_regexes = [
+default_com_line_regexes: list[list[tuple[str, int | None]]] = [
     [(r"(?P<prefix>(snmp-server (\S+ )*community)( [08])? )(\S+)", 5)],
     # TODO(https://github.com/intentionet/netconan/issues/5):
     # Confirm this catches all community possibilities for snmp-server

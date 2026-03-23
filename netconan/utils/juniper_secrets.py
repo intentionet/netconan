@@ -85,14 +85,14 @@ def _gap(c1: str, c2: str) -> int:
     return pos_diff % len(NUM_ALPHA) - 1
 
 
-def _gap_decode(gaps: List[int], dec: List[int]) -> chr:
+def _gap_decode(gaps: List[int], dec: List[int]) -> str:
     if len(gaps) != len(dec):
         raise ValueError("Nibble and decode size not the same!")
     num = sum(g * d for g, d in zip(gaps, dec))
     return chr(num % 256)
 
 
-def juniper_nonrandom_encrypt(plain: str, salt: str = None) -> str:
+def juniper_nonrandom_encrypt(plain: str, salt: str | None = None) -> str:
     """Encrypts a Juniper $9 encrypted secret.
 
     Juniper encryption takes in a salt which should be a single character.
@@ -141,7 +141,7 @@ def _fixedc(count: int) -> str:
 def _gap_encode(pc: str, prev: str, enc: List[int]) -> str:
     ord_val = ord(pc)
     crypt = ""
-    gaps = []
+    gaps: list[int] = []
     for mod in reversed(enc):
         gaps.insert(0, ord_val // mod)
         ord_val %= mod

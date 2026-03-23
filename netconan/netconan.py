@@ -27,16 +27,16 @@ from .anonymize_files import anonymize_files
 from .ip_anonymization import IpAnonymizer
 
 
-def host_bits(x):
+def host_bits(x: str) -> int:
     """Argparse type function for --preserve-host-bits."""
     # the name of this function is used for error message, apparently.
     val = int(x)
     if val < 0 or val > 32:
-        raise argparse.ArgumentError("valid values are [0, 32]")
+        raise argparse.ArgumentTypeError("valid values are [0, 32]")
     return val
 
 
-def _parse_args(argv):
+def _parse_args(argv: list[str]) -> argparse.Namespace:
     """Parse arguments from the given list."""
     parser = configargparse.ArgParser(
         # Replace the default config file help with custom message
@@ -155,10 +155,11 @@ def _parse_args(argv):
         default=8,
         help="Preserve the trailing bits of IP addresses, aka the host bits of a network. Set this value large enough to represent the largest interface network (e.g., 8 for a /24 or 12 for a /20) or NAT pool.",
     )
-    return parser.parse_args(argv)
+    result: argparse.Namespace = parser.parse_args(argv)
+    return result
 
 
-def main(argv=sys.argv[1:]):
+def main(argv: list[str] = sys.argv[1:]) -> None:
     """Netconan tool entry point."""
     args = _parse_args(argv)
 
@@ -187,23 +188,23 @@ def main(argv=sys.argv[1:]):
                 "Can only dump IP address map when anonymizing IP addresses."
             )
 
-    as_numbers = None
+    as_numbers: list[str] | None = None
     if args.as_numbers is not None:
         as_numbers = args.as_numbers.split(",")
 
-    reserved_words = None
+    reserved_words: list[str] | None = None
     if args.reserved_words is not None:
         reserved_words = args.reserved_words.split(",")
 
-    sensitive_words = None
+    sensitive_words: list[str] | None = None
     if args.sensitive_words is not None:
         sensitive_words = args.sensitive_words.split(",")
 
-    preserve_prefixes = None
+    preserve_prefixes: list[str] | None = None
     if args.preserve_prefixes is not None:
         preserve_prefixes = args.preserve_prefixes.split(",")
 
-    preserve_addresses = None
+    preserve_addresses: list[str] | None = None
     if args.preserve_addresses is not None:
         preserve_addresses = args.preserve_addresses.split(",")
 
