@@ -48,7 +48,7 @@ _KNOWN_HOSTS_KEY_REGEX = re.compile(
 )
 
 
-def _read_ssh_wire_string(data, offset):
+def _read_ssh_wire_string(data: bytes, offset: int) -> tuple[bytes | None, int]:
     """Read a length-prefixed string from SSH wire format.
 
     Returns (string_bytes, new_offset) or (None, offset) if data is too short.
@@ -61,7 +61,7 @@ def _read_ssh_wire_string(data, offset):
     return data[offset : offset + 4 + length], offset + 4 + length
 
 
-def anonymize_ssh_key_blob(base64_blob, salt):
+def anonymize_ssh_key_blob(base64_blob: str, salt: str) -> str:
     """Generate a deterministic anonymized SSH key blob preserving format.
 
     The replacement:
@@ -86,7 +86,7 @@ def anonymize_ssh_key_blob(base64_blob, salt):
         return base64_blob
 
     # Generate replacement bytes using HMAC-SHA256, expanding as needed
-    hmac_key = salt.encode() if isinstance(salt, str) else salt
+    hmac_key = salt.encode()
     replacement_bytes = b""
     counter = 0
     while len(replacement_bytes) < len(data_portion):
@@ -116,17 +116,17 @@ def anonymize_ssh_key_blob(base64_blob, salt):
     return new_blob
 
 
-def anonymize_ssh_key_hash(hex_hash, salt):
+def anonymize_ssh_key_hash(hex_hash: str, salt: str) -> str:
     """Generate a deterministic anonymized SSH key hash (MD5 fingerprint).
 
     Produces a same-length uppercase hex string from HMAC-SHA256.
     """
-    hmac_key = salt.encode() if isinstance(salt, str) else salt
+    hmac_key = salt.encode()
     h = hmac.new(hmac_key, hex_hash.encode(), hashlib.sha256)
     return h.hexdigest()[: len(hex_hash)].upper()
 
 
-def generate_ssh_key_regexes():
+def generate_ssh_key_regexes() -> list[tuple[re.Pattern[str], str]]:
     """Return compiled SSH key regexes as a list of (regex, group_name) tuples."""
     return [
         (_AUTH_KEY_REGEX, "key"),
@@ -135,7 +135,12 @@ def generate_ssh_key_regexes():
     ]
 
 
-def replace_ssh_keys(compiled_regexes, line, lookup, salt):
+def replace_ssh_keys(
+    compiled_regexes: list[tuple[re.Pattern[str], str]],
+    line: str,
+    lookup: dict[str, str],
+    salt: str,
+) -> str:
     """Replace SSH public key blobs in the given line.
 
     Args:

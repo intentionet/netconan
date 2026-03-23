@@ -67,7 +67,7 @@ class FileAnonymizer:
         self.anonymizer_sensitive_word: SensitiveWordAnonymizer | None = None
         self.compiled_regexes: list[list[CompiledRegexRule]] | None = None
         self.pwd_lookup: dict[str, str] | None = None
-        self.ssh_key_regexes: list[tuple[re.Pattern[str], int]] | None = None
+        self.ssh_key_regexes: list[tuple[re.Pattern[str], str]] | None = None
         self.ssh_key_lookup: dict[str, str] | None = None
 
         # The salt is only used for IP and sensitive word anonymization
