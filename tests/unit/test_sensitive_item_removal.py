@@ -37,7 +37,8 @@ from netconan.sensitive_item_removal import (
 arista_password_lines = [
     (
         "username noc secret sha512 {}",
-        "$6$RMxgK5ALGIf.nWEC$tHuKCyfNtJMCY561P52dTzHUmYMmLxb/Mxik.j3vMUs8lMCPocM00/NAS.SN6GCWx7d/vQIgxnClyQLAb7n3x0",
+        # Hash of "netconanExamplePassword" using sha512_crypt
+        "$6$DOphiwNHNVLzCXmR$4sS7hYY6UPAnX6oXU9rIbCqKgTJBf9wJ4Hf2sz7HYPjH7Wrn9II1vS0wdHtirRHv1YACC.E.YDlaUb9U8ysvk0",
     ),
     ("   vrrp 2 authentication text {}", "RemoveMe"),
 ]
@@ -197,6 +198,21 @@ juniper_password_lines = [
     ),
     ("set snmp community {} authorization read-only", "SECRETTEXT"),
     ("set snmp trap-group {} otherstuff", "SECRETTEXT"),
+    (
+        'set system root-authentication encrypted-password "{}"',
+        # Hash of "netconanExamplePassword" using sha512_crypt
+        "$6$DOphiwNHNVLzCXmR$4sS7hYY6UPAnX6oXU9rIbCqKgTJBf9wJ4Hf2sz7HYPjH7Wrn9II1vS0wdHtirRHv1YACC.E.YDlaUb9U8ysvk0",
+    ),
+    (
+        'set system login user admin authentication encrypted-password "{}"',
+        # Hash of "netconanExamplePassword" using sha512_crypt
+        "$6$DOphiwNHNVLzCXmR$4sS7hYY6UPAnX6oXU9rIbCqKgTJBf9wJ4Hf2sz7HYPjH7Wrn9II1vS0wdHtirRHv1YACC.E.YDlaUb9U8ysvk0",
+    ),
+    (
+        'encrypted-password "{}";',
+        # Hash of "netconanExamplePassword" using sha512_crypt
+        "$6$DOphiwNHNVLzCXmR$4sS7hYY6UPAnX6oXU9rIbCqKgTJBf9wJ4Hf2sz7HYPjH7Wrn9II1vS0wdHtirRHv1YACC.E.YDlaUb9U8ysvk0",
+    ),
     ("key hexadecimal {}", "ABCDEF123456"),
     (
         'authentication-key "{}";',
@@ -303,7 +319,13 @@ sensitive_items_and_formats = [
         _sensitive_item_formats.juniper_type9,
     ),
     (
-        "$6$RMxgK5ALGIf.nWEC$tHuKCyfNtJMCY561P52dTzHUmYMmLxb/Mxik.j3vMUs8lMCPocM00/NAS.SN6GCWx7d/vQIgxnClyQLAb7n3x0",
+        # Hash of "netconanExamplePassword" using sha256_crypt
+        "$5$dyjYlf.RKgW5cjA5$5OmkZF/RpklPYw8oC9k8nxKIh0RzyNmx74zPJ1CRuz8",
+        _sensitive_item_formats.sha256,
+    ),
+    (
+        # Hash of "netconanExamplePassword" using sha512_crypt
+        "$6$DOphiwNHNVLzCXmR$4sS7hYY6UPAnX6oXU9rIbCqKgTJBf9wJ4Hf2sz7HYPjH7Wrn9II1vS0wdHtirRHv1YACC.E.YDlaUb9U8ysvk0",
         _sensitive_item_formats.sha512,
     ),
 ]
@@ -327,6 +349,8 @@ unique_passwords = [
     "PasswordThree",
     "$9$HqfQ1IcrK8n/t0IcvM24aZGi6/t",
     "$1$CNANTest$xAfu6Am1d5D/.6OVICuOu/",
+    # Hash of "netconanExamplePassword" using sha256_crypt
+    "$5$dyjYlf.RKgW5cjA5$5OmkZF/RpklPYw8oC9k8nxKIh0RzyNmx74zPJ1CRuz8",
     "$6$NQJRTiqxZiNR0aWI$hU1EPleWl6wGcMtDxaMEqNhN8WnxEqmeFjWC5h8oh5USSn5P9ZgFXbf2giO8nEtM.yBXO3O6b.76LQ1zlmG3B0",
 ]
 
@@ -680,13 +704,13 @@ def test_pwd_removal_preserve_trailing_whitespace(regexes, whitespace):
 
 
 @pytest.mark.parametrize("whitespace", [" ", "\t", "\n", " \t\n"])
-def test_line_scrub_preserve_trailing_whitespace(regexes, whitespace):
-    """Test trailing whitespace is preserved when line is scrubbed (encrypted-password case)."""
-    # encrypted-password triggers line scrubbing (sensitive_item_num=None)
+def test_encrypted_password_preserve_trailing_whitespace(regexes, whitespace):
+    """Test trailing whitespace is preserved when encrypted-password is anonymized."""
     config_line = "        encrypted-password SECRET{}".format(whitespace)
     pwd_lookup = {}
     processed_line = replace_matching_item(regexes, config_line, pwd_lookup, SALT)
-    assert _LINE_SCRUBBED_MESSAGE in processed_line
+    assert "SECRET" not in processed_line
+    assert _LINE_SCRUBBED_MESSAGE not in processed_line
     assert processed_line.endswith(whitespace)
 
 

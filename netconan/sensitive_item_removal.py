@@ -23,7 +23,7 @@ from enum import Enum
 from hashlib import md5
 
 # Using passlib for digests not supported by hashlib
-from passlib.hash import cisco_type7, md5_crypt, sha512_crypt
+from passlib.hash import cisco_type7, md5_crypt, sha256_crypt, sha512_crypt
 
 from netconan.utils import juniper_secrets
 
@@ -75,7 +75,7 @@ aws_regexes = [
 # These are extra regexes to find lines that seem like they might contain
 # sensitive info (these are not already caught by RANCID default regexes)
 extra_password_regexes = [
-    [(r"(?<=encrypted-password )(\S+)", None)],
+    [(r"(?<=encrypted-password )(\S+)", 1)],
     [(r'(?<=key ")([^"]+)', 1)],
     [(r"(?<=key-hash sha256 )(\S+)", 1)],
     # Replace communities that do not look like well-known BGP communities
@@ -86,6 +86,8 @@ extra_password_regexes = [
     # Catch-all's matching what looks like hashed passwords
     [(r'("?\$9\$[^\s;"]+)', 1)],
     [(r'("?\$1\$[^\s;"]+)', 1)],
+    [(r'("?\$5\$[^\s;"]+)', 1)],
+    [(r'("?\$6\$[^\s;"]+)', 1)],
 ]
 
 
@@ -221,6 +223,7 @@ class _sensitive_item_formats(Enum):
     text = 5
     sha512 = 6
     juniper_type9 = 7
+    sha256 = 8
 
 
 def anonymize_as_numbers(anonymizer, line):
@@ -280,6 +283,9 @@ def _anonymize_value(raw_val, lookup, reserved_words, salt):
         # identify anonymized lines
         anon_val = md5_crypt.using(salt="0" * old_salt_size).hash(anon_val)
 
+    if item_format == _sensitive_item_formats.sha256:
+        anon_val = sha256_crypt.using(rounds=5000).hash(anon_val)
+
     if item_format == _sensitive_item_formats.sha512:
         # Hash anon_val w/standard rounds=5000 to omit rounds parameter from hash output
         anon_val = sha512_crypt.using(rounds=5000).hash(anon_val)
@@ -302,6 +308,8 @@ def _check_sensitive_item_format(val):
     # specific format so it should override hex or text)
     if re.match(r"^\$9\$[\S]+$", val):
         item_format = _sensitive_item_formats.juniper_type9
+    if re.match(r"^\$5\$[\S]+$", val):
+        item_format = _sensitive_item_formats.sha256
     if re.match(r"^\$6\$[\S]+$", val):
         item_format = _sensitive_item_formats.sha512
     if re.match(r"^\$1\$[\S]+\$[\S]+$", val):
