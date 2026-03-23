@@ -1,5 +1,4 @@
 """Default reserved words that should not be anonymized by sensitive word anonymization."""
-
 #   Copyright 2018 Intentionet
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,8 +22,8 @@
 # These are important tokens in network device configs and should not be modified by keyword anonymization
 default_reserved_words = {
     "!",
-    '"',
-    '"${node}"',
+    "\"",
+    "\"${node}\"",
     "#",
     "$",
     "%",
@@ -78,7 +77,7 @@ default_reserved_words = {
     "@",
     "[",
     "\\",
-    '\\"',
+    "\\\"",
     "\\n",
     "\\r",
     "]",
@@ -1623,6 +1622,7 @@ default_reserved_words = {
     "filter-duplicates",
     "filter-interfaces",
     "filter-list",
+    "filter-specific",
     "filtering",
     "fin",
     "fin-no-ack",
@@ -2523,6 +2523,7 @@ default_reserved_words = {
     "logfile",
     "logging",
     "logical",
+    "logical-interface-policer",
     "logical-system",
     "logical-systems",
     "login",
@@ -4256,6 +4257,7 @@ default_reserved_words = {
     "source-address-filter",
     "source-address-name",
     "source-address-translation",
+    "source-class",
     "source-hip",
     "source-host-isolated",
     "source-identity",
@@ -4895,6 +4897,7 @@ default_reserved_words = {
     "units",
     "universal",
     "unix-socket",
+    "unknown",
     "unknown-protocol",
     "unknown-unicast",
     "unnumbered",
@@ -4994,6 +4997,7 @@ default_reserved_words = {
     "valid-network-oui-profile",
     "validate",
     "validation",
+    "validation-database",
     "validation-state",
     "validation-usage",
     "value",
