@@ -25,9 +25,9 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
 ]
 dependencies = [
-    "bidict<1.0.0",
-    "configargparse<2.0.0",
-    "passlib<2.0.0",
+    "bidict",
+    "configargparse",
+    "passlib",
 ]
 dynamic = ["version"]
 
@@ -35,9 +35,9 @@ dynamic = ["version"]
 dev = ["ruff>=0.15"]
 test = [
     "pytest>=7",
-    "pytest-cov<6.0.0",
-    "requests_mock<2.0.0",
-    "testfixtures<7.0.0",
+    "pytest-cov<8.0.0",
+    "requests-mock<2.0.0",
+    "testfixtures<9.0.0",
 ]
 
 [project.scripts]
