@@ -20,7 +20,9 @@ import ipaddress
 import logging
 import re
 from abc import ABCMeta, abstractmethod
+from collections.abc import Sequence
 from hashlib import md5
+from typing import IO, Callable
 
 from bidict import bidict
 
@@ -66,7 +68,7 @@ IPv6_PATTERN = re.compile(
 )
 
 
-def _generate_bit_from_hash(salt, string):
+def _generate_bit_from_hash(salt: str, string: str) -> int:
     """Return the last bit of the result from hashing the input string."""
     last_hash_digit = md5((salt + string).encode()).hexdigest()[-1]
     return int(last_hash_digit, 16) & 1
@@ -74,16 +76,20 @@ def _generate_bit_from_hash(salt, string):
 
 class _BaseIpAnonymizer(object, metaclass=ABCMeta):
     def __init__(
-        self, salt, length, salter=_generate_bit_from_hash, preserve_suffix=None
-    ):
+        self,
+        salt: str,
+        length: int,
+        salter: Callable[[str, str], int] = _generate_bit_from_hash,
+        preserve_suffix: int | None = None,
+    ) -> None:
         self.salt = salt
-        self.cache = bidict({"": ""})
+        self.cache: bidict[str, str] = bidict({"": ""})
         self.length = length
         self.fmt = "{{:0{length}b}}".format(length=length)
         self.salter = salter
         self.preserve_suffix = 0 if preserve_suffix is None else preserve_suffix
 
-    def anonymize(self, ip_int):
+    def anonymize(self, ip_int: int) -> int:
         bits = self.fmt.format(ip_int)
         if self.preserve_suffix == 0:
             anon_bits = self._anonymize_bits(bits)
@@ -98,8 +104,8 @@ class _BaseIpAnonymizer(object, metaclass=ABCMeta):
             self.cache[bits] = anon_bits
         return int(anon_bits, 2)
 
-    def _anonymize_bits(self, bits):
-        ret = self.cache.get(bits)
+    def _anonymize_bits(self, bits: str) -> str:
+        ret: str | None = self.cache.get(bits)
         if ret is not None:
             return ret
 
@@ -111,7 +117,7 @@ class _BaseIpAnonymizer(object, metaclass=ABCMeta):
         self.cache[bits] = ret
         return ret
 
-    def deanonymize(self, ip_int):
+    def deanonymize(self, ip_int: int) -> int:
         bits = self.fmt.format(ip_int)
         if self.preserve_suffix == 0:
             deanon_bits = self._deanonymize_bits(bits)
@@ -124,8 +130,8 @@ class _BaseIpAnonymizer(object, metaclass=ABCMeta):
 
         return int(deanon_bits, 2)
 
-    def _deanonymize_bits(self, bits):
-        ret = self.cache.inv.get(bits)
+    def _deanonymize_bits(self, bits: str) -> str:
+        ret: str | None = self.cache.inv.get(bits)
         if ret is not None:
             return ret
 
@@ -138,7 +144,7 @@ class _BaseIpAnonymizer(object, metaclass=ABCMeta):
         self.cache.inv[bits] = ret
         return ret
 
-    def dump_to_file(self, file_out):
+    def dump_to_file(self, file_out: IO[str]) -> None:
         ips = (
             (bits, anon_bits)
             for bits, anon_bits in self.cache.items()
@@ -150,26 +156,28 @@ class _BaseIpAnonymizer(object, metaclass=ABCMeta):
             file_out.write("{}\t{}\n".format(ip, anon))
 
     @classmethod
-    def _ip_to_str(cls, bits):
+    def _ip_to_str(cls, bits: str) -> str:
         return str(cls.make_addr_from_int(int(bits, 2)))
 
     @classmethod
     @abstractmethod
-    def get_addr_pattern(cls):
+    def get_addr_pattern(cls) -> re.Pattern[str]:
         raise NotImplementedError()
 
     @classmethod
     @abstractmethod
-    def make_addr(cls, addr_str):
+    def make_addr(cls, addr_str: str) -> ipaddress.IPv4Address | ipaddress.IPv6Address:
         raise NotImplementedError()
 
     @classmethod
     @abstractmethod
-    def make_addr_from_int(cls, ip_int):
+    def make_addr_from_int(
+        cls, ip_int: int
+    ) -> ipaddress.IPv4Address | ipaddress.IPv6Address:
         raise NotImplementedError()
 
     @abstractmethod
-    def should_anonymize(self, ip_int):
+    def should_anonymize(self, ip_int: int) -> bool:
         raise NotImplementedError()
 
 
@@ -193,24 +201,36 @@ class IpAnonymizer(_BaseIpAnonymizer):
 
     _DROP_ZEROS_PATTERN = re.compile(r"0*(\d+)\.0*(\d+)\.0*(\d+)\.0*(\d+)")
 
-    def __init__(self, salt, preserve_prefixes=None, preserve_addresses=None, **kwargs):
+    def __init__(
+        self,
+        salt: str,
+        preserve_prefixes: Sequence[str] | None = None,
+        preserve_addresses: Sequence[str] | None = None,
+        preserve_suffix: int | None = None,
+        salter: Callable[[str, str], int] = _generate_bit_from_hash,
+    ) -> None:
         """Create an anonymizer using the specified salt."""
-        super(IpAnonymizer, self).__init__(salt, 32, **kwargs)
+        super(IpAnonymizer, self).__init__(
+            salt, 32, salter=salter, preserve_suffix=preserve_suffix
+        )
 
+        prefixes: list[str]
         if preserve_prefixes is None:
-            preserve_prefixes = list(self.DEFAULT_PRESERVED_PREFIXES)
+            prefixes = list(self.DEFAULT_PRESERVED_PREFIXES)
+        else:
+            prefixes = list(preserve_prefixes)
 
-        self._preserve_addresses = []
+        self._preserve_addresses: list[ipaddress.IPv4Network] = []
         if preserve_addresses is not None:
             self._preserve_addresses = [
-                ipaddress.ip_network(n) for n in preserve_addresses
+                ipaddress.ip_network(n) for n in preserve_addresses  # type: ignore[misc]
             ]
             # Make sure the prefixes are also preserved for preserved blocks, so
             # anonymized addresses outside the block don't accidentally collide
-            preserve_prefixes.extend(preserve_addresses)
+            prefixes.extend(preserve_addresses)
 
         # Preserve relevant prefixes
-        for subnet_str in preserve_prefixes:
+        for subnet_str in prefixes:
             subnet = ipaddress.ip_network(subnet_str)
             prefix_bits = self.fmt.format(int(subnet.network_address))[
                 : subnet.prefixlen
@@ -220,7 +240,7 @@ class IpAnonymizer(_BaseIpAnonymizer):
                 self.cache[value + "0"] = value + "0"
                 self.cache[value + "1"] = value + "1"
 
-    def _is_mask(self, possible_mask_int):
+    def _is_mask(self, possible_mask_int: int) -> bool:
         """Return True if the input int can be used as a 32-bit prefix mask.
 
         An IP address used as a prefix mask in IPv4 is either 1s followed by 0s,
@@ -235,12 +255,12 @@ class IpAnonymizer(_BaseIpAnonymizer):
         return (diff & ((0xFFFFFFFF ^ diff) + 1)) == diff
 
     @classmethod
-    def get_addr_pattern(cls):
+    def get_addr_pattern(cls) -> re.Pattern[str]:
         """Return a compiled regex pattern to recognize IPv4 addresses."""
         return IPv4_PATTERN
 
     @classmethod
-    def make_addr(cls, addr_str):
+    def make_addr(cls, addr_str: str) -> ipaddress.IPv4Address:
         """
         Return an IPv4 address from the given string.
 
@@ -252,11 +272,11 @@ class IpAnonymizer(_BaseIpAnonymizer):
         return ipaddress.IPv4Address(addr_str)
 
     @classmethod
-    def make_addr_from_int(cls, ip_int):
+    def make_addr_from_int(cls, ip_int: int) -> ipaddress.IPv4Address:
         """Return an IPv4 address with the given int representation."""
         return ipaddress.IPv4Address(ip_int)
 
-    def should_anonymize(self, ip_int):
+    def should_anonymize(self, ip_int: int) -> bool:
         """Check if a given address should be anonymized (e.g. is it a mask or address?)."""
         ip = ipaddress.ip_address(ip_int)
         return not (
@@ -267,31 +287,40 @@ class IpAnonymizer(_BaseIpAnonymizer):
 class IpV6Anonymizer(_BaseIpAnonymizer):
     """An anonymizer for IPv6 addresses."""
 
-    def __init__(self, salt, **kwargs):
+    def __init__(
+        self,
+        salt: str,
+        preserve_suffix: int | None = None,
+        salter: Callable[[str, str], int] = _generate_bit_from_hash,
+    ) -> None:
         """Create an anonymizer using the specified salt."""
-        super(IpV6Anonymizer, self).__init__(salt, 128, **kwargs)
+        super(IpV6Anonymizer, self).__init__(
+            salt, 128, salter=salter, preserve_suffix=preserve_suffix
+        )
 
     @classmethod
-    def get_addr_pattern(cls):
+    def get_addr_pattern(cls) -> re.Pattern[str]:
         """Return a compiled regex pattern to recognize IPv6 addresses."""
         return IPv6_PATTERN
 
     @classmethod
-    def make_addr(cls, addr_str):
+    def make_addr(cls, addr_str: str) -> ipaddress.IPv6Address:
         """Return an IPv6 address from the given string."""
         return ipaddress.IPv6Address(addr_str)
 
     @classmethod
-    def make_addr_from_int(cls, ip_int):
+    def make_addr_from_int(cls, ip_int: int) -> ipaddress.IPv6Address:
         """Return an IPv6 address with the given int representation."""
         return ipaddress.IPv6Address(ip_int)
 
-    def should_anonymize(self, ip_int):
+    def should_anonymize(self, ip_int: int) -> bool:
         """Check if a given address should be anonymized."""
         return True
 
 
-def _anonymize_match(anonymizer, match, undo_ip_anon):
+def _anonymize_match(
+    anonymizer: _BaseIpAnonymizer, match: str, undo_ip_anon: bool
+) -> str:
     ip = anonymizer.make_addr(match)
     ip_int = int(ip)
     if not anonymizer.should_anonymize(ip_int):
@@ -307,7 +336,9 @@ def _anonymize_match(anonymizer, match, undo_ip_anon):
     return str(new_ip)
 
 
-def anonymize_ip_addr(anonymizer, line, undo_ip_anon=False):
+def anonymize_ip_addr(
+    anonymizer: _BaseIpAnonymizer, line: str, undo_ip_anon: bool = False
+) -> str:
     """Replace each IP address in the line with an anonymized IP address.
 
     Masks will be unchanged. That is, any IP address that, when written in
