@@ -32,7 +32,7 @@ dependencies = [
 dynamic = ["version"]
 
 [project.optional-dependencies]
-dev = ["ruff>=0.15"]
+dev = ["mypy", "ruff>=0.15"]
 test = [
     "pytest>=7",
     "pytest-cov<8.0.0",
