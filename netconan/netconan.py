@@ -80,7 +80,7 @@ def _parse_args(argv):
         "-i",
         "--input",
         required=True,
-        help="Input file or directory containing files to anonymize",
+        help="Input file or directory containing files to anonymize (use - for stdin)",
     )
     parser.add_argument(
         "-l",
@@ -99,7 +99,7 @@ def _parse_args(argv):
         "-o",
         "--output",
         required=True,
-        help="Output file or directory where anonymized files are placed",
+        help="Output file or directory where anonymized files are placed (use - for stdout)",
     )
     parser.add_argument(
         "-p",
