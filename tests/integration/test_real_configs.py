@@ -1,16 +1,20 @@
 """Integration tests that run netconan against real-world config files.
 
-Discovers configs downloaded into tests/test_data/{vendor}/{source}/ and
-runs netconan against each, verifying:
+Discovers configs in two directories:
+  - tests/test_data/{vendor}/{source}/  — downloaded by the download script
+  - tests/test_data_local/{vendor}/{source}/  — your own local configs
+
+Runs netconan against each file and verifies:
   - No crashes (no unhandled exceptions)
   - Output file is produced and non-empty
   - Password-like patterns are anonymized when present in input
   - IP addresses are changed when present in input
 
-Requires test data to be downloaded first:
-    python tools/download_test_configs.py
+Requires test data to be downloaded or placed manually:
+    python tools/download_test_configs.py      # downloaded data
+    tests/test_data_local/{vendor}/{source}/   # your own configs
 
-The entire suite is skipped if tests/test_data/ does not exist.
+The entire suite is skipped if neither directory contains config files.
 """
 
 import os
@@ -21,8 +25,9 @@ import pytest
 
 from netconan.netconan import main
 
-# Root test data directory
+# Test data directories (both are scanned for configs)
 TEST_DATA_DIR = Path(__file__).parent.parent / "test_data"
+TEST_DATA_LOCAL_DIR = Path(__file__).parent.parent / "test_data_local"
 
 # Regex for detecting password-like patterns in input configs.
 # Intentionally conservative — only match patterns that netconan's password
@@ -50,12 +55,12 @@ _SKIP_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".pdf", ".gz", ".tar", ".zi
 _MAX_FILE_SIZE = 10 * 1024 * 1024
 
 
-def discover_test_configs():
-    """Scan tests/test_data/ and return (vendor, source, filepath) tuples."""
-    if not TEST_DATA_DIR.is_dir():
+def _scan_data_dir(data_dir):
+    """Scan a test data directory and return (vendor, source, filepath) tuples."""
+    if not data_dir.is_dir():
         return []
     configs = []
-    for vendor_dir in sorted(TEST_DATA_DIR.iterdir()):
+    for vendor_dir in sorted(data_dir.iterdir()):
         if not vendor_dir.is_dir() or vendor_dir.name.startswith("."):
             continue
         vendor = vendor_dir.name
@@ -74,6 +79,11 @@ def discover_test_configs():
                     continue
                 configs.append((vendor, source, config_file))
     return configs
+
+
+def discover_test_configs():
+    """Scan test_data/ and test_data_local/ for config files."""
+    return _scan_data_dir(TEST_DATA_DIR) + _scan_data_dir(TEST_DATA_LOCAL_DIR)
 
 
 def has_password_patterns(content):
