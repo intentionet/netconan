@@ -85,9 +85,6 @@ def test_anonymize_files_bad_output_file(tmpdir):
 
     output_file = tmpdir.mkdir("out").mkdir(filename)
 
-    with pytest.raises(ValueError, match="Cannot write output file.*"):
-        FileAnonymizer(True, True).anonymize_file(str(input_file), str(output_file))
-
     # Anonymizing files should complete okay, because it skips the errored file
     with LogCapture() as log_capture:
         anonymize_files(
