@@ -223,8 +223,7 @@ def main(argv: list[str] = sys.argv[1:]) -> None:
         ]
     ):
         logging.warning(
-            "No anonymization options turned on, "
-            "no output file(s) will be generated."
+            "No anonymization options turned on, no output file(s) will be generated."
         )
     else:
         anonymize_files(
