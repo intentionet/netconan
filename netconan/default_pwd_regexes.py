@@ -136,7 +136,7 @@ default_pwd_line_regexes: list[list[RegexRule]] = [
     #     (to make sure the regex handles different syntaxes allowed in the line)
     [(r"(\S* )*md5 \d+ key [^ ;]+(.*)", None)],
     [(r"(\S* )*(secret|simple-password) [^ ;]+(.*)", None)],
-    [(r"(\S* )*encrypted-password [^ ;]+(.*)", None)],
+    [(r"(?P<prefix>(\S* )*encrypted-password )([^ ;]+)", 3)],
     [(r"(\S* )*ssh-(rsa|dsa) \"(.*)", None)],
     [(r"(\S* )*((pre-shared-|)key (ascii-text|hexadecimal)) [^ ;]+(.*)", None)],
 ]

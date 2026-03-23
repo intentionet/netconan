@@ -80,7 +80,7 @@ aws_regexes: list[list[RegexRule]] = [
 
 # These are extra regexes to find lines that seem like they might contain
 # sensitive info (these are not already caught by RANCID default regexes)
-extra_password_regexes = [
+extra_password_regexes: list[list[RegexRule]] = [
     [(r"(?<=encrypted-password )(\S+)", 1)],
     [(r'(?<=key ")([^"]+)', 1)],
     [(r"(?<=key-hash sha256 )(\S+)", 1)],
