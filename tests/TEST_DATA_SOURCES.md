@@ -292,6 +292,57 @@ snmp-server group MYGROUP v3 priv read MYVIEW write MYVIEW
 snmp-server user MYUSER MYGROUP v3 auth sha AuthPass123 priv aes 128 PrivPass456
 ```
 
+## Automated Testing
+
+An automated download script and integration test suite are provided to streamline
+testing against real-world configs.
+
+### Downloading configs
+
+```bash
+# Download all vendors
+python tools/download_test_configs.py
+
+# Download specific vendors only
+python tools/download_test_configs.py --vendors cisco arista
+
+# Force re-download (overwrite existing)
+python tools/download_test_configs.py --force
+```
+
+Configs are downloaded into `tests/test_data/{vendor}/{source}/`. The directory is
+git-ignored so downloaded configs are never committed.
+
+**Current sources (7 across 5 vendors):**
+
+| Vendor | Source | Method | Files |
+|--------|--------|--------|-------|
+| cisco | batfish | git sparse | Cisco IOS/IOS-XE test configs |
+| cisco | ciscoconfparse | git sparse | `*.ios` parser test fixtures |
+| arista | batfish | git sparse | Arista EOS test configs |
+| juniper_flat | jcoeder | git clone | 28 production-style set-style snippets |
+| juniper_hierarchical | batfish | git sparse | Hierarchical (brace-style) Juniper configs |
+| fortinet | batfish | git sparse | FortiOS test configs |
+| fortinet | azure | curl | FortiGate `show full-configuration` |
+
+### Running integration tests
+
+```bash
+# Run integration tests (skips if test_data/ not present)
+python -m pytest tests/integration/test_real_configs.py -v
+
+# Run only crash tests (fastest)
+python -m pytest tests/integration/test_real_configs.py -v -k test_no_crash
+
+# Run only password anonymization checks
+python -m pytest tests/integration/test_real_configs.py -v -k test_passwords_anonymized
+```
+
+The integration tests verify three things per config file:
+1. **No crash** — netconan processes the file without exceptions
+2. **Passwords anonymized** — if the input contains password patterns, the output differs
+3. **IPs anonymized** — if the input contains IP addresses, some change in the output
+
 ## Using Test Data for Development
 
 ### Running netconan against downloaded configs
