@@ -85,7 +85,9 @@ default_pwd_line_regexes = [
         )
     ],
     [(r"(?P<prefix>(tacacs|radius)-server (\S+ )*key( \d)? )(\S+)", 5)],
-    [(r"(?P<prefix>key( \d| hexadecimal)? )(\S+)", 3)],
+    # Require 7+ chars to avoid false positives on short values like key-chain
+    # key IDs (e.g. "key 10" in Juniper authentication-key-chains).
+    [(r"(?P<prefix>key( \d| hexadecimal)? )(\S{7,})", 3)],
     [(r"(?P<prefix>ntp authentication-key \d+ md5 )(\S+)", 2)],
     [(r"(?P<prefix>syscon( password| address \S+) )(\S+)", 3)],
     [
@@ -112,7 +114,7 @@ default_pwd_line_regexes = [
     [(r"(ldap-login-password) \S+(.*)", None)],
     [
         (
-            r"((ikev1 )?(pre-shared-key |key |failover key )(ascii-text |hexadecimal )?).*(.*)",
+            r"((ikev1 )?(pre-shared-key (ascii-text |hexadecimal )?|key (ascii-text |hexadecimal )|failover key )).*(.*)",
             None,
         )
     ],
