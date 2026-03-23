@@ -12,7 +12,6 @@ This work was modified from the original in the following ways:
 """
 
 import re
-from typing import List, Tuple
 
 MAGIC = "$9$"
 
@@ -73,7 +72,7 @@ def juniper_decrypt(crypt: str) -> str:
     return decrypt
 
 
-def _nibble(chars: str, length: int) -> Tuple[str, str]:
+def _nibble(chars: str, length: int) -> tuple[str, str]:
     nib = chars[:length]
     chars = chars[length:]
     return nib, chars
@@ -85,7 +84,7 @@ def _gap(c1: str, c2: str) -> int:
     return pos_diff % len(NUM_ALPHA) - 1
 
 
-def _gap_decode(gaps: List[int], dec: List[int]) -> str:
+def _gap_decode(gaps: list[int], dec: list[int]) -> str:
     if len(gaps) != len(dec):
         raise ValueError("Nibble and decode size not the same!")
     num = sum(g * d for g, d in zip(gaps, dec))
@@ -138,7 +137,7 @@ def _fixedc(count: int) -> str:
         return ""
 
 
-def _gap_encode(pc: str, prev: str, enc: List[int]) -> str:
+def _gap_encode(pc: str, prev: str, enc: list[int]) -> str:
     ord_val = ord(pc)
     crypt = ""
     gaps: list[int] = []
