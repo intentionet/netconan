@@ -64,10 +64,12 @@ def test_config_file(tmpdir):
     """Test config file args are parsed."""
     cfg_file = str(tmpdir.mkdir("config_file").join("config.cfg"))
     with open(cfg_file, "w") as f:
-        f.write("""[Defaults]
+        f.write(
+            """[Defaults]
         input=in
         output=out
-        log-level=CRITICAL""")
+        log-level=CRITICAL"""
+        )
     args = _parse_args(["-c={}".format(cfg_file)])
 
     assert "in" == args.input
@@ -85,10 +87,12 @@ def test_config_file_and_override(tmpdir):
     """Test command line args override config file args."""
     cfg_file = str(tmpdir.mkdir("config_file").join("config.cfg"))
     with open(cfg_file, "w") as f:
-        f.write("""[Defaults]
+        f.write(
+            """[Defaults]
         input=in
         output=out
-        log-level=CRITICAL""")
+        log-level=CRITICAL"""
+        )
     args = _parse_args(["-c={}".format(cfg_file), "--input=override"])
 
     assert "override" == args.input
