@@ -14,11 +14,10 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-from __future__ import absolute_import
-
 import logging
 import re
 from binascii import b2a_hex
+from collections.abc import Sequence
 from enum import Enum
 from hashlib import md5
 
@@ -27,8 +26,15 @@ from passlib.hash import cisco_type7, md5_crypt, sha256_crypt, sha512_crypt
 
 from netconan.utils import juniper_secrets
 
-from .default_pwd_regexes import default_com_line_regexes, default_pwd_line_regexes
+from .default_pwd_regexes import (
+    RegexRule,
+    default_com_line_regexes,
+    default_pwd_line_regexes,
+)
 from .default_reserved_words import default_reserved_words
+
+# A compiled regex rule: (compiled_pattern, capture_group_index_or_None)
+CompiledRegexRule = tuple[re.Pattern[str], int | None]
 
 # A regex matching any of the characters that are allowed to precede a password
 # regex (e.g. sensitive line is allowed to be in quotes or after a colon)
@@ -67,14 +73,14 @@ _PASSWORD_ENCLOSING_TEXT = ["\\'", '\\"', "'", '"', " "]
 _PASSWORD_ENCLOSING_HEAD_TEXT = _PASSWORD_ENCLOSING_TEXT + ["[", "{"]
 _PASSWORD_ENCLOSING_TAIL_TEXT = _PASSWORD_ENCLOSING_TEXT + ["]", "}", ";", ","]
 
-aws_regexes = [
+aws_regexes: list[list[RegexRule]] = [
     [(r"(?<=\<pre_shared_key\>).{32}(?=\<\/pre_shared_key)", 0)],
     [(r"(?<=PreSharedKey\": \").{32}", 0)],
 ]
 
 # These are extra regexes to find lines that seem like they might contain
 # sensitive info (these are not already caught by RANCID default regexes)
-extra_password_regexes = [
+extra_password_regexes: list[list[RegexRule]] = [
     [(r"(?<=encrypted-password )(\S+)", 1)],
     [(r'(?<=key ")([^"]+)', 1)],
     [(r"(?<=key-hash sha256 )(\S+)", 1)],
@@ -98,17 +104,17 @@ class AsNumberAnonymizer(object):
     # Except the last, which just serves to indicate the end of the previous block
     _AS_NUM_BOUNDARIES = [0, 64512, 65536, 4200000000, 4294967296]
 
-    def __init__(self, as_numbers, salt):
+    def __init__(self, as_numbers: Sequence[str], salt: str) -> None:
         """Create an anonymizer for the specified list of AS numbers (strings) and salt."""
         self.salt = salt
         self._generate_as_number_regex(as_numbers)
         self._generate_as_number_replacement_map(as_numbers)
 
-    def anonymize(self, as_number):
+    def anonymize(self, as_number: str) -> str:
         """Anonymize the specified AS number (string)."""
         return self.as_num_map[as_number]
 
-    def _generate_as_number_regex(self, as_numbers):
+    def _generate_as_number_regex(self, as_numbers: Sequence[str]) -> None:
         """Generate regex for finding AS number."""
         # Match a non-digit, any of the AS numbers and another non-digit
         # Using lookahead and lookbehind to match on context but not include that context in the match
@@ -116,29 +122,30 @@ class AsNumberAnonymizer(object):
             r"(?:(?<=\D)|(?<=^))({})(?=\D|$)".format("|".join(as_numbers))
         )
 
-    def _generate_as_number_replacement(self, as_number):
+    def _generate_as_number_replacement(self, as_number: str) -> str:
         """Generate a replacement AS number for the given AS number and salt."""
         hash_val = int(md5((self.salt + as_number).encode()).hexdigest(), 16)
-        as_number = int(as_number)
-        if as_number < 0 or as_number > 4294967295:
+        as_number_int = int(as_number)
+        if as_number_int < 0 or as_number_int > 4294967295:
             raise ValueError(
                 "AS number provided was outside accepted range (0-4294967295)"
             )
 
         block_begin = 0
         for next_block_begin in self._AS_NUM_BOUNDARIES:
-            if as_number < next_block_begin:
+            if as_number_int < next_block_begin:
                 return str(hash_val % (next_block_begin - block_begin) + block_begin)
             block_begin = next_block_begin
+        raise ValueError(f"AS number {as_number} did not fall into any block")
 
-    def _generate_as_number_replacement_map(self, as_numbers):
+    def _generate_as_number_replacement_map(self, as_numbers: Sequence[str]) -> None:
         """Generate map of AS numbers and their replacements."""
-        self.as_num_map = {
+        self.as_num_map: dict[str, str] = {
             as_num: self._generate_as_number_replacement(as_num)
             for as_num in as_numbers
         }
 
-    def get_as_number_pattern(self):
+    def get_as_number_pattern(self) -> re.Pattern[str]:
         """Return the compiled regex to find AS numbers."""
         return self.as_num_regex
 
@@ -146,7 +153,12 @@ class AsNumberAnonymizer(object):
 class SensitiveWordAnonymizer(object):
     """An anonymizer for sensitive keywords."""
 
-    def __init__(self, sensitive_words, salt, reserved_words=default_reserved_words):
+    def __init__(
+        self,
+        sensitive_words: Sequence[str],
+        salt: str,
+        reserved_words: set[str] = default_reserved_words,
+    ) -> None:
         """Create an anonymizer for specified list of sensitive words and set of reserved words to leave alone."""
         # Canonicalize reserved and sensitive words so case doesn't matter for
         # internal comparisons
@@ -155,13 +167,13 @@ class SensitiveWordAnonymizer(object):
 
         self.salt = salt
         self.sens_regex = self._generate_sensitive_word_regex(sensitive_words_)
-        self.sens_word_replacements = {}
+        self.sens_word_replacements: dict[str, str] = {}
         # Figure out which reserved words may clash with sensitive words, so they can be preserved in anonymization
         self.conflicting_words = self._generate_conflicting_reserved_word_list(
             sensitive_words_
         )
 
-    def anonymize(self, line):
+    def anonymize(self, line: str) -> str:
         """Anonymize sensitive words from the input line."""
         if self.sens_regex.search(line) is not None:
             _, _, _, parts, word_indices = _split_line_preserve_whitespace(line)
@@ -173,9 +185,11 @@ class SensitiveWordAnonymizer(object):
             line = "".join(parts)
         return line
 
-    def _generate_conflicting_reserved_word_list(self, sensitive_words):
+    def _generate_conflicting_reserved_word_list(
+        self, sensitive_words: set[str]
+    ) -> set[str]:
         """Return a list of reserved words that may conflict with the specified sensitive words."""
-        conflicting_words = set()
+        conflicting_words: set[str] = set()
         for sensitive_word in sensitive_words:
             conflicting_words.update(
                 set([w for w in self.reserved_words if sensitive_word in w])
@@ -189,11 +203,13 @@ class SensitiveWordAnonymizer(object):
         return conflicting_words
 
     @classmethod
-    def _generate_sensitive_word_regex(cls, sensitive_words):
+    def _generate_sensitive_word_regex(
+        cls, sensitive_words: set[str]
+    ) -> re.Pattern[str]:
         """Compile and return regex for the specified list of sensitive words."""
         return re.compile("({})".format("|".join(sensitive_words)), re.IGNORECASE)
 
-    def _get_or_generate_sensitive_word_replacement(self, sensitive_word):
+    def _get_or_generate_sensitive_word_replacement(self, sensitive_word: str) -> str:
         """Return the replacement string for the given sensitive word.
 
         Generates the replacement if necessary.
@@ -208,7 +224,7 @@ class SensitiveWordAnonymizer(object):
             self.sens_word_replacements[sensitive_word] = replacement
         return replacement
 
-    def _lookup_anon_word(self, match):
+    def _lookup_anon_word(self, match: re.Match[str]) -> str:
         """Lookup anonymized word for the given sensitive word regex match."""
         return self._get_or_generate_sensitive_word_replacement(match.group(0))
 
@@ -226,13 +242,18 @@ class _sensitive_item_formats(Enum):
     sha256 = 8
 
 
-def anonymize_as_numbers(anonymizer, line):
+def anonymize_as_numbers(anonymizer: AsNumberAnonymizer, line: str) -> str:
     """Anonymize AS numbers in the input line."""
     as_number_regex = anonymizer.get_as_number_pattern()
     return as_number_regex.sub(lambda match: anonymizer.anonymize(match.group(0)), line)
 
 
-def _anonymize_value(raw_val, lookup, reserved_words, salt):
+def _anonymize_value(
+    raw_val: str,
+    lookup: dict[str, str],
+    reserved_words: set[str],
+    salt: str,
+) -> str:
     """Generate an anonymized replacement for the input value.
 
     This function tries to determine what type of value was passed in and
@@ -248,7 +269,7 @@ def _anonymize_value(raw_val, lookup, reserved_words, salt):
     if not val:
         logging.debug("Nothing to anonymize after removing special characters")
         return raw_val
-    decrypted = None
+    decrypted: str | None = None
     if val.startswith(juniper_secrets.MAGIC):
         try:
             decrypted = juniper_secrets.juniper_decrypt(val)
@@ -258,7 +279,7 @@ def _anonymize_value(raw_val, lookup, reserved_words, salt):
         anon_val = lookup[val]
         logging.debug('Anonymized input "%s" to "%s" (via lookup)', val, anon_val)
         return sens_head + anon_val + sens_tail
-    elif decrypted in lookup:
+    elif decrypted is not None and decrypted in lookup:
         anon_val = juniper_secrets.juniper_nonrandom_encrypt(lookup[decrypted], salt)
         logging.debug('Anonymized input "%s" to "%s" (via lookup)', val, anon_val)
         return sens_head + anon_val + sens_tail
@@ -300,7 +321,7 @@ def _anonymize_value(raw_val, lookup, reserved_words, salt):
     return sens_head + anon_val + sens_tail
 
 
-def _check_sensitive_item_format(val):
+def _check_sensitive_item_format(val: str) -> _sensitive_item_formats:
     """Determine the type/format of the value passed in."""
     item_format = _sensitive_item_formats.text
 
@@ -323,7 +344,9 @@ def _check_sensitive_item_format(val):
     return item_format
 
 
-def _extract_enclosing_text(in_val, head="", tail=""):
+def _extract_enclosing_text(
+    in_val: str, head: str = "", tail: str = ""
+) -> tuple[str, str, str]:
     """Extract allowed enclosing text from input and return the enclosing and enclosed text."""
     val = in_val
     for head_text in _PASSWORD_ENCLOSING_HEAD_TEXT:
@@ -340,7 +363,7 @@ def _extract_enclosing_text(in_val, head="", tail=""):
     return head, val, tail
 
 
-def generate_default_sensitive_item_regexes():
+def generate_default_sensitive_item_regexes() -> list[list[CompiledRegexRule]]:
     """Compile and return the default password and community line regexes."""
     combined_regexes = (
         aws_regexes
@@ -355,12 +378,12 @@ def generate_default_sensitive_item_regexes():
 
 
 def replace_matching_item(
-    compiled_regexes,
-    input_line,
-    pwd_lookup,
-    salt,
-    reserved_words=default_reserved_words,
-):
+    compiled_regexes: list[list[CompiledRegexRule]],
+    input_line: str,
+    pwd_lookup: dict[str, str],
+    salt: str,
+    reserved_words: set[str] = default_reserved_words,
+) -> str:
     """If line matches a regex, anonymize or remove the line."""
     # Split preserving whitespace for later restoration
     leading, words, trailing, parts, word_indices = _split_line_preserve_whitespace(
@@ -409,9 +432,11 @@ def replace_matching_item(
 
             output_line = compiled_re.sub(
                 # This is text preceding the password and shouldn't be anonymized
-                lambda m: (m.group("prefix") if "prefix" in m.groupdict() else "")
-                + _anonymize_value(
-                    m.group(sensitive_item_num), pwd_lookup, reserved_words, salt
+                lambda m: (
+                    (m.group("prefix") if "prefix" in m.groupdict() else "")
+                    + _anonymize_value(
+                        m.group(sensitive_item_num), pwd_lookup, reserved_words, salt
+                    )
                 ),
                 output_line,
             )
@@ -436,7 +461,9 @@ def replace_matching_item(
     return enclosing_head + output_line + enclosing_tail
 
 
-def _split_line_preserve_whitespace(line):
+def _split_line_preserve_whitespace(
+    line: str,
+) -> tuple[str, list[str], str, list[str], list[int]]:
     """Split line into parts, preserving whitespace as separate elements.
 
     Uses re.split with a capturing group to keep whitespace delimiters.

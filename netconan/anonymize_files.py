@@ -14,18 +14,20 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-from __future__ import absolute_import
-
 import errno
 import logging
 import os
 import random
 import string
+import sys
+from collections.abc import Sequence
+from typing import IO
 
 from .default_reserved_words import default_reserved_words
 from .ip_anonymization import IpAnonymizer, IpV6Anonymizer, anonymize_ip_addr
 from .sensitive_item_removal import (
     AsNumberAnonymizer,
+    CompiledRegexRule,
     SensitiveWordAnonymizer,
     anonymize_as_numbers,
     generate_default_sensitive_item_regexes,
@@ -41,37 +43,35 @@ class FileAnonymizer:
 
     def __init__(
         self,
-        anon_pwd,
-        anon_ip,
-        salt=None,
-        sensitive_words=None,
-        undo_ip_anon=False,
-        as_numbers=None,
-        reserved_words=None,
-        preserve_prefixes=None,
-        preserve_networks=None,
-        preserve_suffix_v4=None,
-        preserve_suffix_v6=None,
-    ):
+        anon_pwd: bool,
+        anon_ip: bool,
+        salt: str | None = None,
+        sensitive_words: Sequence[str] | None = None,
+        undo_ip_anon: bool = False,
+        as_numbers: Sequence[str] | None = None,
+        reserved_words: Sequence[str] | None = None,
+        preserve_prefixes: Sequence[str] | None = None,
+        preserve_networks: Sequence[str] | None = None,
+        preserve_suffix_v4: int | None = None,
+        preserve_suffix_v6: int | None = None,
+    ) -> None:
         """Creates anonymizer classes."""
         self.undo_ip_anon = undo_ip_anon
 
-        self.anonymizer4 = None
-        self.anonymizer6 = None
-        self.anonymizer_as_num = None
-        self.anonymizer_sensitive_word = None
-        self.compiled_regexes = None
-        self.pwd_lookup = None
+        self.anonymizer4: IpAnonymizer | None = None
+        self.anonymizer6: IpV6Anonymizer | None = None
+        self.anonymizer_as_num: AsNumberAnonymizer | None = None
+        self.anonymizer_sensitive_word: SensitiveWordAnonymizer | None = None
+        self.compiled_regexes: list[list[CompiledRegexRule]] | None = None
+        self.pwd_lookup: dict[str, str] | None = None
 
         # The salt is only used for IP and sensitive word anonymization
-        self.salt = salt
-        if self.salt is None:
-            self.salt = "".join(
+        if salt is None:
+            salt = "".join(
                 random.choice(_CHAR_CHOICES) for _ in range(_DEFAULT_SALT_LENGTH)
             )
-            logging.warning(
-                'No salt was provided; using randomly generated "%s"', self.salt
-            )
+            logging.warning('No salt was provided; using randomly generated "%s"', salt)
+        self.salt: str = salt
         logging.debug('Using salt: "%s"', self.salt)
 
         if anon_pwd:
@@ -96,17 +96,7 @@ class FileAnonymizer:
         if as_numbers is not None:
             self.anonymizer_as_num = AsNumberAnonymizer(as_numbers, self.salt)
 
-    def anonymize_file(self, in_file, out_file):
-        """Anonymize a single file."""
-        if os.path.isdir(out_file):
-            raise ValueError(
-                "Cannot write output file; "
-                "output file is a directory ({})".format(out_file)
-            )
-        with open(in_file, "r") as in_io, open(out_file, "w") as out_io:
-            self.anonymize_io(in_io, out_io)
-
-    def anonymize_io(self, in_io, out_io):
+    def anonymize_io(self, in_io: IO[str], out_io: IO[str]) -> None:
         """Reads from the in_io buffer, writing anonymized configuration into the out_io buffer.
 
         Both in_io and out_io can either be
@@ -142,29 +132,37 @@ class FileAnonymizer:
 
 
 def anonymize_files(
-    input_path,
-    output_path,
-    anon_pwd,
-    anon_ip,
-    salt=None,
-    dumpfile=None,
-    sensitive_words=None,
-    undo_ip_anon=False,
-    as_numbers=None,
-    reserved_words=None,
-    preserve_prefixes=None,
-    preserve_networks=None,
-    preserve_suffix_v4=None,
-    preserve_suffix_v6=None,
-):
+    input_path: str,
+    output_path: str,
+    anon_pwd: bool,
+    anon_ip: bool,
+    salt: str | None = None,
+    dumpfile: str | None = None,
+    sensitive_words: Sequence[str] | None = None,
+    undo_ip_anon: bool = False,
+    as_numbers: Sequence[str] | None = None,
+    reserved_words: Sequence[str] | None = None,
+    preserve_prefixes: Sequence[str] | None = None,
+    preserve_networks: Sequence[str] | None = None,
+    preserve_suffix_v4: int | None = None,
+    preserve_suffix_v6: int | None = None,
+) -> None:
     """Anonymize each file in input and save to output."""
-    if not os.path.exists(input_path):
+    use_stdin = input_path == "-"
+    use_stdout = output_path == "-"
+
+    if not use_stdin and not os.path.exists(input_path):
         raise ValueError("Input does not exist")
 
-    # Generate list of file tuples: (input file path, output file path)
-    file_list = []
-    if os.path.isfile(input_path):
+    # Build list of (input, output) pairs to process.
+    # Pipe paths use "-" as a sentinel for stdin/stdout.
+    if use_stdin or os.path.isfile(input_path):
         file_list = [(input_path, output_path)]
+    elif use_stdout:
+        raise ValueError(
+            "Cannot write directory output to stdout; "
+            "use a file input with -o - or specify an output directory"
+        )
     else:
         if not os.listdir(input_path):
             raise ValueError("Input directory is empty")
@@ -172,7 +170,7 @@ def anonymize_files(
             raise ValueError(
                 "Output path must be a directory if input path is a directory"
             )
-
+        file_list = []
         for root, dirs, files in os.walk(input_path):
             rel_root = os.path.relpath(root, input_path)
             file_list.extend(
@@ -204,25 +202,45 @@ def anonymize_files(
         logging.debug("File in  %s", in_path)
         logging.debug("File out %s", out_path)
         try:
-            # Make parent dirs for output file if they don't exist
-            _mkdirs(out_path)
-            if os.path.isdir(out_path):
-                raise ValueError(
-                    "Cannot write output file; "
-                    "output file is a directory ({})".format(out_path)
-                )
-            with open(in_path, "r") as f_in, open(out_path, "w") as f_out:
-                file_anonymizer.anonymize_io(f_in, f_out)
+            _process_one(file_anonymizer, in_path, out_path)
         except Exception:
             logging.error("Failed to anonymize file %s", in_path, exc_info=True)
 
     if dumpfile is not None:
+        # dumpfile requires anon_ip, which guarantees both anonymizers exist
+        assert file_anonymizer.anonymizer4 is not None
+        assert file_anonymizer.anonymizer6 is not None
         with open(dumpfile, "w") as f_out:
             file_anonymizer.anonymizer4.dump_to_file(f_out)
             file_anonymizer.anonymizer6.dump_to_file(f_out)
 
 
-def _mkdirs(file_path):
+def _process_one(file_anonymizer: FileAnonymizer, in_path: str, out_path: str) -> None:
+    """Anonymize a single input/output pair. A path of "-" means stdin/stdout."""
+    use_stdin = in_path == "-"
+    use_stdout = out_path == "-"
+
+    if not use_stdout:
+        _mkdirs(out_path)
+        if os.path.isdir(out_path):
+            raise ValueError(
+                "Cannot write output file; output file is a directory ({})".format(
+                    out_path
+                )
+            )
+
+    in_io: IO[str] = sys.stdin if use_stdin else open(in_path, "r")
+    out_io: IO[str] = sys.stdout if use_stdout else open(out_path, "w")
+    try:
+        file_anonymizer.anonymize_io(in_io, out_io)
+    finally:
+        if not use_stdin:
+            in_io.close()
+        if not use_stdout:
+            out_io.close()
+
+
+def _mkdirs(file_path: str) -> None:
     """Make parent directories for the specified file if they don't exist."""
     dir_path = os.path.dirname(file_path)
     if len(dir_path) > 0:
