@@ -774,6 +774,11 @@ def test_pwd_removal_append(regexes, config_line, sensitive_text, append_text):
         "nothing in this string should be replaced",
         "      interface GigabitEthernet0/0",
         "ip address 1.2.3.4 255.255.255.0",
+        # Key-chain key IDs should not be anonymized (short values, not passwords)
+        "key 10",
+        "key 63",
+        "key-chain kc0 key 0",
+        "authentication-key-chains key-chain kc0 key 10",
         "set community 12345",
         "set community 1234:5678",
         "set community (1234:5678)",
