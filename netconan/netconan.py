@@ -153,6 +153,12 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
         default=8,
         help="Preserve the trailing bits of IP addresses, aka the host bits of a network. Set this value large enough to represent the largest interface network (e.g., 8 for a /24 or 12 for a /20) or NAT pool.",
     )
+    parser.add_argument(
+        "--anonymize-descriptions",
+        action="store_true",
+        default=False,
+        help="Anonymize description fields with deterministic hashed replacements",
+    )
     result: argparse.Namespace = parser.parse_args(argv)
     return result
 
@@ -220,6 +226,7 @@ def main(argv: list[str] = sys.argv[1:]) -> None:
             args.anonymize_passwords,
             args.anonymize_ips,
             args.undo,
+            args.anonymize_descriptions,
         ]
     ):
         logging.warning(
@@ -239,6 +246,7 @@ def main(argv: list[str] = sys.argv[1:]) -> None:
             reserved_words,
             preserve_prefixes,
             preserve_addresses,
+            anon_descriptions=args.anonymize_descriptions,
             preserve_suffix_v4=args.preserve_host_bits,
             preserve_suffix_v6=args.preserve_host_bits,
         )
