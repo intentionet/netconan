@@ -63,7 +63,7 @@ select = ["E", "W", "F", "D", "I"]
 ignore = ["E203", "E501", "D203", "D213", "D401", "D413"]
 
 [tool.pytest.ini_options]
-addopts = "--cov=netconan"
+addopts = "--cov=netconan --cov-report=xml"
 testpaths = ["tests"]
 
 [tool.mypy]
