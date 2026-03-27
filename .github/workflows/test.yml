@@ -38,6 +38,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip wheel setuptools
           pip install -e .[test]
+          pip install mypy
+      - name: Type check
+        run: |
+          mypy netconan/
       - name: Test
         run: |
           pytest
