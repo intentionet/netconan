@@ -1,0 +1,5 @@
+codecov:
+  notify:
+    # One upload per Python version; wait for all before finalizing. Keep in
+    # sync with the python-version matrix in .github/workflows/test.yml.
+    after_n_builds: 5

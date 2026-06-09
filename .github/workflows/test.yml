@@ -1,12 +1,17 @@
 name: Python package
 
-on: [push, pull_request]
+# pull_request_target gives PR runs access to secrets.CODECOV_TOKEN, including
+# fork and Dependabot PRs. Each checkout below fetches the PR head so coverage
+# reflects the PR's code. This exposes the (upload-only) token to PR code.
+on: [push, pull_request_target]
 
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
@@ -30,6 +35,8 @@ jobs:
         python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v6
         with:
@@ -42,9 +49,17 @@ jobs:
         run: |
           pytest
       - name: Upload coverage to Codecov
-        if: matrix.python-version == '3.13'
+        # PRs and pushes to master only; other-branch pushes (e.g. Dependabot)
+        # lack the token. Each version uploads under its own flag; Codecov
+        # merges all uploads for a commit.
+        if: >-
+          github.event_name == 'pull_request_target' ||
+          github.ref == 'refs/heads/master'
         uses: codecov/codecov-action@v6
         with:
           files: coverage.xml
+          flags: python-${{ matrix.python-version }}
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
+          override_commit: ${{ github.event.pull_request.head.sha }}
+          override_pr: ${{ github.event.pull_request.number }}
