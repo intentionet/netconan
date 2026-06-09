@@ -55,7 +55,7 @@ jobs:
         if: >-
           github.event_name == 'pull_request_target' ||
           github.ref == 'refs/heads/master'
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         with:
           files: coverage.xml
           flags: python-${{ matrix.python-version }}
