@@ -61,6 +61,7 @@ Features
 Netconan can anonymize *many types of sensitive information*:
 
 * Sensitive strings like passwords or SNMP community strings (``--anonymize-passwords``, ``-p``), for many common network vendors.
+* SSH public keys in authentication and known-hosts lines (``--anonymize-ssh-keys``). Supports RSA, DSA, ECDSA, and Ed25519 key types. Key blobs are replaced with deterministic, length-preserving replacements that maintain the SSH wire format key type header.
 * IPv4 and IPv6 addresses (``--anonymize-ips``, ``-a``).
 * User-specified sensitive words (``--sensitive-words``, ``-w``).  *Note that any occurrence of a specified sensitive word will be replaced regardless of context, even if it is part of a larger string.*
 * User-specified AS numbers (``--as-numbers``, ``-n``).  *Note that any number matching a specified AS number will be anonymized.*
@@ -110,7 +111,8 @@ For more information about less commonly-used features, see the Netconan help (`
 
 .. code-block:: bash
 
-    usage: netconan [-h] [--version] [-a] [-c CONFIG] [-d DUMP_IP_MAP] -i INPUT
+    usage: netconan [-h] [--version] [-a] [--anonymize-ssh-keys] [-c CONFIG]
+                    [-d DUMP_IP_MAP] -i INPUT
                     [-l {DEBUG,INFO,WARNING,ERROR,CRITICAL}] [-n AS_NUMBERS] -o
                     OUTPUT [-p] [-r RESERVED_WORDS] [-s SALT] [-u]
                     [-w SENSITIVE_WORDS] [--preserve-prefixes PRESERVE_PREFIXES]
@@ -128,6 +130,10 @@ For more information about less commonly-used features, see the Netconan help (`
       -h, --help            show this help message and exit
       --version             Print version number and exit
       -a, --anonymize-ips   Anonymize IP addresses
+      --anonymize-ssh-keys  Anonymize SSH public key blobs in authentication
+                            and known-hosts lines. Supports RSA, DSA, ECDSA,
+                            and Ed25519 key types. Replacement is deterministic
+                            from --salt.
       -c CONFIG, --config CONFIG
                             Netconan configuration file with defaults for these
                             CLI parameters
