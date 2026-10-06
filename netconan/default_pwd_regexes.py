@@ -124,7 +124,9 @@ default_pwd_line_regexes: list[list[RegexRule]] = [
     [(r"(key-string \d?)(.*)", None)],
     [(r"(message-digest-key \d+ md5 (7|encrypted)) (.*)", None)],
     [(r"(.*?neighbor.*?) (\S*) password (.*)", None)],
-    [(r"(wlccp \S+ username (\S+)( .*)? password( \d)?) (\S+)(.*)", None)],
+    [(r"(wlccp \S+ username (\S+)( .*)? password( \d)?) (\S+)(.*)", 1)],
+    # Juniper encrypted-password with capture group for hash-preserving anonymization.
+    [(r"(?P<prefix>(\S* )*encrypted-password )([^ ;]+)", 3)],
     # These are regexes for JUNOS
     # TODO(https://github.com/intentionet/netconan/issues/4):
     # Follow-up on these.  They were modified from RANCID's regexes and currently:
@@ -134,7 +136,6 @@ default_pwd_line_regexes: list[list[RegexRule]] = [
     #     (to make sure the regex handles different syntaxes allowed in the line)
     [(r"(\S* )*md5 \d+ key [^ ;]+(.*)", None)],
     [(r"(\S* )*(secret|simple-password) [^ ;]+(.*)", None)],
-    [(r"(\S* )*encrypted-password [^ ;]+(.*)", None)],
     [(r"(\S* )*ssh-(rsa|dsa) \"(.*)", None)],
     [(r"(\S* )*((pre-shared-|)key (ascii-text|hexadecimal)) [^ ;]+(.*)", None)],
 ]
