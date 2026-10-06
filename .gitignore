@@ -113,3 +113,9 @@ ENV/
 
 # development artifacts
 working/
+
+# downloaded test configs (see tests/TEST_DATA_SOURCES.md)
+tests/test_data/
+
+# local test configs (your own configs, see tests/README.md)
+tests/test_data_local/
