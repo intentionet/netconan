@@ -64,6 +64,7 @@ Netconan can anonymize *many types of sensitive information*:
 * IPv4 and IPv6 addresses (``--anonymize-ips``, ``-a``).
 * User-specified sensitive words (``--sensitive-words``, ``-w``).  *Note that any occurrence of a specified sensitive word will be replaced regardless of context, even if it is part of a larger string.*
 * User-specified AS numbers (``--as-numbers``, ``-n``).  *Note that any number matching a specified AS number will be anonymized.*
+* Description fields (``--anonymize-descriptions``).  *Description text is replaced with a deterministic hash, preserving surrounding quotes and semicolons.*
 
 
 Netconan attempts to *preserve useful structure*. For example,

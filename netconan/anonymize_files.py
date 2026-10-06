@@ -18,12 +18,17 @@ import errno
 import logging
 import os
 import random
+import re
 import string
 import sys
 from collections.abc import Sequence
 from typing import IO
 
 from .default_reserved_words import default_reserved_words
+from .description_anonymization import (
+    generate_description_regexes,
+    replace_descriptions,
+)
 from .ip_anonymization import IpAnonymizer, IpV6Anonymizer, anonymize_ip_addr
 from .sensitive_item_removal import (
     AsNumberAnonymizer,
@@ -54,6 +59,7 @@ class FileAnonymizer:
         preserve_networks: Sequence[str] | None = None,
         preserve_suffix_v4: int | None = None,
         preserve_suffix_v6: int | None = None,
+        anon_descriptions: bool = False,
     ) -> None:
         """Creates anonymizer classes."""
         self.undo_ip_anon = undo_ip_anon
@@ -64,6 +70,8 @@ class FileAnonymizer:
         self.anonymizer_sensitive_word: SensitiveWordAnonymizer | None = None
         self.compiled_regexes: list[list[CompiledRegexRule]] | None = None
         self.pwd_lookup: dict[str, str] | None = None
+        self.description_regexes: list[re.Pattern[str]] | None = None
+        self.description_lookup: dict[str, str] | None = None
 
         # The salt is only used for IP and sensitive word anonymization
         if salt is None:
@@ -73,6 +81,10 @@ class FileAnonymizer:
             logging.warning('No salt was provided; using randomly generated "%s"', salt)
         self.salt: str = salt
         logging.debug('Using salt: "%s"', self.salt)
+
+        if anon_descriptions:
+            self.description_regexes = generate_description_regexes()
+            self.description_lookup = {}
 
         if anon_pwd:
             self.compiled_regexes = generate_default_sensitive_item_regexes()
@@ -122,6 +134,17 @@ class FileAnonymizer:
             if self.anonymizer_sensitive_word is not None:
                 output_line = self.anonymizer_sensitive_word.anonymize(output_line)
 
+            if (
+                self.description_regexes is not None
+                and self.description_lookup is not None
+            ):
+                output_line = replace_descriptions(
+                    self.description_regexes,
+                    output_line,
+                    self.description_lookup,
+                    self.salt,
+                )
+
             if self.anonymizer_as_num is not None:
                 output_line = anonymize_as_numbers(self.anonymizer_as_num, output_line)
 
@@ -146,6 +169,7 @@ def anonymize_files(
     preserve_networks: Sequence[str] | None = None,
     preserve_suffix_v4: int | None = None,
     preserve_suffix_v6: int | None = None,
+    anon_descriptions: bool = False,
 ) -> None:
     """Anonymize each file in input and save to output."""
     use_stdin = input_path == "-"
@@ -196,6 +220,7 @@ def anonymize_files(
         salt=salt,
         sensitive_words=sensitive_words,
         undo_ip_anon=undo_ip_anon,
+        anon_descriptions=anon_descriptions,
     )
 
     for in_path, out_path in file_list:
